@@ -2,6 +2,7 @@
   :ensure t
   :bind (:map global-map
 	      (("M-m r f" . org-roam-node-find)
+	       ("M-m r i" . org-roam-node-insert)
 	       ("M-m r F" . org-roam-ref-find)
 	       ("M-m r c" . org-roam-capture)
 	       ("M-m r g" . org-roam-graph)))
@@ -25,3 +26,20 @@
 	   :unnarrowed t)))
 
   (setf org-id-link-to-org-use-id t))
+
+(use-package org-download
+  :ensure t
+  :bind (:map org-mode-map
+	      (("M-v" . org-download-clipboard)))
+  :custom
+  (org-download-image-dir "./data/")
+  (org-download-heading-lvl nil)
+  (org-download-image-org-width 100)
+  (org-download-image-html-width 800)
+  (org-download-image-latex-width 600)
+  :config
+  (defun org-download--dir-2 ()
+    (if org-download-heading-lvl
+	(org-download-get-heading
+	 org-download-heading-lvl)
+      (file-name-base (buffer-file-name)))))
