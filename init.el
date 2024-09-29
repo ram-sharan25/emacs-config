@@ -3,6 +3,10 @@
 ;; Add the modules/personal directory to the load path
 (add-to-list 'load-path (expand-file-name "modules/personal" user-emacs-directory))
 
+
+(define-prefix-command 'bp/global-prefix-map)
+(define-key global-map (kbd "M-m") 'bp/global-prefix-map)
+
 ;; Function to load all .el files from a directory
 (defun load-directory (directory)
   "Load all .el files in DIRECTORY."
@@ -22,6 +26,7 @@
        (add-to-list 'package-archives
 		    '("melpa" . "https://melpa.org/packages/") t)))
 (package-initialize)
+
 
 
 
