@@ -3,6 +3,9 @@
   :bind (("C-M-f" . sp-forward-sexp)
 	 ("C-M-b" . sp-backward-sexp)))
 
+(global-set-key (kbd "s-/") 'comment-dwim)
+(global-set-key (kbd "s-l") 'mark-whole-line)
+
 (use-package smartrep
   :ensure t)
 
