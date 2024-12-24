@@ -1,4 +1,4 @@
-;; Directory setup
+;;; templates for org captures
 (require 'org)
 (setq org-capture-templates nil)  ; Clear existing templates
 
@@ -9,25 +9,38 @@
 (setq templates-dir (concat personal-dir "templates"))
 (setq monkey-dir "~/Stillness/Personal/Writings/monkey/")
 (setq monkey-data-dir (concat monkey-dir "/data"))
+(setq ideas-dir (concat personal-dir "ideas"))
 
 
 ;; Create all necessary directories
-(dolist (dir (list personal-dir tasks-dir journal-dir notes-dir templates-dir monkey-dir monkey-data-dir))
+(dolist (dir (list personal-dir tasks-dir journal-dir notes-dir templates-dir monkey-dir monkey-data-dir ideas-dir))
   (unless (file-exists-p dir)
     (make-directory dir t)))
 
 ;; Create initial org files if they don't exist
 (dolist (file '(("tasks.org" . "* Tasks\n")
 		("quick-notes.org" . "* Quick Notes\n")
-		("journal.org" . "* Journal\n")))
+		("journal.org" . "* Journal\n")
+
   (let ((filepath (concat (cond
 			  ((string= (car file) "tasks.org") tasks-dir)
 			  ((string= (car file) "quick-notes.org") notes-dir)
 			  ((string= (car file) "journal.org") journal-dir))
+
 			 "/" (car file))))
     (unless (file-exists-p filepath)
       (with-temp-file filepath
-	(insert (cdr file))))))
+	(insert (cdr file))))))))
+
+;; Create initial ideas.org file if it doesn't exist
+(let ((filepath (concat ideas-dir "/ideas.org")))
+  (unless (file-exists-p filepath)
+    (with-temp-file filepath
+      (insert
+      "#+TITLE: Ideas List\n"
+	      "* Ideas\n"))))
+
+
 
 (defun monkey-get-file ()
   (expand-file-name
@@ -37,7 +50,7 @@
 
 ;; Set up capture templates BEFORE defining keybindings
 (setq org-capture-templates
-      `(;; Tasks, Notes, and Journal templates
+      `(
 	("t" "Task" entry
 	 (file+headline ,(concat tasks-dir "/tasks.org") "Tasks")
 	 "* TODO %?\n:PROPERTIES:\n:Created: %U\n:END:\n%i\n%a"
@@ -54,6 +67,11 @@
 	 "* %<%I:%M %p> %?\n:PROPERTIES:\n:Created: %U\n:END:\n%i\n%a"
 	 :empty-lines 1
 	 :tree-type day)
+
+	("i" "Idea" item
+	 (file+headline "~/Stillness/Personal/Writings/ideas/ideas.org" "Ideas")
+	 "- [ ] %^{Idea} :idea:\n  :PROPERTIES:\n  :Created: %U\n  :Source: %a\n  :END:\n  %?"
+	 :empty-lines 1)
 
 	("J" "Journal with Template" entry
 	 (file+olp+datetree ,(concat journal-dir "/journal.org"))
@@ -79,10 +97,15 @@
   (interactive)
   (org-capture nil "j"))
 
+(defun my/capture-idea ()
+  (interactive)
+  (org-capture nil "i"))
+
 ;; Global keybindings for captures
 (global-set-key (kbd "C-c t") 'my/capture-task)   ; Ctrl-c t for tasks
 (global-set-key (kbd "C-c n") 'my/capture-note)   ; Ctrl-c n for notes
 (global-set-key (kbd "C-c j") 'my/capture-journal) ; Ctrl-c j for journal
+(global-set-key (kbd "C-c i") 'my/capture-idea)
 
 ;; Create journal template if it doesn't exist
 (let ((template-file (concat templates-dir "/journal-template.org")))
