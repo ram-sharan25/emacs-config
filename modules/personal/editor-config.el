@@ -25,3 +25,6 @@
   (add-hook 'before-save-hook #'whitespace-cleanup))
 
 (add-hook 'prog-mode-hook #'rsr/prog-mode-hook)
+
+;; Enable org-indent-mode by default for all org files
+(add-hook 'org-mode-hook 'org-indent-mode)
