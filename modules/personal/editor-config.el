@@ -28,3 +28,4 @@
 
 ;; Enable org-indent-mode by default for all org files
 (add-hook 'org-mode-hook 'org-indent-mode)
+(setq toggle-truncate-lines t)
