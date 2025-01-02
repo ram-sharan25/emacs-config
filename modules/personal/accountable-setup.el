@@ -11,66 +11,103 @@
 (setq daily-file (concat personal-dir "daily.org"))
  ;;"File for daily entries and tracking."
 ;; Function to ensure daily heading exists
-(defun ensure-daily-heading ()
- "Create or find today's heading with all required sections."
- (let ((today (format-time-string "%Y-%m-%d %A")))
-   (with-current-buffer (find-file-noselect daily-file)
-     (unless (file-exists-p daily-file)
-       (write-region "" nil daily-file))
+(defun date-tree-exists-p ()
+ "Check if today's date tree already exists."
+ (let ((year (format-time-string "%Y"))
+       (month (format-time-string "%Y-%m %B"))
+       (day (format-time-string "%Y-%m-%d %A")))
+   (save-excursion
      (goto-char (point-min))
-     (unless (re-search-forward (format "^\\* %s" today) nil t)
+     (and (re-search-forward (format "^\\* %s$" year) nil t)
+	  (re-search-forward (format "^\\** %s$" month) nil t)
+	  (re-search-forward (format "^\\*** %s$" day) nil t)))))
+(defun ensure-date-tree ()
+ "Create or find today's date tree structure."
+ (unless (date-tree-exists-p)  ; Only create if it doesn't exist
+   (let ((year (format-time-string "%Y"))
+	 (month (format-time-string "%Y-%m %B"))
+	 (day (format-time-string "%Y-%m-%d %A")))
+     (goto-char (point-min))
+     (unless (re-search-forward (format "^\\* %s$" year) nil t)
        (goto-char (point-max))
-       (when (> (point) 1) (insert "\n"))
-       (insert (format "* %s\n" today))
-       (insert "** TODO Items\n")
-       (insert "** Journal\n")
-       (insert "** Review\n")
-       (save-buffer))
-     today)))
-;; Set up capture templates
+       (insert (format "\n* %s" year)))
+     (goto-char (point-min))
+     (re-search-forward (format "^\\* %s$" year))
+     (unless (re-search-forward (format "^\\** %s$" month) nil t)
+       (org-end-of-subtree)
+       (insert (format "\n** %s" month)))
+     (goto-char (point-min))
+     (re-search-forward (format "^\\* %s$" year))
+     (re-search-forward (format "^\\** %s$" month))
+     (unless (re-search-forward (format "^\\*** %s$" day) nil t)
+       (org-end-of-subtree)
+       (insert (format "\n*** %s\n**** TODO Items\n**** Journal\n**** Review" day))))))
+;; Function to ensure we're in the correct section
+(defun ensure-correct-section (section)
+ "Ensure we're in the correct SECTION of today's entry."
+ (let ((year (format-time-string "%Y"))
+       (month (format-time-string "%Y-%m %B"))
+       (day (format-time-string "%Y-%m-%d %A")))
+   (goto-char (point-min))
+   (re-search-forward (format "^\\* %s$" year))
+   (re-search-forward (format "^\\** %s$" month))
+   (re-search-forward (format "^\\*** %s$" day))
+   (re-search-forward (format "^\\**** %s$" section))))
+;; Update capture templates
 (setq org-capture-templates
      `(
        ("t" "Todo" entry
-	(file+function daily-file
-		      (lambda ()
-			(ensure-daily-heading)
-			(re-search-forward "^\\** TODO Items" nil t)))
-	"* %<%I:%M %p> [ ] %? \n [[%F][source]] "
-	:empty-lines 1
-	:prepend t)
-	("i" "Ideas" entry
-	(file+function daily-file
-		      (lambda ()
-			(ensure-daily-heading)
-			(re-search-forward "^\\** Journal" nil t)))
-	"*  %<%I:%M %p> [ ] :IDEA: %? \n [[%F][source]] "
-	:empty-lines 1)
-	("j" "Journal" entry
-	(file+function daily-file
-		      (lambda ()
-			(ensure-daily-heading)
-			(re-search-forward "^\\** Journal" nil t)))
-	"* %<%I:%M %p> :  \n - %? \n [[%F][source]]"
-	:empty-lines 1
-	tree-type day)
-	("m" "Monkey Mind" entry
-	(file+function daily-file
-		      (lambda ()
-			(ensure-daily-heading)
-			(re-search-forward "^\\** Journal" nil t)))
-	"* %<%I:%M %p> Mind Map 🐒 :\n - %?  \n [[%F][source]] "
-	:empty-lines 1)
-	("r" "Review" entry
-	(file+function daily-file
-		      (lambda ()
-			(ensure-daily-heading)
-			(re-search-forward "^\\** Review" nil t)))
-	"* %<%I:%M %p> Day Review:  \n - %? \n [[%F][source]]\n "
-	:empty-lines 1)))
+        (file+function daily-file
+                      (lambda ()
+                        (ensure-date-tree)
+                        (ensure-correct-section "TODO Items")))
+        "***** %<%I:%M %p> [ ] %? \n [[%F][source]] "
+        :empty-lines 1
+        :prepend t)
+        ("i" "Ideas" entry
+        (file+function daily-file
+                      (lambda ()
+                        (ensure-date-tree)
+                        (ensure-correct-section "Journal")))
+        "***** %<%I:%M %p> [ ] :IDEA: %? \n [[%F][source]] "
+        :empty-lines 1)
+        ("j" "Journal" entry
+        (file+function daily-file
+                      (lambda ()
+                        (ensure-date-tree)
+                        (ensure-correct-section "Journal")))
+        "***** %<%I:%M %p> : \n - %? \n [[%F][source]]"
+        :empty-lines 1)
+        ("m" "Monkey Mind" entry
+        (file+function daily-file
+                      (lambda ()
+                        (ensure-date-tree)
+                        (ensure-correct-section "Journal")))
+        "***** %<%I:%M %p> Mind Map 🐒 :\n - %? \n [[%F][source]] "
+        :empty-lines 1)
+        ("r" "Review" entry
+        (file+function daily-file
+                      (lambda ()
+                        (ensure-date-tree)
+                        (ensure-correct-section "Review")))
+        "***** %<%I:%M %p> Day Review: \n - %? \n [[%F][source]]\n "
+        :empty-lines 1)))
+
+(defun ensure-capture-location ()
+ "Ensure we're at the right location in the tree before capturing."
+ (save-excursion
+   (let ((year (format-time-string "%Y"))
+	 (month (format-time-string "%Y-%m %B"))
+	 (day (format-time-string "%Y-%m-%d %A")))
+     (goto-char (point-min))
+     (re-search-forward (format "^\\* %s$" year))
+     (re-search-forward (format "^\\** %s$" month))
+     (re-search-forward (format "^\\*** %s$" day)))))
 ;; Ensure daily heading exists before capture
 (advice-add 'org-capture :before
-	  (lambda (&rest _)
-	    (ensure-daily-heading)))
+	   (lambda (&rest _)
+	     (with-current-buffer (find-file-noselect daily-file)
+	       (ensure-date-tree))))
 ;; Capture functions
 (defun my/capture-todo ()
  "Capture a new TODO item."
@@ -102,15 +139,17 @@
 (defun open-daily-file ()
  "Open daily file and jump to today's entry."
  (interactive)
- (find-file "~/Stillness/Personal/Writings/daily.org")
- (let ((today (format-time-string "%Y-%m-%d")))
+ (find-file daily-file)
+ (unless (file-exists-p daily-file)
+   (write-region "" nil daily-file))
+ (ensure-date-tree)
+ (let ((year (format-time-string "%Y"))
+       (month (format-time-string "%Y-%m %B"))
+       (day (format-time-string "%Y-%m-%d %A")))
    (goto-char (point-min))
-   (if (re-search-forward (format "^\\* %s" today) nil t)
-       (beginning-of-line)
-     (ensure-daily-heading)
-     (goto-char (point-min))
-     (re-search-forward (format "^\\* %s" today) nil t)
-     (beginning-of-line))))
+   (re-search-forward (format "^\\* %s$" year))
+   (re-search-forward (format "^\\** %s$" month))
+   (re-search-forward (format "^\\*** %s$" day))))
 (global-set-key (kbd "C-c C-o d") 'open-daily-file)
 
 (provide 'accountable-setup)
