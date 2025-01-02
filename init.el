@@ -1,5 +1,8 @@
 (setf custom-file (expand-file-name ".custom" user-emacs-directory))
 
+(push "/Users/rrimal/.local/bin" exec-path)
+(setenv "PATH" (concat "/Users/rrimal/.local/bin/:" (getenv "PATH")))
+
 ;; Add the modules/personal directory to the load path
 (add-to-list 'load-path (expand-file-name "modules/personal" user-emacs-directory))
 
@@ -12,6 +15,7 @@
   "Load all .el files in DIRECTORY."
   (let ((files (directory-files directory t "\\.el$")))
     (dolist (file files)
+      (message "Loading %s" file)
       (load (file-name-sans-extension file)))))
 
 ;; Load all .el files from the personal directory
@@ -29,21 +33,9 @@
 
 
 
-
-
-
 (use-package swiper
   :ensure t
   :bind ("C-s" . swiper))
-
-
-
-;; show lines in all modes
-(global-display-line-numbers-mode 1)
-
-
-
-
 
 (setq org-src-fontify-natively t)  ;; Enable syntax highlighting for source code blocks
 
