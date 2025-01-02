@@ -6,6 +6,9 @@
 (global-set-key (kbd "s-/") 'comment-dwim)
 (global-set-key (kbd "s-l") 'mark-whole-line)
 
+(add-hook 'prog-mode-hook #'display-line-numbers-mode)
+(add-hook 'org-mode-hook #'display-line-numbers-mode)
+
 (use-package smartrep
   :ensure t)
 
