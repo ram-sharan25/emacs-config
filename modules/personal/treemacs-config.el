@@ -24,7 +24,7 @@
 	  treemacs-hide-dot-git-directory          t
 	  treemacs-indentation                     2
 	  treemacs-indentation-string              " "
-	  treemacs-is-never-other-window           nil
+	  treemacs-is-never-other-window           t
 	  treemacs-max-git-entries                 5000
 	  treemacs-missing-project-action          'ask
 	  treemacs-move-files-by-mouse-dragging    t
@@ -32,6 +32,7 @@
 	  treemacs-no-png-images                   nil
 	  treemacs-no-delete-other-windows         t
 	  treemacs-project-follow-cleanup          nil
+	  treemacs-project-follow-mode             t
 	  treemacs-persist-file                    (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
 	  treemacs-position                        'left
 	  treemacs-read-string-input               'from-child-frame
@@ -85,8 +86,10 @@
 	("C-x t t"   . treemacs)
 	("C-x t d"   . treemacs-select-directory)
 	("C-x t B"   . treemacs-bookmark)
-	("C-x t f" . treemacs-find-file)
+	("C-x t C-t" . treemacs-find-file)
 	("C-x t M-t" . treemacs-find-tag)))
+
+
 
 (use-package treemacs-projectile
   :after (treemacs projectile)
@@ -100,9 +103,7 @@
   :after (treemacs magit)
   :ensure t)
 
-(use-package treemacs-tab-bar ;;treemacs-tab-bar if you use tab-bar-mode
-  :after (treemacs)
+(use-package treemacs-perspective
+  :after (treemacs perspective)
   :ensure t
-  :config (treemacs-set-scope-type 'Tabs))
-
-(treemacs-start-on-boot)
+  :config (treemacs-set-scope-type 'Perspectives))
