@@ -9,6 +9,8 @@
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 (add-hook 'org-mode-hook #'display-line-numbers-mode)
 
+(setq org-latex-toc-command "\\tableofcontents \\clearpage")
+
 (use-package smartrep
   :ensure t)
 
