@@ -24,7 +24,7 @@
       (message "✅ Using Node.js from: %s" node-bin))))
 
 ;; Run this function automatically when opening a JS/TS file
-(add-hook 'js-mode-hook #'rsr/setup-nvm)
+(add-hook 'js-jsx-mode-hook #'rsr/setup-nvm)
 (add-hook 'typescript-mode-hook #'rsr/setup-nvm)
 (add-hook 'tsx-ts-mode-hook #'rsr/setup-nvm)
 (add-hook 'web-mode-hook #'rsr/setup-nvm)  ; If you use web-mode for JS/TS
@@ -34,28 +34,59 @@
   (interactive)
   (rsr/setup-nvm))
 
-;; (setenv "PATH" (concat (getenv "PATH") ":/Users/rrimal/.nvm/versions/node/v22.8.0/bin"))
-;; (setq exec-path (append exec-path '("/Users/rrimal/.nvm/versions/node/v22.8.0/bin")))
+
 
 (defun rsr/lsp-mode-setup ()
   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-  (lsp-headerline-breadcrumbmode))
+  (lsp-headerline-breadcrumb-mode))
 
 (use-package lsp-mode
   :commands (lsp lsp-deferred)
   :hook (lsp-mode . rsr/lsp-mode-setup)
   :init
-  (setq lsp-keymap-prefix "C-c l")  ;; Or 'C-l', 's-l'
+  (setq lsp-keymap-prefix "C-c l")
   :config
-  (lsp-enable-which-key-integration t))
-
+  (lsp-enable-which-key-integration t)
+  :bind (:map lsp-mode-map
+	 ;; Core navigation
+	 ("M-." . lsp-find-definition)
+	 ("M-," . xref-go-back)
+	 ("M-?" . lsp-find-references)
+	 ;; Peek functionality
+	 ("C-c p d" . lsp-ui-peek-find-definitions)
+	 ("C-c p r" . lsp-ui-peek-find-references)))
 
 (use-package lsp-ui
-  :hook (lsp-mode . lsp-ui-mode)
-  :custom
-  (lsp-ui-doc-position 'bottom))
+  :ensure t
+  :after (lsp-mode)
+  :commands lsp-ui-doc-hide
+  :bind (:map lsp-ui-mode-map
+     ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
+     ([remap xref-find-references] . lsp-ui-peek-find-references)
+     ("C-c u" . lsp-ui-imenu)
+     ("C-c d" . lsp-ui-doc-show)
+     ("C-c h" . lsp-ui-doc-hide)
+     ("C-c p d" . lsp-ui-peek-find-definitions)  ; Custom keybinding for Peek Definitions
+     ("C-c p r" . lsp-ui-peek-find-references)   ; Custom keybinding for Peek References
+     ("C-c p i" . lsp-ui-peek-find-implementation))
+  :init (setq lsp-ui-doc-enable nil
+   lsp-ui-doc-frame 'bottom
+   lsp-ui-doc-position 'right
+   lsp-ui-peek-enable t
+   lsp-ui-peek-enable t     ; Enable lsp-ui-peek
+   lsp-ui-peek-show-directory t  ; Show directory of files in peek window
+   lsp-ui-peek-max-width 100  ; You can adjust the width of the peek window as needed
+   lsp-ui-peek-max-height 20 )
+  :config
+  (add-to-list 'lsp-ui-doc-frame-parameters '(right-fringe . 8))
+  (add-hook 'lsp-ui-doc-frame-mode-hook
+	    (lambda ()
+	      (setq-local cursor-type 'box)  ; Make the cursor visible in the doc frame
+	      (use-local-map lsp-ui-doc-mode-map))))
 
 (use-package lsp-treemacs
   :after lsp)
 
 (use-package lsp-ivy)
+
+;;end of lsp_mode.el
