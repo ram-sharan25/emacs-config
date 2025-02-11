@@ -1,67 +1,61 @@
-;;; Core LSP packages
+;; Ensure Node.js LTS is used before starting LSP
+(defun rsr/setup-nvm ()
+  "Dynamically load the correct Node.js version from NVM, respecting .nvmrc."
+  (let* ((nvm-dir (or (getenv "NVM_DIR") (expand-file-name "~/.nvm")))
+	 (nvm-sh (expand-file-name "nvm.sh" nvm-dir))
+	 (project-root (locate-dominating-file default-directory ".nvmrc"))
+	 (nvmrc-path (when project-root (expand-file-name ".nvmrc" project-root)))
+	 (nvmrc-version (when (and nvmrc-path (file-exists-p nvmrc-path))
+			 (string-trim
+			  (shell-command-to-string
+			   (concat "cat " (shell-quote-argument nvmrc-path))))))
+	 (node-bin (when (file-exists-p nvm-sh)
+		    (string-trim
+		     (shell-command-to-string
+		      (format "export NVM_DIR=\"%s\" && . \"%s\" && %s && echo $NVM_BIN"
+			     nvm-dir
+			     nvm-sh
+			     (if nvmrc-version
+				 (format "nvm use %s --silent" nvmrc-version)
+			       "nvm use --silent")))))))
+    (when (and node-bin (file-exists-p node-bin))
+      (setenv "PATH" (concat node-bin path-separator (getenv "PATH")))
+      (setq exec-path (cons node-bin exec-path))
+      (message "✅ Using Node.js from: %s" node-bin))))
+
+;; Run this function automatically when opening a JS/TS file
+(add-hook 'js-mode-hook #'rsr/setup-nvm)
+(add-hook 'typescript-mode-hook #'rsr/setup-nvm)
+(add-hook 'tsx-ts-mode-hook #'rsr/setup-nvm)
+(add-hook 'web-mode-hook #'rsr/setup-nvm)  ; If you use web-mode for JS/TS
+
+(defun rsr/nvm-use ()
+  "Manually trigger NVM setup for the current buffer."
+  (interactive)
+  (rsr/setup-nvm))
+
+;; (setenv "PATH" (concat (getenv "PATH") ":/Users/rrimal/.nvm/versions/node/v22.8.0/bin"))
+;; (setq exec-path (append exec-path '("/Users/rrimal/.nvm/versions/node/v22.8.0/bin")))
+
+(defun rsr/lsp-mode-setup ()
+  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+  (lsp-headerline-breadcrumbmode))
+
 (use-package lsp-mode
-  :ensure t
-  :init
-  (setq lsp-keymap-prefix "C-c l")
-  :bind (:map lsp-mode-map
-	      ("M-/" . lsp-find-references)
-	      ("M-." . lsp-find-definition))
-  :hook
-  ((python-mode . lsp-deferred)
-   (c-mode . lsp-deferred)
-   (c++-mode . lsp-deferred)
-   (typescript-mode . lsp-deferred))
   :commands (lsp lsp-deferred)
-  :config (setq lsp-disabled-clients '(deno-ls))
-	  (setq lsp-diagnostics-provider :flymake))
+  :hook (lsp-mode . rsr/lsp-mode-setup)
+  :init
+  (setq lsp-keymap-prefix "C-c l")  ;; Or 'C-l', 's-l'
+  :config
+  (lsp-enable-which-key-integration t))
 
-
-
-(use-package flycheck
-  :ensure t
-  :init (global-flycheck-mode t))
-
-(use-package lsp-pyright
-  :ensure t)
-
-(use-package nvm
-  :ensure t)
 
 (use-package lsp-ui
-  :ensure t
-  :after lsp-mode
-  :config
-  ;; Enable or disable lsp-ui features
-  (setq lsp-ui-doc-enable t)           ;; Show documentation on hover
-  (setq lsp-ui-doc-show-with-cursor t) ;; Only show documentation when the cursor is over the symbol
-  (setq lsp-ui-doc-position 'top)      ;; Position of the documentation window (top, bottom, or at point)
+  :hook (lsp-mode . lsp-ui-mode)
+  :custom
+  (lsp-ui-doc-position 'bottom))
 
-  ;; Customize peek window behavior
-  (setq lsp-ui-peek-enable t)          ;; Enable peek window (find definition, find references)
-  (setq lsp-ui-peek-show-directory t)  ;; Show directory info in the peek window
-  (setq lsp-ui-peek-list-width 60)     ;; Width of the peek window
+(use-package lsp-treemacs
+  :after lsp)
 
-
-  ;; Customize the flycheck diagnostics display
-  (setq lsp-ui-sideline-enable t)      ;; Enable the inline diagnostic display
-  (setq lsp-ui-sideline-show-diagnostics t) ;; Show diagnostics inline
-  (setq lsp-ui-sideline-show-hover t) ;; Show hover information in the sideline
-  (setq lsp-ui-sideline-show-symbol t) ;; Show symbol in the sideline
-
-  ;; Optional: Customize the size of the documentation pop-up
-  (setq lsp-ui-doc-max-width 80)       ;; Max width of the documentation pop-up
-  (setq lsp-ui-doc-max-height 15)      ;; Max height of the documentation pop-up
-
-  (global-set-key (kbd "M-?") 'lsp-ui-peek-find-definitions))  ;; Peek definition
-
-
-
-
-
-;; Completion
-(use-package company
-  :ensure t
-  :config
-  (setq company-minimum-prefix-length 1)
-  (setq company-idle-delay 0.0)
-  (global-company-mode t))
+(use-package lsp-ivy)
