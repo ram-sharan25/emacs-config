@@ -14,12 +14,12 @@
 (use-package smartrep
   :ensure t)
 
-(use-package multiple-cursors
+(use-Package multiple-cursors
   :ensure t
   :defer t
   :commands (mc/mark-previous-like-this mc/mark-next-like-this)
   :init
-  (smartrep-define-key bp/global-prefix-map
+  (smartrep-define-key rsr/global-prefix-map
       "m"
     '(("p" . mc/mark-previous-like-this)
       ("n" . mc/mark-next-like-this)
@@ -33,4 +33,17 @@
 
 ;; Enable org-indent-mode by default for all org files
 (add-hook 'org-mode-hook 'org-indent-mode)
-(setq toggle-truncate-lines t)
+(setq-default toggle-truncate-lines t)
+
+
+;; Enable hs-minor-mode globally
+(add-hook 'prog-mode-hook #'hs-minor-mode)
+(add-hook 'text-mode-hook #'hs-minor-mode)
+
+;; Keybinding to toggle hide/show of the current block in hs-minor-mode
+(global-set-key (kbd "C-c C-t") 'hs-toggle-hiding)
+;; Keybinding to toggle hide/show of the current block in hs-minor-mode
+(global-set-key (kbd "C-c C-h") 'hs-hide-block)
+(global-set-key (kbd "C-c C-s") 'hs-show-block)
+(global-set-key (kbd "C-c C-c") 'hs-hide-all)
+(global-set-key (kbd "C-c C-a") 'hs-show-all)
