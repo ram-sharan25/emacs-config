@@ -1,51 +1,63 @@
-;;;; auto completion package
+;; Company Mode Core Setup
 (use-package company
   :ensure t
   :demand t
   :custom
-  (company-auto-complete t)
-  (company-auto-complete-chars "")
-
-  (company-idle-delay 0.1)
+  (company-idle-delay 0.1)               ;; Faster response for experienced users
   (company-minimum-prefix-length 2)
-  (company-quickhelp-color-background "#4F4F4F")
-  (company-quickhelp-color-foreground "#DCDCCC")
+  (company-tooltip-limit 15)             ;; More suggestions for verbose languages
+  (company-show-quick-access t)          ;; Quick selection numbers
+  (company-require-match 'never)
+  (company-dabbrev-downcase nil)        ;; Case-sensitive completion
+  (company-global-modes '(not vterm-mode)) ;; Disable in specific modes
 
-  (company-require-match nil)
-  (company-tooltip-flip-when-above t)
-  (company-tooltip-limit 10)
-
-  ;; invert the navigation direction if the the completion popup-isearch-match
-  ;; is displayed on top (happens near the bottom of windows)
-  (company-tooltip-flip-when-above t)
-  :init
-  (setf company-frontends
-	'(company-echo-frontend company-pseudo-tooltip-frontend company-echo-metadata-frontend company-preview-if-just-one-frontend))
-
-  ;; Enable Company
-  (global-company-mode 1)
-  ;; bind Tab key to company completion with indent
-  ;;(define-key company-mode-map [remap indent-for-tab-command] #'company-indent-or-complete-common)
-
-  (bind-keys :map company-active-map
-	     ("M-n" . company-select-next)
-	     ("M-p" . company-select-previous)
-	     ("M-m d c" . company-show-doc-buffer)))
-
-(use-package company-quickhelp
-  :ensure t
-  :after company
-  :custom
-  (company-quickhelp-color-background "#4F4F4F")
-  (company-quickhelp-color-foreground "#DCDCCC")
-  (company-quickhelp-delay 0.2)
-  (company-quickhelp-mode t)
-  (company-quickhelp-use-propertized-text t)
   :config
-  (add-to-list 'company-frontends 'company-quickhelp-frontend))
+  (global-company-mode 1)
+
+  ;; Smart backends prioritization
+  (setq company-backends
+	'(company-files          ;; File path completion
+	  (company-capf          ;; Completion-at-point
+	   company-dabbrev-code  ;; Code-aware dabbrev
+	   company-keywords)     ;; Language keywords
+	   company-yasnippet)))  ;; Snippet expansion
 
 
+;; Language-Specific Support
 
-;;; for some unknown reason
-;;; company-quickhelp-delay >= company-ideal-delay + 0.1
-;;; otherwise completion in slime throws error "Reply to canceled synchoronous eval request"
+;; Python
+(use-package company-jedi
+  :ensure t
+  :hook (python-mode . (lambda () (add-to-list 'company-backends 'company-jedi))))
+
+;; C/C++
+(use-package company-rtags
+  :ensure t
+  :hook (c-mode-common . (lambda () (add-to-list 'company-backends 'company-rtags))))
+
+
+;; Enhanced UI & Features
+;; Ensure all-the-icons is available for company-box
+(use-package all-the-icons
+  :ensure t)
+
+;; Enhanced UI & Features for Company
+;; With use-package:
+(use-package company-box
+  :hook (company-mode . company-box-mode))
+
+;; Or:
+(require 'company-box)
+(add-hook 'company-mode-hook 'company-box-mode)
+(use-package company-statistics
+  :ensure t
+  :config (company-statistics-mode))
+
+
+;; Keybinding Optimizations
+
+(define-key company-active-map (kbd "TAB") #'company-complete-selection)
+(define-key company-active-map (kbd "<tab>") #'company-complete-selection)
+(define-key company-active-map (kbd "C-w") #'company-complete-common)
+(define-key company-active-map (kbd "C-j") #'company-select-next)
+(define-key company-active-map (kbd "C-k") #'company-select-previous)
