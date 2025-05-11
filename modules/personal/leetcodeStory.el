@@ -26,13 +26,13 @@
 		    title-input (format-time-string "%Y-%m-%d")))
 
     ;; Insert template
-    (insert (format "* [%s] - LeetCode [Problem Number]\n" title-input))
+    (insert (format "* [%s] \n" title-input))
     (insert "  - Link: [Problem Link Here]\n")
     (insert "  - Difficulty: [Easy/Medium/Hard]\n")
     (insert (format "  - Date: <%s>\n\n" (format-time-string "%Y-%m-%d")))
     (insert "** Approach & Code\n\n")
     (insert "*** Approach 1 \n\n")
-    (insert "   (Briefly describe your main idea or approach here)\n\n")
+    (insert "- (Briefly describe your main idea or approach here) \n\n")
     (insert "#+BEGIN_SRC python :results output :exports both\n")
     (insert "# Your Python code here\n")
     (insert "# print(\"Solution output...\")\n")
@@ -43,7 +43,7 @@
     (insert "*** Problem Complexity\n")
     (insert "   - Time Complexity: O(...)\n")
     (insert "   - Space Complexity: O(...)\n\n")
-    (insert "** Key Takeaway / Learning\n\n")
+    (insert "*** Key Takeaway / Learning\n\n")
 
     ;; Save to file immediately
     (write-file full-path)
@@ -76,3 +76,29 @@ If it's a new LeetCode note buffer, use custom save logic. Otherwise, normal sav
 (define-key global-map (kbd "C-c n") #'my-create-new-leetcode-note)
 ;; Note: C-c followed by a letter is often reserved for major modes.
 ;; Using Super key or a personal prefix map is safer for truly global bindings.
+
+
+
+(defun my-org-insert-src-block-with-extras ()
+  "Insert an Org mode source block, prompting for language,
+and including :results output, :exports both, and a #+RESULTS: block.
+Leaves point on the line inside the source block."
+  (interactive)
+  (let ((language (read-string "Source code language (e.g., python): " nil nil "python")))
+    (if (string-empty-p language)
+	(message "No language specified. Source block not inserted.")
+      (progn
+	;; Insert the #+BEGIN_SRC line with language and default headers
+	(insert (format "#+BEGIN_SRC %s :results output :exports both\n" language))
+	;; Save point for cursor positioning, then insert the rest
+	(let ((code-line-point (point)))
+	  (insert "\n") ; Empty line for code
+	  (insert "#+END_SRC\n\n")  ; #+END_SRC followed by two newlines
+	  (insert "#+RESULTS:\n")   ; The #+RESULTS: block
+	  (goto-char code-line-point) ; Move cursor to the empty line inside the SRC block
+	  )))))
+
+;; (Re)Define the keybinding specifically for Org mode
+;; This ensures C-c k is only active in Org buffers.
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c k") #'my-org-insert-src-block-with-extras))
