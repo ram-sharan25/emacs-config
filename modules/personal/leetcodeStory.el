@@ -26,12 +26,13 @@
 		    title-input (format-time-string "%Y-%m-%d")))
 
     ;; Insert template
-    (insert (format "* [%s] \n" title-input))
-    (insert "  - Link: [Problem Link Here]\n")
+    (insert "* Information \n" )
+    (insert (format "  - Name: [%s] \n" title-input))
+    (insert "  - Link: [Problem Link Here] \n")
     (insert "  - Difficulty: [Easy/Medium/Hard]\n")
     (insert (format "  - Date: <%s>\n\n" (format-time-string "%Y-%m-%d")))
-    (insert "** Approach & Code\n\n")
-    (insert "*** Approach 1 \n\n")
+    (insert "* Approach & Code\n\n")
+    (insert "** Approach 1 \n\n")
     (insert "- (Briefly describe your main idea or approach here) \n\n")
     (insert "#+BEGIN_SRC python :results output :exports both\n")
     (insert "# Your Python code here\n")
@@ -40,10 +41,10 @@
     (insert "# print(f\"Result: {result}\")\n")
     (insert "#+END_SRC\n\n")
     (insert "#+RESULTS:\n\n")
-    (insert "*** Problem Complexity\n")
+    (insert "** Problem Complexity\n")
     (insert "   - Time Complexity: O(...)\n")
     (insert "   - Space Complexity: O(...)\n\n")
-    (insert "*** Key Takeaway / Learning\n\n")
+    (insert "** Key Takeaway / Learning\n\n")
 
     ;; Save to file immediately
     (write-file full-path)
