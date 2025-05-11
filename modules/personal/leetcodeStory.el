@@ -1,3 +1,13 @@
+(defvar my-leetcode-notes-default-directory
+  "~/Stillness/Personal/Software/Projects/NeetCode/"
+  "Default directory to save LeetCode notes.")
+
+
+(defun my-sanitize-filename (filename)
+  "Sanitize FILENAME by replacing potentially invalid characters with underscores."
+  (replace-regexp-in-string "[\\/:*?\"<>| \[\]]" "_" filename))
+
+
 (defun my-create-new-leetcode-note ()
   "Prompt for a LeetCode problem title, create an Org note, and save it with that title."
   (interactive)
