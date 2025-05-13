@@ -31,6 +31,7 @@
     (insert "  - Link: [Problem Link Here] \n")
     (insert "  - Difficulty: [Easy/Medium/Hard]\n")
     (insert (format "  - Date: <%s>\n\n" (format-time-string "%Y-%m-%d")))
+    (insert "  - Problem Type:     \n")
     (insert "* Approach & Code\n\n")
     (insert "** Approach 1 \n\n")
     (insert "- (Briefly describe your main idea or approach here) \n\n")
@@ -41,10 +42,10 @@
     (insert "# print(f\"Result: {result}\")\n")
     (insert "#+END_SRC\n\n")
     (insert "#+RESULTS:\n\n")
-    (insert "** Problem Complexity\n")
+    (insert "*** Problem Complexity\n")
     (insert "   - Time Complexity: O(...)\n")
     (insert "   - Space Complexity: O(...)\n\n")
-    (insert "** Key Takeaway / Learning\n\n")
+    (insert "*** Key Takeaway / Learning\n\n")
 
     ;; Save to file immediately
     (write-file full-path)
