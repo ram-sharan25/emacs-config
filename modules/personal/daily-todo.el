@@ -10,10 +10,7 @@
 (setq journal-file (concat personal-dir "Journal.org"))
 (setq notes-file (concat personal-dir "RoughNotes.org"))
 (setq index-file (concat personal-dir "NotesIndex.org"))
-
-
-
-
+(setq todo-index-file (concat personal-dir "TodoIndex.org"))
 
 (defun ensure-date-tree ()
   "Create the year/month/day heading structure for today if it doesn't exist."
@@ -44,6 +41,9 @@
 (defun diary--now ()
   "Return the current timestamp string."
   (format-time-string "[%Y-%m-%d %a %H:%M]"))
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "IN-PROGRESS(p)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)")))
+
 
 ;;; === Capture Templates ===
 
@@ -90,38 +90,12 @@
 	      (with-current-buffer (find-file-noselect journal-file)
 		(ensure-date-tree))))
 
-;; ;; <<< NEW function to build the index
-;; (defun notes-rebuild-index ()
-;;   "Rebuild the notes index file by scanning all notes and ideas."
-;;   (interactive)
-;;   (let ((index-entries '()))
-;;     ;; Go through the notes file and collect headlines and IDs
-;;     (with-current-buffer (find-file-noselect notes-file)
-;;       (org-map-entries
-;;        (lambda ()
-;;	 (let ((id (org-entry-get (point) "ID"))
-;;	       (headline (org-get-heading t t)))
-;;	   (when id
-;;	     (push (list headline id) index-entries))))
-;;        "NOTE|IDEA" 'file)) ; Match entries with :NOTE: or :IDEA: tags
-
-;;     ;; Write the collected data to the index file, overwriting it
-;;     (with-temp-file index-file
-;;       (insert "#+TITLE: Notes and Ideas Index\n\n")
-;;       (dolist (item (reverse index-entries)) ; reverse to keep original order
-;;	(let ((headline (car item))
-;;	      (id (cadr item)))
-;;	  (insert (format "- [[id:%s][%s]]\n" id headline)))))
-;;     (message "Notes index rebuilt successfully with %d entries." (length index-entries))))
-
-;; <<< MODIFIED function to build the HIERARCHICAL index
-;; <<< CORRECTED function to build the HIERARCHICAL index
 (defun notes-rebuild-index ()
   "Rebuild the notes index file with a Year->Month->Week structure."
   (interactive)
   (let ((notes-by-date (make-hash-table :test 'equal)))
     ;; 1. Collect all notes and group them by Y/M/W in a hash table
-    (with-current-buffer (find-file-noselect notes-file)
+    (with-current-buffer (find-fbile-noselect notes-file)
       (org-map-entries
        (lambda ()
 	 (let* ((id (org-entry-get (point) "ID"))
@@ -140,7 +114,6 @@
 	       (setf (gethash year notes-by-date) year-ht)))))
        "NOTE|IDEA" 'file))
 
-    ;; 2. Write the collected data into the structured index file
     (with-temp-file index-file
       (insert "#+TITLE: Notes and Ideas Index\n\n")
       (dolist (year (cl-sort (hash-table-keys notes-by-date) #'string<))
@@ -164,6 +137,63 @@
   (interactive)
   (find-file index-file))
 
+;; <<< MODIFIED function to build a hierarchical index with status tags
+(defun todos-rebuild-index ()
+  "Rebuild the TODO index file, using tags to denote status."
+  (interactive)
+  (let ((todos-by-date (make-hash-table :test 'equal)))
+    ;; 1. Collect all tasks and their statuses, grouping by Y/M/W
+    (with-current-buffer (find-file-noselect diary-file)
+      (org-map-entries
+       (lambda ()
+	 (let* ((id (org-entry-get (point) "ID"))
+		(headline (org-get-heading t t))
+		(status (org-get-todo-state)) ; Get the task's status
+		(time-str (org-entry-get (point) "TIME"))
+		(time (and time-str (org-time-string-to-seconds time-str))))
+	   (when (and id time status)
+	     (let* ((year  (format-time-string "%Y" time))
+		    (month (format-time-string "%m" time))
+		    (week  (format-time-string "%V" time))
+		    (year-ht   (or (gethash year todos-by-date) (make-hash-table :test 'equal)))
+		    (month-ht  (or (gethash month year-ht) (make-hash-table :test 'equal)))
+		    ;; Store the task with its status in a single list
+		    (week-list (or (gethash week month-ht) '())))
+	       (setf (gethash week month-ht) (cons (list headline id status) week-list))
+	       (setf (gethash month year-ht) month-ht)
+	       (setf (gethash year todos-by-date) year-ht)))))
+       "TODO|IN-PROGRESS|WAITING|DONE|CANCELED" 'file))
+
+    ;; 2. Write the data into the index file, appending a tag for each status
+    (with-temp-file todo-index-file
+      (insert "#+TITLE: TODO Index by Status\n\n")
+      (dolist (year (cl-sort (hash-table-keys todos-by-date) #'string<))
+	(insert (format "* %s\n" year))
+	(let ((year-ht (gethash year todos-by-date)))
+	  (dolist (month (cl-sort (hash-table-keys year-ht) #'string<))
+	    (let* ((month-name (format-time-string "%B" (encode-time 0 0 0 1 (string-to-number month) (string-to-number year))))
+		   (month-ht (gethash month year-ht)))
+	      (insert (format "** %s-%s %s\n" year month month-name))
+	      (dolist (week (cl-sort (hash-table-keys month-ht) #'string<))
+		(insert (format "*** Week %s\n" week))
+		(let ((task-list (gethash week month-ht)))
+		  (dolist (item (reverse task-list))
+		    (let* ((headline (car item))
+			   (id (cadr item))
+			   (status (caddr item))
+			   ;; Determine the tag based on the status keyword
+			   (tag (cond ((string= status "DONE")     "DONE")
+				      ((string= status "CANCELED") "CANCELED")
+				      (t                          "PROGRESS"))))
+		      ;; Insert the list item with a neatly aligned tag
+		      (insert (format "- [[id:%s][%s]]\t:%s:\n" id headline tag)))))))))))
+  (message "Hierarchical TODO index with tags rebuilt successfully.")))
+
+(defun todos-open-index-file ()
+  "Open the TODO index file."
+  (interactive)
+  (find-file todo-index-file))
+
 
 
 
@@ -186,8 +216,11 @@
 (global-set-key (kbd "C-c o d") 'open-daily-file)
 
 
-(global-set-key (kbd "C-c o r") #'notes-rebuild-index) ; "Notes - Rebuild"
-(global-set-key (kbd "C-c o i") #'notes-open-index-file) ; "Notes - Open"
+(global-set-key (kbd "C-c b n") #'notes-rebuild-index) ; "Notes - Rebuild"
+(global-set-key (kbd "C-c o n") #'notes-open-index-file) ; "Notes - Open"
+
+(global-set-key (kbd "C-c b t") #'todos-rebuild-index) ; "TODOS - Rebuild"
+(global-set-key (kbd "C-c o t") #'todos-open-index-file) ; "TODOS - Open"
 
 
 

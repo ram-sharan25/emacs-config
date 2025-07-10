@@ -1,20 +1,29 @@
+(require 'org-id)
+
+
 (defvar my-leetcode-notes-default-directory
   "~/Stillness/Personal/Software/Projects/NeetCode/"
   "Default directory to save LeetCode notes.")
-
+(defvar-local my-is-leetcode-note-buffer nil
+  "Non-nil if the current buffer is a new LeetCode note buffer.")
 
 (defun my-sanitize-filename (filename)
   "Sanitize FILENAME by replacing potentially invalid characters with underscores."
   (replace-regexp-in-string "[\\/:*?\"<>| \[\]]" "_" filename))
 
+;; Define the path for your index file
+(defvar leetcode-index-file (expand-file-name "Index.org" my-leetcode-notes-default-directory)
+  "The full path to the LeetCode index file.")
 
 (defun my-create-new-leetcode-note ()
   "Prompt for a LeetCode problem title, create an Org note, and save it with that title."
+
   (interactive)
+  (setq-local my-is-leetcode-note-buffer t)
   (let* ((title-input (read-string "Enter LeetCode Problem Title: "))
 	 (sanitized-title (my-sanitize-filename title-input))
 	 (filename (format "%s.org" sanitized-title))
-	 (full-path (expand-file-name filename my-leetcode-notes-default-directory))
+	 (full-path (expand-file-name filename my-c-deleetcode-notes-default-directory))
 	 (buffer-name (format "*LeetCode: %s*" title-input)))
     (switch-to-buffer (generate-new-buffer buffer-name))
     (org-mode)
@@ -22,9 +31,10 @@
 
     ;; Insert metadata
     (insert (format "#+TITLE: %s\n" title-input))
-    (insert (format ":PROPERTIES:\n:Title: %s\n:Created: <%s>\n:END:\n\n"
-		    title-input (format-time-string "%Y-%m-%d")))
-
+    (insert (format ":PROPERTIES:\n:ID:       %s\n:Title:    %s\n:Created:  <%    s>\n:END:\n\n"
+		(org-id-new) ; Call the function to generate an ID
+		title-input
+		(format-time-string "%Y-%m-%d")))
     ;; Insert template
     (insert "* Information \n" )
     (insert (format "  - Name: [%s] \n" title-input))
@@ -104,3 +114,35 @@ Leaves point on the line inside the source block."
 ;; This ensures C-c k is only active in Org buffers.
 (with-eval-after-load 'org
   (define-key org-mode-map (kbd "C-c k") #'my-org-insert-src-block-with-extras))
+
+(defun leetcode-rebuild-index ()
+  "Create an Org index of all files in `my-leetcode-notes-default-directory`."
+  (interactive)
+  (let* ((directory my-leetcode-notes-default-directory)
+	 (index-file (expand-file-name "Index.org" directory))
+	 ;; Match all files except the index itself
+	 (files (seq-filter
+		 (lambda (f)
+		   (and (file-regular-p f)
+			(not (string-equal (file-truename f) (file-truename index-file)))))
+		 (directory-files directory t "\\.\\(org\\|py\\)$"))))
+    (with-temp-file index-file
+      (insert "#+TITLE: File Index\n\n* Indexed Files\n")
+      (dolist (file (sort files #'string<))
+	(let ((rel-path (file-relative-name file directory))
+	      (display-name (file-name-nondirectory file)))
+	  (insert (format "- [[file:%s][%s]]\n" rel-path display-name)))))
+    (message "✅ Index created at: %s" index-file)))
+
+
+(defun leetcode-open-index ()
+  "Open the LeetCode index file."
+  (interactive)
+  (find-file my-leetcode-index-file))
+
+;; Define a keybinding to open the index
+(define-key global-map (kbd "C-c o l") #'leetcode-open-index)
+
+
+;; Define a keybinding to run the indexer
+(define-key global-map (kbd "C-c b l") #'leetcode-rebuild-index)
