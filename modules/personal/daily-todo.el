@@ -55,7 +55,7 @@
 
 	("m" "Meeting Entry" entry
 	 (file ,diary-file)
-	 "* MEETING with %^{Person} :MEETING:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:NAME: %\\1\n:TIME: %(diary--now)\n:END:\n- Agenda: %^{Agenda}\n- Discussions:\n  - %?"
+	 "*  %^{Person} :MEETING:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:NAME: %\\1\n:TIME: %(diary--now)\n:END:\n- Agenda: %^{Agenda}\n- Discussions:\n  - %?"
 	 :empty-lines 1)
 
 	("i" "Idea Entry" entry
@@ -65,7 +65,7 @@
 
 	("u" "Scratch Note " entry
 	 (file ,notes-file)
-	 "* Rough Note  %^{Title} :NOTE:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:TOPIC: %\\1\n:TIME: %(diary--now)\n:END:\n- Description: %?"
+	 "* %^{Title} :NOTE:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:TOPIC: %\\1\n:TIME: %(diary--now)\n:END:\n- Description: %?"
 	 :empty-lines 1)
 
 	("j" "Journal " plain ; Use 'plain' type to insert text directly
@@ -95,7 +95,7 @@
   (interactive)
   (let ((notes-by-date (make-hash-table :test 'equal)))
     ;; 1. Collect all notes and group them by Y/M/W in a hash table
-    (with-current-buffer (find-fbile-noselect notes-file)
+    (with-current-buffer (find-file-noselect notes-file)
       (org-map-entries
        (lambda ()
 	 (let* ((id (org-entry-get (point) "ID"))
@@ -195,10 +195,13 @@
   (find-file todo-index-file))
 
 
+(defun open-diary-file ()
+  "Open daily file and jump to today's entry."
+  (interactive)
+  (find-file diary-file))
 
 
-
-(defun open-daily-file ()
+(defun open-journal-file ()
   "Open daily file and jump to today's entry."
   (interactive)
   (find-file journal-file)
@@ -212,8 +215,9 @@
 (global-set-key (kbd "C-c m") (lambda () (interactive) (org-capture nil "m")))  ;; New Meeting
 (global-set-key (kbd "C-c i") (lambda () (interactive) (org-capture nil "i")))  ;; New Idea
 (global-set-key (kbd "C-c j") (lambda () (interactive) (org-capture nil "j")))
-(global-set-key (kbd "C-c u") (lambda () (interactive) (org-capture nil "u")))
-(global-set-key (kbd "C-c o d") 'open-daily-file)
+(global-set-key (kbd "C-c n") (lambda () (interactive) (org-capture nil "u")))
+(global-set-key (kbd "C-c o j") 'open-journal-file)
+(global-set-key (kbd "C-c o d") 'open-diary-file)
 
 
 (global-set-key (kbd "C-c b n") #'notes-rebuild-index) ; "Notes - Rebuild"
