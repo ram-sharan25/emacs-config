@@ -14,7 +14,7 @@
 (use-package smartrep
   :ensure t)
 
-(use-Package multiple-cursors
+(use-package multiple-cursors
   :ensure t
   :defer t
   :commands (mc/mark-previous-like-this mc/mark-next-like-this)
@@ -35,10 +35,11 @@
 (add-hook 'org-mode-hook 'org-indent-mode)
 (setq-default toggle-truncate-lines t)
 
+(add-hook 'prog-mode-hook #'hs-minor-mode)
 
 ;; Enable hs-minor-mode globally
-(add-hook 'prog-mode-hook #'hs-minor-mode)
-(add-hook 'text-mode-hook #'hs-minor-mode)
+;; (add-hook 'prog-mode-hook #'hs-minor-mode)
+;; (add-hook 'text-mode-hook #'hs-minor-mode)
 
 ;; Keybinding to toggle hide/show of the current block in hs-minor-mode
 (global-set-key (kbd "C-c C-t") 'hs-toggle-hiding)
