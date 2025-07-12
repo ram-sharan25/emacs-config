@@ -32,14 +32,27 @@
   :bind (:map org-mode-map
 	      (("M-v" . org-download-clipboard)))
   :custom
-  (org-download-image-dir "./data/")
-  (org-download-heading-lvl nil)
+  (org-download-heading-lvl nil) ; Don't organize by heading
+  (org-download-image-dir "./data/") ; Default, overridden by our function
   (org-download-image-org-width 100)
   (org-download-image-html-width 800)
   (org-download-image-latex-width 600)
   :config
+  ;; Ensure ./data/ exists relative to the current buffer file
   (defun org-download--dir-2 ()
-    (if org-download-heading-lvl
-	(org-download-get-heading
-	 org-download-heading-lvl)
-      (file-name-base (buffer-file-name)))))
+    "Return ./data directory relative to buffer file. Create if needed."
+    (let* ((base-dir (file-name-directory (or (buffer-file-name) default-directory)))
+	   (data-dir (expand-file-name "data" base-dir)))
+      (unless (file-directory-p data-dir)
+	(make-directory data-dir t))
+      data-dir))
+
+  ;; Prompt user for image filename and save it to ./data
+  (defun org-download--fullname (filename link)
+    "Prompt for a custom filename and save it in ./data/."
+    (let* ((ext (file-name-extension filename))
+	   (base-name (read-string "Image name (without extension): "))
+	   (final-name (concat base-name "." ext))
+	   (dir (org-download--dir-2)))
+      (expand-file-name final-name dir))))
+(setq org-startup-with-inline-images t)
