@@ -23,7 +23,7 @@
   (let* ((title-input (read-string "Enter LeetCode Problem Title: "))
 	 (sanitized-title (my-sanitize-filename title-input))
 	 (filename (format "%s.org" sanitized-title))
-	 (full-path (expand-file-name filename my-c-deleetcode-notes-default-directory))
+	 (full-path (expand-file-name filename my-leetcode-notes-default-directory))
 	 (buffer-name (format "*LeetCode: %s*" title-input)))
     (switch-to-buffer (generate-new-buffer buffer-name))
     (org-mode)
@@ -85,7 +85,7 @@ If it's a new LeetCode note buffer, use custom save logic. Otherwise, normal sav
 ;; For example, if you have a personal prefix map like "C-c p", you could use "C-c p n".
 ;;(global-set-key (kbd "s-n") #'my-create-new-leetcode-note) ; "s" stands for Super/Cmd/Windows key
 ;; Alternatively, for a "C-c" based binding (less "global" but common for user commands):
-(define-key global-map (kbd "C-c n") #'my-create-new-leetcode-note)
+(define-key global-map (kbd "C-c l") #'my-create-new-leetcode-note)
 ;; Note: C-c followed by a letter is often reserved for major modes.
 ;; Using Super key or a personal prefix map is safer for truly global bindings.
 
