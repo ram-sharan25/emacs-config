@@ -42,6 +42,8 @@
     (insert "  - Difficulty: [Easy/Medium/Hard]\n")
     (insert (format "  - Date: <%s>\n" (format-time-string "%Y-%m-%d")))
     (insert "  - Problem Type:     \n\n")
+    (insert "* Problem Decription\n")
+    (insert "- (Briefly describe your problem here ) \n\n")  (insert "- \n\n")
     (insert "* Approach & Code\n\n")
     (insert "** Approach 1 \n\n")
     (insert "- (Briefly describe your main idea or approach here) \n\n")
