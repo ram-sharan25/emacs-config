@@ -37,6 +37,15 @@
 
 (add-hook 'prog-mode-hook #'hs-minor-mode)
 
+(defun my-insert-todo-item ()
+  "Insert a new to-do item ('- [ ] ') on the next line."
+  (interactive)
+  (end-of-line)
+  (insert "\n- [ ] "))
+
+(global-set-key (kbd "C-c 0") 'my-insert-todo-item)
+(global-set-key (kbd "C-c C-0") 'my-insert-todo-item)
+
 ;; Enable hs-minor-mode globally
 ;; (add-hook 'prog-mode-hook #'hs-minor-mode)
 ;; (add-hook 'text-mode-hook #'hs-minor-mode)
