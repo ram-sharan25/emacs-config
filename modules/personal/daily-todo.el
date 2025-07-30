@@ -60,12 +60,12 @@
 
 	("i" "Idea Entry" entry
 	 (file ,notes-file)
-	 "* %^{Title} :IDEA:\n:PROPERTIES: \n:ID:    %(org-id-new)\n:NAME: %\\1\n:TIME: %(diary--now)\n:END:\n- Description: %?"
+	 "* %^{Title} :IDEA:\n:PROPERTIES: \n:ID:    %(org-id-new)\n:NAME: %\\1\n:TAGS:  \n:TIME: %(diary--now)\n:END:\n- Description: %?"
 	 :empty-lines 1)
 
 	("u" "Scratch Note " entry
 	 (file ,notes-file)
-	 "* %^{Title} :NOTE:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:TOPIC: %\\1\n:TIME: %(diary--now)\n:END:\n- Description: %?"
+	 "* %^{Title} :NOTE:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:TOPIC: %\\1\n:TAGS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
 	 :empty-lines 1)
 
 	("j" "Journal " plain ; Use 'plain' type to insert text directly
@@ -184,7 +184,9 @@
 			   ;; Determine the tag based on the status keyword
 			   (tag (cond ((string= status "DONE")     "DONE")
 				      ((string= status "CANCELED") "CANCELED")
-				      (t                          "PROGRESS"))))
+				      ((string= status "WAITING") "WAITING")
+				       ((string= status "TODO") "TODO")
+				      (t                          "IN-PROGRESS"))))
 		      ;; Insert the list item with a neatly aligned tag
 		      (insert (format "- [[id:%s][%s]]\t:%s:\n" id headline tag)))))))))))
   (message "Hierarchical TODO index with tags rebuilt successfully.")))
