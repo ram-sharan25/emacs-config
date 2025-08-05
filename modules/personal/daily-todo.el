@@ -50,22 +50,22 @@
 (setq org-capture-templates
       `(("t" "TODO Entry" entry
 	 (file ,diary-file)
-	 "* TODO %^{Title} :TODO:\n :PROPERTIES:\n :ID:    %(org-id-new)\n:NAME: %\\1\n:TIME: %(diary--now)\n:END:\n- Description: %?\n- DONE:"
+	 "* TODO %^{Title} :TODO:\n :PROPERTIES:\n :ID:    %(org-id-new)\n :NAME:  %\\1\n t:KEYWORDS: \n:TIME: %(diary--now)\n :END:\n\n- Description: \n  - %?\n\n- TODO:[/]\n  - [ ] \n \n- DONE: \n  - "
 	 :empty-lines 1)
 
 	("m" "Meeting Entry" entry
 	 (file ,diary-file)
-	 "*  %^{Person} :MEETING:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:NAME: %\\1\n:TIME: %(diary--now)\n:END:\n- Agenda: %^{Agenda}\n- Discussions:\n  - %?"
+	 "*  %^{Person} :MEETING:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:NAME: %\\1\n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Agenda: %^{Agenda}\n- Discussions:\n  - %?"
 	 :empty-lines 1)
 
 	("i" "Idea Entry" entry
 	 (file ,notes-file)
-	 "* %^{Title} :IDEA:\n:PROPERTIES: \n:ID:    %(org-id-new)\n:NAME: %\\1\n:TAGS:  \n:TIME: %(diary--now)\n:END:\n- Description: %?"
+	 "* %^{Title} :IDEA:\n:PROPERTIES: \n:ID:    %(org-id-new)\n:NAME: %\\1\n:TAGS:  \n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
 	 :empty-lines 1)
 
 	("u" "Scratch Note " entry
 	 (file ,notes-file)
-	 "* %^{Title} :NOTE:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:TOPIC: %\\1\n:TAGS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
+	 "* %^{Title} :NOTE:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:TOPIC: %\\1\n:TAGS: \n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
 	 :empty-lines 1)
 
 	("j" "Journal " plain ; Use 'plain' type to insert text directly
