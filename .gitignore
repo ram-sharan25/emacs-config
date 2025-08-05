@@ -20,3 +20,8 @@ smex-items
 theme/
 transient/
 url/
+diary
+eshell/
+projectile.cache
+init.elc
+company-statistics*
