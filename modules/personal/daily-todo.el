@@ -50,7 +50,7 @@
 (setq org-capture-templates
       `(("t" "TODO Entry" entry
 	 (file ,diary-file)
-	 "* TODO %^{Title} :TODO:\n :PROPERTIES:\n :ID:    %(org-id-new)\n :NAME:  %\\1\n t:KEYWORDS: \n:TIME: %(diary--now)\n :END:\n\n- Description: \n  - %?\n\n- TODO:[/]\n  - [ ] \n \n- DONE: \n  - "
+	 "* TODO %^{Title} :TODO:\n :PROPERTIES:\n :ID:    %(org-id-new)\n :NAME:  %\\1\n :KEYWORDS: \n :TIME: %(diary--now)\n :END:\n\n- Description: \n  - %?\n\n- TODO:[/]\n  - [ ] \n \n- DONE: \n  - "
 	 :empty-lines 1)
 
 	("m" "Meeting Entry" entry
