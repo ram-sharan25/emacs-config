@@ -7,6 +7,7 @@
 (setq personal-dir "~/Stillness/Personal/Writings/")
  ;;"Base directory for personal writings."
 (setq diary-file (concat personal-dir "Diary.org"))
+(setq log-file (concat personal-dir "LogBook.org"))
 (setq journal-file (concat personal-dir "Journal.org"))
 (setq notes-file (concat personal-dir "RoughNotes.org"))
 (setq index-file (concat personal-dir "NotesIndex.org"))
@@ -67,6 +68,9 @@
 	 (file ,notes-file)
 	 "* %^{Title} :NOTE:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:TOPIC: %\\1\n:TAGS: \n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
 	 :empty-lines 1)
+
+	("h" "Log Time" entry (file+datetree,log-file )
+				 "* %? \n" :clock-in t :clock-keep t :clock-resume t)
 
 	("j" "Journal " plain ; Use 'plain' type to insert text directly
 	 (file+function ,journal-file
@@ -196,6 +200,11 @@
   (interactive)
   (find-file todo-index-file))
 
+(defun logbook-open-file ()
+  "Open the logbook  file."
+  (interactive)
+  (find-file log-file))
+
 
 (defun open-diary-file ()
   "Open daily file and jump to today's entry."
@@ -216,17 +225,22 @@
 (global-set-key (kbd "C-c t") (lambda () (interactive) (org-capture nil "t")))  ;; New TODO
 (global-set-key (kbd "C-c m") (lambda () (interactive) (org-capture nil "m")))  ;; New Meeting
 (global-set-key (kbd "C-c i") (lambda () (interactive) (org-capture nil "i")))  ;; New Idea
-(global-set-key (kbd "C-c j") (lambda () (interactive) (org-capture nil "j")))
-(global-set-key (kbd "C-c n") (lambda () (interactive) (org-capture nil "u")))
+(global-set-key (kbd "C-c j") (lambda () (interactive) (org-capture nil "j")))  ;; New Journal
+(global-set-key (kbd "C-c h") (lambda () (interactive) (org-capture nil "h")))  ;; New Log Entry
+(global-set-key (kbd "C-c n") (lambda () (interactive) (org-capture nil "u")))  ;; New Note
+
 (global-set-key (kbd "C-c o j") 'open-journal-file)
 (global-set-key (kbd "C-c o d") 'open-diary-file)
-
+(global-set-key (kbd "C-c o h") 'logbook-open-file)
 
 (global-set-key (kbd "C-c b n") #'notes-rebuild-index) ; "Notes - Rebuild"
 (global-set-key (kbd "C-c o n") #'notes-open-index-file) ; "Notes - Open"
 
 (global-set-key (kbd "C-c b t") #'todos-rebuild-index) ; "TODOS - Rebuild"
 (global-set-key (kbd "C-c o t") #'todos-open-index-file) ; "TODOS - Open"
+
+(global-set-key (kbd "C-x i") #'org-clock-in) ; "clock in "
+(global-set-key (kbd "C-x o") #'org-clock-out) ; "clock out"
 
 
 
