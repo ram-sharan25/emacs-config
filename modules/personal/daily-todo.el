@@ -43,7 +43,7 @@
   "Return the current timestamp string."
   (format-time-string "[%Y-%m-%d %a %H:%M]"))
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "IN-PROGRESS(p)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)")))
+      '((sequence "TODO(t)" "IN-PROGRESS(p)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)" "STARTED(s)" "REVIEW(r)" "MAYBE(m)" "DEFERRED(f)")))
 
 
 ;;; === Capture Templates ===
@@ -142,6 +142,7 @@
   (find-file index-file))
 
 ;; <<< MODIFIED function to build a hierarchical index with status tags
+
 (defun todos-rebuild-index ()
   "Rebuild the TODO index file, using tags to denote status."
   (interactive)
@@ -166,9 +167,9 @@
 	       (setf (gethash week month-ht) (cons (list headline id status) week-list))
 	       (setf (gethash month year-ht) month-ht)
 	       (setf (gethash year todos-by-date) year-ht)))))
-       "TODO|IN-PROGRESS|WAITING|DONE|CANCELED" 'file))
+       "TODO|IN-PROGRESS|WAITING|DONE|CANCELED|STARTED|REVIEW|MAYBE|DEFERRED" 'file))
 
-    ;; 2. Write the data into the index file, appending a tag for each status
+    ;; 2. Write the index file
     (with-temp-file todo-index-file
       (insert "#+TITLE: TODO Index by Status\n\n")
       (dolist (year (cl-sort (hash-table-keys todos-by-date) #'string<))
@@ -185,15 +186,31 @@
 		    (let* ((headline (car item))
 			   (id (cadr item))
 			   (status (caddr item))
-			   ;; Determine the tag based on the status keyword
-			   (tag (cond ((string= status "DONE")     "DONE")
-				      ((string= status "CANCELED") "CANCELED")
-				      ((string= status "WAITING") "WAITING")
-				       ((string= status "TODO") "TODO")
-				      (t                          "IN-PROGRESS"))))
-		      ;; Insert the list item with a neatly aligned tag
-		      (insert (format "- [[id:%s][%s]]\t:%s:\n" id headline tag)))))))))))
-  (message "Hierarchical TODO index with tags rebuilt successfully.")))
+			   ;; Determine the color and text based on the status
+			   (status-info (cond ((string= status "DONE")        (cons "DONE" "forest green"))
+					      ((string= status "CANCELED")    (cons "CANCELED" "royal blue"))
+					      ((string= status "WAITING")     (cons "WAITING" "dark orange"))
+					      ((string= status "TODO")        (cons "TODO" "grey40"))
+					      ((string= status "STARTED")        (cons "STARTED" "grey40"))
+					      ((string= status "REVIEW")        (cons "REVIEW" "grey40"))
+					      ((string= status "MAYBE")        (cons "MAYBE" "grey40"))
+					      ((string= status "DEFERRED")        (cons "DEFERRED" "grey40"))
+					      (t                              (cons "IN-PROGRESS" "firebrick"))))
+			   (tag-text (car status-info))
+			   (color (cdr status-info))
+			   ;; Create visible status bullets
+			   (status-bullet (cond ((string= status "DONE") "✅ DONE")
+						((string= status "CANCELED") "❌ CANCELED")
+						((string= status "WAITING") "⏳ WAITING")
+						((string= status "TODO") "🔥 TODO")
+						((string= status "STARTED") "🐢 STARTED")
+						((string= status "REVIEW") "🔎 REVIEW")
+						((string= status "MAYBE") "🤔 MAYBE")
+						((string= status "DEFERRED") "⏸️ DELAYED")
+						(t "🔄 IN-PROGRESS"))))
+		      ;; Insert the formatted line using status as bullet
+		      (insert (format "%s [[id:%s][%s]]\n" status-bullet id headline)))))))))
+      (message "Hierarchical TODO index with colored tags rebuilt successfully.")))))
 
 (defun todos-open-index-file ()
   "Open the TODO index file."
@@ -240,10 +257,9 @@
 (global-set-key (kbd "C-c o t") #'todos-open-index-file) ; "TODOS - Open"
 
 (global-set-key (kbd "C-x i") #'org-clock-in) ; "clock in "
-(global-set-key (kbd "C-x o") #'org-clock-out) ; "clock out"
+(global-set-key (kbd "C-x j") #'org-clock-out) ; "clock out"
 
 
 
 
 (provide 'flat-diary-config)
-;;; flat-diary-config.el ends here
