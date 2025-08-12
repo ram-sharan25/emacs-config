@@ -43,7 +43,7 @@
   "Return the current timestamp string."
   (format-time-string "[%Y-%m-%d %a %H:%M]"))
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "IN-PROGRESS(p)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)" "STARTED(s)" "REVIEW(r)" "MAYBE(m)" "DEFERRED(f)")))
+      '((sequence "TODO(t)" "IN-PROGRESS(p)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)" "STARTED(s)" "REVIEW(r)" "MAYBE(m)" "DEFERRED(f)" "TODAY(n)")))
 
 
 ;;; === Capture Templates ===
@@ -195,7 +195,8 @@
 					      ((string= status "REVIEW")        (cons "REVIEW" "grey40"))
 					      ((string= status "MAYBE")        (cons "MAYBE" "grey40"))
 					      ((string= status "DEFERRED")        (cons "DEFERRED" "grey40"))
-					      (t                              (cons "IN-PROGRESS" "firebrick"))))
+					      ((string= status "TODAY")        (cons "TODAY" "grey40"))
+					      (t(cons "IN-PROGRESS" "firebrick"))))
 			   (tag-text (car status-info))
 			   (color (cdr status-info))
 			   ;; Create visible status bullets
@@ -207,6 +208,7 @@
 						((string= status "REVIEW") "🔎 REVIEW")
 						((string= status "MAYBE") "🤔 MAYBE")
 						((string= status "DEFERRED") "⏸️ DELAYED")
+						((string= status "TODAY")   "📌 TODAY")
 						(t "🔄 IN-PROGRESS"))))
 		      ;; Insert the formatted line using status as bullet
 		      (insert (format "%s [[id:%s][%s]]\n" status-bullet id headline)))))))))
@@ -259,6 +261,7 @@
 (global-set-key (kbd "C-x i") #'org-clock-in) ; "clock in "
 (global-set-key (kbd "C-x j") #'org-clock-out) ; "clock out"
 
+(global-set-key (kbd "C-c o a") 'org-tree-to-indirect-buffer);;open a heading in a new buffer
 
 
 
