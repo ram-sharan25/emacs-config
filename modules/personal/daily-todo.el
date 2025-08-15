@@ -261,7 +261,7 @@
 (global-set-key (kbd "C-x i") #'org-clock-in) ; "clock in "
 (global-set-key (kbd "C-x j") #'org-clock-out) ; "clock out"
 
-(global-set-key (kbd "C-c o a") 'org-tree-to-indirect-buffer);;open a heading in a new buffer
+(global-set-key (kbd "C-c o b") 'org-tree-to-indirect-buffer);;open a heading in a new buffer
 
 
 

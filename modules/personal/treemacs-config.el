@@ -20,7 +20,7 @@
 	  treemacs-find-workspace-method           'find-for-file-or-pick-first
 	  treemacs-git-command-pipe                ""
 	  treemacs-goto-tag-strategy               'refetch-index
-	  treemacs-header-scroll-indicators        '(nil . "^^^^^^")
+	  treemacs-header-scroll-ifndicators        '(nil . "^^^^^^")
 	  treemacs-hide-dot-git-directory          t
 	  treemacs-indentation                     2
 	  treemacs-indentation-string              " "
@@ -59,7 +59,8 @@
 	  treemacs-width                           35
 	  treemacs-width-increment                 1
 	  treemacs-width-is-initially-locked       t
-	  treemacs-workspace-switch-cleanup        nil)
+	  treemacs-workspace-switch-cleanup        nil
+	  treemacs-project-follow-mode             t)
 
     ;; The default width and height of the icons is 22 pixels. If you are
     ;; using a Hi-DPI display, uncomment this to double the icon size.
@@ -91,9 +92,6 @@
 
 
 
-(use-package treemacs-projectile
-  :after (treemacs projectile)
-  :ensure t)
 
 (use-package treemacs-icons-dired
   :hook (dired-mode . treemacs-icons-dired-enable-once)
@@ -107,3 +105,13 @@
   :after (treemacs perspective)
   :ensure t
   :config (treemacs-set-scope-type 'Perspectives))
+
+(use-package treemacs-projectile
+  :after (treemacs projectile)
+  :ensure t)
+
+
+(use-package treemacs-tab-bar ;;treemacs-tab-bar if you use tab-bar-mode
+  :after (treemacs)
+  :ensure t
+  :config (treemacs-set-scope-type 'Tabs))

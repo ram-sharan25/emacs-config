@@ -15,6 +15,14 @@
 	       ("M-m r t" . org-roam-tag-add)))
   :config
   (setq org-roam-directory "/Users/rrimal/Stillness/Notes")
+  (setq org-roam-db-sources
+	'(;; First source: Your main notes directory
+	  (directory . ("~/Stillness/Personal/Writings/"
+			:file-extensions ("org")
+			:recursive t))))
+
+
+  (org-roam-db-autosync-mode)
 
   (org-roam-db-autosync-mode t)
 
@@ -30,7 +38,7 @@
 (use-package org-download
   :ensure t
   :bind (:map org-mode-map
-	      (("M-v" . org-download-clipboard)))
+	      (("s-r" . org-download-clipboard)))
   :custom
   (org-download-heading-lvl nil) ; Don't organize by heading
   (org-download-image-dir "./data/") ; Default, overridden by our function

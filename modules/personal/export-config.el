@@ -14,6 +14,7 @@
   (let ((bp/org-publishing-file t))
     (apply f args)))
 
+
 (advice-add 'org-publish-file :around #'org-publish-file--publishing-flag-around)
 
 (defun bp/org-html--format-image-relative (original-function source attribute info)

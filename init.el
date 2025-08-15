@@ -41,6 +41,7 @@
 (global-font-lock-mode 1)
 (set-face-attribute 'default nil :height 160)
 
+
 ;; Load custom modules AFTER setting up `use-package`
 (load-directory (expand-file-name "modules/personal" user-emacs-directory))
 
@@ -53,3 +54,19 @@
  '((python . t)
    (shell . t)))
 (setq org-confirm-babel-evaluate nil)
+(setq python-shell-completion-native-enable nil)
+
+
+;; Set maximum line length for wrapping
+(setq-default fill-column 80)
+
+;; Enable auto-fill-mode in all buffers
+(add-hook 'after-change-major-mode-hook #'turn-on-auto-fill)
+
+;; Ensure M-q (fill-paragraph) is always available
+(global-set-key (kbd "M-q") #'fill-paragraph)
+
+;; run jedi in virtual environment
+ (setq jedi:server-command
+      '("/Users/rrimal/.emacs.d/.venv-jedi/bin/python"
+	"/Users/rrimal/.emacs.d/elpa/jedi-core-*/jediepcserver.py"))
