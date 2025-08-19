@@ -26,3 +26,17 @@
 
 (bind-keys :map rsr/global-prefix-map
 	   ("e o" . rsr/capture-screenshot))
+
+
+(use-package which-key
+  :ensure t
+  :config
+  (which-key-mode +1))
+
+(require 'golden-ratio)
+(golden-ratio-mode 1)
+
+
+(global-visual-line-mode t)
+
+(show-paren-mode 1)
