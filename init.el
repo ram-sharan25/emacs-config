@@ -70,3 +70,16 @@
  (setq jedi:server-command
       '("/Users/rrimal/.emacs.d/.venv-jedi/bin/python"
 	"/Users/rrimal/.emacs.d/elpa/jedi-core-*/jediepcserver.py"))
+
+
+(use-package exec-path-from-shell
+  :config
+  ;; This ensures your Emacs instance has the same PATH as your shell.
+  (when (memq window-system '(mac ns x))
+    ;; The following two lines are the fix for the slow startup.
+    ;; 1. Define which environment variables to copy from the shell.
+    (setq exec-path-from-shell-variables '("PATH" "MANPATH"))
+
+    ;; 2. Enable caching. Emacs will only re-run the shell command
+    ;;    if your shell config files (like .zshrc) have changed.
+    (exec-path-from-shell-initialize)))
