@@ -28,8 +28,8 @@
   ;; DOCUMENTATION SETTINGS
   (setq lsp-ui-doc-show-with-mouse nil)
   (setq lsp-ui-sideline-show-hover nil)
-  (setq lsp-ui-doc-position 'top)
-  (setq lsp-ui-doc-frame-size '(0.3 . 0.3))
+  (setq lsp-ui-doc-position 'bottom)
+  (setq lsp-ui-doc-frame-size '(0.3 . 1))
 
   ;; OTHER UI FEATURES
   (setq lsp-ui-peek-enable t
