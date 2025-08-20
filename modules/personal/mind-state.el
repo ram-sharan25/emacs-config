@@ -66,6 +66,7 @@ First element is start hour, second is end hour.")
   (< (or (current-idle-time) 0) mind-state-idle-threshold))
 
 (defun mind-state--should-prompt-p ()
+  (interactive)
   "Return t if we should show a mind-state prompt now."
   (and (mind-state--within-active-hours-p)
        (mind-state--user-is-active-p)
@@ -84,6 +85,7 @@ First element is start hour, second is end hour.")
 
 ;; === Core Prompt Function ===
 (defun mind-state--prompt-user ()
+  (interactive)
   "Prompt user for current mind-state and log it."
   (when (mind-state--should-prompt-p)
     (let* ((state-with-completion
