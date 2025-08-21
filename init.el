@@ -23,7 +23,7 @@
 (add-to-list 'load-path (expand-file-name "modules/personal" user-emacs-directory))
 
 (define-prefix-command 'rsr/global-prefix-map)
-(define-key global-map (kbd "M-m") 'rsr/global-prefix-map)
+(define-key global-map (kbd "M-m") 'rsr/global-prefix-map) ;
 
 ;; Function to load all .el files from a directory
 (defun load-directory (directory)
