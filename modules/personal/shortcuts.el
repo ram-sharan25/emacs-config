@@ -25,8 +25,9 @@ Uses `current-date-time-format' for the formatting the date/time."
 
 (global-set-key "\C-c\C-y" 'insert-current-date-time)
 
-
-
+(use-package darkroom
+  :ensure t)
+(global-set-key (kbd "C-M-z") #'darkroom-tentative-mode)
 
 ;; 1. Cmd-l to select the whole line and copy to clipboard
 (defun rsr/select-whole-line ()
