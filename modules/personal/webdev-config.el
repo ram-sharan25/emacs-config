@@ -21,13 +21,13 @@
 (with-eval-after-load 'lsp-mode
   (add-to-list 'lsp-language-id-configuration '(rjsx-mode . "javascriptreact"))
   (setq lsp-typescript-suggest-auto-imports t
-	lsp-typescript-format-enable t
-	lsp-typescript-preferences-quote-style "single"))
+  lsp-typescript-format-enable t
+  lsp-typescript-preferences-quote-style "single"))
 
 ;; Development tools
 (use-package add-node-modules-path
   :hook ((rjsx-mode . add-node-modules-path)
-	 (typescript-mode . add-node-modules-path)))
+   (typescript-mode . add-node-modules-path)))
 
 (use-package prettier-js)
 (defun my-add-prettier-keybinding ()
@@ -38,9 +38,28 @@
 
 (use-package emmet-mode
   :hook ((rjsx-mode . emmet-mode)
-	 (typescript-mode . emmet-mode)
-	 (css-mode . emmet-mode))
+   (typescript-mode . emmet-mode)
+   (css-mode . emmet-mode))
   :config (setq emmet-expand-jsx-className? t))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; YAML AND .ENV FILE SUPPORT
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; A. Install Major Modes for Syntax Highlighting
+;; This ensures .yml and .env files get proper colors and indentation.
+(use-package yaml-mode
+  :ensure t
+  :mode "\\.ya?ml\\'")
+
+(use-package dotenv-mode
+  :ensure t
+  :mode "\\.env\\'")
+
+;; B. Enable Autocompletion for YAML
+;; This hooks lsp-mode into yaml-mode. It will automatically start the
+;; yaml-language-server (if you installed it via npm).
+(add-hook 'yaml-mode-hook #'lsp-deferred)
 
 
 (add-hook 'rjsx-mode-hook #'lsp-deferred)
@@ -68,7 +87,7 @@ export default %s;" name name name)))
   "Insert a custom React hook template."
   (interactive "sHook name (without 'use' prefix): ")
   (let ((full-hook-name (if (string-prefix-p "use" hook-name) hook-name
-			  (concat "use" (capitalize hook-name)))))
+        (concat "use" (capitalize hook-name)))))
     (insert (format "import { useState, useEffect } from 'react';
 
 const %s = () => {
