@@ -24,3 +24,33 @@ Uses `current-date-time-format' for the formatting the date/time."
        )
 
 (global-set-key "\C-c\C-y" 'insert-current-date-time)
+
+
+
+
+;; 1. Cmd-l to select the whole line and copy to clipboard
+(defun rsr/select-whole-line ()
+  "Select the entire current line and copy it to clipboard."
+  (interactive)
+  (beginning-of-line)
+  (set-mark-command nil)
+  (end-of-line)
+  (forward-char 1)  ; Include the newline character
+  (kill-ring-save (region-beginning) (region-end)))
+
+(global-set-key (kbd "s-l") #'rsr/select-whole-line)
+
+;; 2. Cmd-/ to comment or uncomment the current line or region
+(defun rsr-comment-or-uncomment ()
+  "Comment or uncomment current line or region."
+  (interactive)
+  (if (use-region-p)
+      (comment-or-uncomment-region (region-beginning) (region-end))
+    (comment-or-uncomment-region (line-beginning-position) (line-end-position))))
+
+(global-set-key (kbd "s-/") 'rsr-comment-or-uncomment)
+(global-set-key (kbd "C-/") 'rsr-comment-or-uncomment)
+
+;;
+;; 4. Cmd-Shift-k to delete the whole line
+(global-set-key (kbd "s-k") 'kill-whole-line)
