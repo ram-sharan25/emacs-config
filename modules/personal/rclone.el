@@ -1,9 +1,12 @@
 (defun sync-notes-with-rclone ()
-  (interactive)
   "Sync notes directory to a designated remote with rclone."
+  (interactive)
   (message "Syncing notes with rclone...")
-  ;; The & is important to run the command in the background
-  (shell-command-to-string "rclone sync ~/Stillness/Personal/ One\ Drive:Personal/ &")
-  (message "Sync complete."))
+  ;; Use start-process for background execution without capturing output
+  (start-process "rclone-sync" nil "rclone" "copy"
+                 (expand-file-name "~/Stillness/Personal/")
+                 "One Drive:Personal/")
+  (message "Sync initiated in background."))
+
 
 (add-hook 'kill-emacs-hook 'sync-notes-with-rclone)
