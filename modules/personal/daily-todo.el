@@ -16,27 +16,27 @@
 (defun ensure-date-tree ()
   "Create the year/month/day heading structure for today if it doesn't exist."
   (let ((year (format-time-string "%Y"))
-	(month (format-time-string "%Y-%m %B"))
-	(day (format-time-string "%Y-%m-%d %A")))
+  (month (format-time-string "%Y-%m %B"))
+  (day (format-time-string "%Y-%m-%d %A")))
     (save-excursion
       (goto-char (point-min))
       ;; Find or create Year headline
       (unless (re-search-forward (format "^\\* %s$" year) nil t)
-	(goto-char (point-max))
-	(insert (format "\n* %s" year)))
+  (goto-char (point-max))
+  (insert (format "\n* %s" year)))
       ;; Find or create Month headline
       (goto-char (point-min))
       (re-search-forward (format "^\\* %s$" year))
       (unless (re-search-forward (format "^\\** %s$" month) nil t)
-	(org-end-of-subtree)
-	(insert (format "\n** %s" month)))
+  (org-end-of-subtree)
+  (insert (format "\n** %s" month)))
       ;; Find or create Day headline
       (goto-char (point-min))
       (re-search-forward (format "^\\* %s$" year))
       (re-search-forward (format "^** %s$" month))
       (unless (re-search-forward (format "^\\*** %s$" day) nil t)
-	(org-end-of-subtree)
-	(insert (format "\n*** %s" day))))))
+  (org-end-of-subtree)
+  (insert (format "\n*** %s" day))))))
 
 
 (defun diary--now ()
@@ -50,38 +50,38 @@
 
 (setq org-capture-templates
       `(("t" "TODO Entry" entry
-	 (file ,diary-file)
-	 "* TODO %^{Title} :TODO:\n :PROPERTIES:\n :ID:    %(org-id-new)\n :NAME:  %\\1\n :KEYWORDS: \n :TIME: %(diary--now)\n :END:\n\n- Description: \n  - %?\n\n- TODO:[/]\n  - [ ] \n \n- DONE: \n  - "
-	 :empty-lines 1)
+   (file ,diary-file)
+   "* TODO %^{Title} :TODO:\n :PROPERTIES:\n :ID:    %(org-id-new)\n :NAME:  %\\1\n :KEYWORDS: \n :TIME: %(diary--now)\n :END:\n\n- Description: \n  - %?\n\n- TODO:[/]\n  - [ ] \n \n- DONE: \n  - "
+   :empty-lines 1)
 
-	("m" "Meeting Entry" entry
-	 (file ,diary-file)
-	 "*  %^{Person} :MEETING:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:NAME: %\\1\n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Agenda: %^{Agenda}\n- Discussions:\n  - %?"
-	 :empty-lines 1)
+  ("m" "Meeting Entry" entry
+   (file ,diary-file)
+   "*  %^{Person} :MEETING:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:NAME: %\\1\n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Agenda: %^{Agenda}\n- Discussions:\n  - %?"
+   :empty-lines 1)
 
-	("i" "Idea Entry" entry
-	 (file ,notes-file)
-	 "* %^{Title} :IDEA:\n:PROPERTIES: \n:ID:    %(org-id-new)\n:NAME: %\\1\n:TAGS:  \n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
-	 :empty-lines 1)
+  ("i" "Idea Entry" entry
+   (file ,notes-file)
+   "* %^{Title} :IDEA:\n:PROPERTIES: \n:ID:    %(org-id-new)\n:NAME: %\\1\n:TAGS:  \n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
+   :empty-lines 1)
 
-	("u" "Scratch Note " entry
-	 (file ,notes-file)
-	 "* %^{Title} :NOTE:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:TOPIC: %\\1\n:TAGS: \n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
-	 :empty-lines 1)
+  ("u" "Scratch Note " entry
+   (file ,notes-file)
+   "* %^{Title} :NOTE:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:TOPIC: %\\1\n:TAGS: \n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
+   :empty-lines 1)
 
-	("h" "Log Time" entry (file+datetree,log-file )
-				 "* %? \n" :clock-in t :clock-keep t :clock-resume t)
+  ("h" "Log Time" entry (file+datetree,log-file )
+         "* %? \n" :clock-in t :clock-keep t :clock-resume t)
 
-	("j" "Journal " plain ; Use 'plain' type to insert text directly
-	 (file+function ,journal-file
-			(lambda ()
-			  ;; Navigate to the end of today's entry
-			  (let ((day-heading (format-time-string "^\\*\\*\\* %Y-%m-%d")))
-			    (goto-char (point-min))
-			    (re-search-forward day-heading nil t)
-			    (org-end-of-subtree))))
-	 ;; This template creates a list item instead of a new headline
-	 "**** %<%I:%M %p>:\n - %? \n - [[%F][source]]")))
+  ("j" "Journal " plain ; Use 'plain' type to insert text directly
+   (file+function ,journal-file
+      (lambda ()
+        ;; Navigate to the end of today's entry
+        (let ((day-heading (format-time-string "^\\*\\*\\* %Y-%m-%d")))
+          (goto-char (point-min))
+          (re-search-forward day-heading nil t)
+          (org-end-of-subtree))))
+   ;; This template creates a list item instead of a new headline
+   "**** %<%I:%M %p>:\n - %? \n - [[%F][source]]")))
 
 (defun diary--entry-date (time-string)
   "Extract date (YYYY-MM-DD) from a TIME property string like [2025-05-05 Mon 18:00]."
@@ -90,9 +90,9 @@
 
 
 (advice-add 'org-capture :before
-	    (lambda (&rest _)
-	      (with-current-buffer (find-file-noselect journal-file)
-		(ensure-date-tree))))
+      (lambda (&rest _)
+        (with-current-buffer (find-file-noselect journal-file)
+    (ensure-date-tree))))
 
 (defun notes-rebuild-index ()
   "Rebuild the notes index file with a Year->Month->Week structure."
@@ -102,37 +102,37 @@
     (with-current-buffer (find-file-noselect notes-file)
       (org-map-entries
        (lambda ()
-	 (let* ((id (org-entry-get (point) "ID"))
-		(headline (org-get-heading t t))
-		(time-str (org-entry-get (point) "TIME"))
-		(time (and time-str (org-time-string-to-seconds time-str))))
-	   (when (and id time)
-	     (let* ((year  (format-time-string "%Y" time))
-		    (month (format-time-string "%m" time))
-		    (week  (format-time-string "%V" time))
-		    (year-ht   (or (gethash year notes-by-date) (make-hash-table :test 'equal)))
-		    (month-ht  (or (gethash month year-ht) (make-hash-table :test 'equal)))
-		    (week-list (or (gethash week month-ht) '())))
-	       (setf (gethash week month-ht) (cons (list headline id) week-list))
-	       (setf (gethash month year-ht) month-ht)
-	       (setf (gethash year notes-by-date) year-ht)))))
+   (let* ((id (org-entry-get (point) "ID"))
+    (headline (org-get-heading t t))
+    (time-str (org-entry-get (point) "TIME"))
+    (time (and time-str (org-time-string-to-seconds time-str))))
+     (when (and id time)
+       (let* ((year  (format-time-string "%Y" time))
+        (month (format-time-string "%m" time))
+        (week  (format-time-string "%V" time))
+        (year-ht   (or (gethash year notes-by-date) (make-hash-table :test 'equal)))
+        (month-ht  (or (gethash month year-ht) (make-hash-table :test 'equal)))
+        (week-list (or (gethash week month-ht) '())))
+         (setf (gethash week month-ht) (cons (list headline id) week-list))
+         (setf (gethash month year-ht) month-ht)
+         (setf (gethash year notes-by-date) year-ht)))))
        "NOTE|IDEA" 'file))
 
     (with-temp-file index-file
       (insert "#+TITLE: Notes and Ideas Index\n\n")
       (dolist (year (cl-sort (hash-table-keys notes-by-date) #'string<))
-	(insert (format "* %s\n" year))
-	(let ((year-ht (gethash year notes-by-date)))
-	  (dolist (month (cl-sort (hash-table-keys year-ht) #'string<))
-	    ;; This is the line that was fixed
-	    (let* ((month-name (format-time-string "%B" (encode-time 0 0 0 1 (string-to-number month) (string-to-number year))))
-		   (month-ht (gethash month year-ht)))
-	      (insert (format "** %s-%s %s\n" year month month-name))
-	      (dolist (week (cl-sort (hash-table-keys month-ht) #'string<))
-		(let ((note-list (gethash week month-ht)))
-		  (insert (format "*** Week %s\n" week))
-		  (dolist (item (reverse note-list))
-		    (insert (format "- [[id:%s][%s]]\n" (cadr item) (car item))))))))))))
+  (insert (format "* %s\n" year))
+  (let ((year-ht (gethash year notes-by-date)))
+    (dolist (month (cl-sort (hash-table-keys year-ht) #'string<))
+      ;; This is the line that was fixed
+      (let* ((month-name (format-time-string "%B" (encode-time 0 0 0 1 (string-to-number month) (string-to-number year))))
+       (month-ht (gethash month year-ht)))
+        (insert (format "** %s-%s %s\n" year month month-name))
+        (dolist (week (cl-sort (hash-table-keys month-ht) #'string<))
+    (let ((note-list (gethash week month-ht)))
+      (insert (format "*** Week %s\n" week))
+      (dolist (item (reverse note-list))
+        (insert (format "- [[id:%s][%s]]\n" (cadr item) (car item))))))))))))
   (message "Hierarchical notes index rebuilt successfully."))
 
 ;; <<< NEW function to open the index file
@@ -151,67 +151,67 @@
     (with-current-buffer (find-file-noselect diary-file)
       (org-map-entries
        (lambda ()
-	 (let* ((id (org-entry-get (point) "ID"))
-		(headline (org-get-heading t t))
-		(status (org-get-todo-state)) ; Get the task's status
-		(time-str (org-entry-get (point) "TIME"))
-		(time (and time-str (org-time-string-to-seconds time-str))))
-	   (when (and id time status)
-	     (let* ((year  (format-time-string "%Y" time))
-		    (month (format-time-string "%m" time))
-		    (week  (format-time-string "%V" time))
-		    (year-ht   (or (gethash year todos-by-date) (make-hash-table :test 'equal)))
-		    (month-ht  (or (gethash month year-ht) (make-hash-table :test 'equal)))
-		    ;; Store the task with its status in a single list
-		    (week-list (or (gethash week month-ht) '())))
-	       (setf (gethash week month-ht) (cons (list headline id status) week-list))
-	       (setf (gethash month year-ht) month-ht)
-	       (setf (gethash year todos-by-date) year-ht)))))
+   (let* ((id (org-entry-get (point) "ID"))
+    (headline (org-get-heading t t))
+    (status (org-get-todo-state)) ; Get the task's status
+    (time-str (org-entry-get (point) "TIME"))
+    (time (and time-str (org-time-string-to-seconds time-str))))
+     (when (and id time status)
+       (let* ((year  (format-time-string "%Y" time))
+        (month (format-time-string "%m" time))
+        (week  (format-time-string "%V" time))
+        (year-ht   (or (gethash year todos-by-date) (make-hash-table :test 'equal)))
+        (month-ht  (or (gethash month year-ht) (make-hash-table :test 'equal)))
+        ;; Store the task with its status in a single list
+        (week-list (or (gethash week month-ht) '())))
+         (setf (gethash week month-ht) (cons (list headline id status) week-list))
+         (setf (gethash month year-ht) month-ht)
+         (setf (gethash year todos-by-date) year-ht)))))
        "TODO|IN-PROGRESS|WAITING|DONE|CANCELED|STARTED|REVIEW|MAYBE|DEFERRED" 'file))
 
     ;; 2. Write the index file
     (with-temp-file todo-index-file
       (insert "#+TITLE: TODO Index by Status\n\n")
       (dolist (year (cl-sort (hash-table-keys todos-by-date) #'string<))
-	(insert (format "* %s\n" year))
-	(let ((year-ht (gethash year todos-by-date)))
-	  (dolist (month (cl-sort (hash-table-keys year-ht) #'string<))
-	    (let* ((month-name (format-time-string "%B" (encode-time 0 0 0 1 (string-to-number month) (string-to-number year))))
-		   (month-ht (gethash month year-ht)))
-	      (insert (format "** %s-%s %s\n" year month month-name))
-	      (dolist (week (cl-sort (hash-table-keys month-ht) #'string<))
-		(insert (format "*** Week %s\n" week))
-		(let ((task-list (gethash week month-ht)))
-		  (dolist (item (reverse task-list))
-		    (let* ((headline (car item))
-			   (id (cadr item))
-			   (status (caddr item))
-			   ;; Determine the color and text based on the status
-			   (status-info (cond ((string= status "DONE")        (cons "DONE" "forest green"))
-					      ((string= status "CANCELED")    (cons "CANCELED" "royal blue"))
-					      ((string= status "WAITING")     (cons "WAITING" "dark orange"))
-					      ((string= status "TODO")        (cons "TODO" "grey40"))
-					      ((string= status "STARTED")        (cons "STARTED" "grey40"))
-					      ((string= status "REVIEW")        (cons "REVIEW" "grey40"))
-					      ((string= status "MAYBE")        (cons "MAYBE" "grey40"))
-					      ((string= status "DEFERRED")        (cons "DEFERRED" "grey40"))
-					      ((string= status "TODAY")        (cons "TODAY" "grey40"))
-					      (t(cons "IN-PROGRESS" "firebrick"))))
-			   (tag-text (car status-info))
-			   (color (cdr status-info))
-			   ;; Create visible status bullets
-			   (status-bullet (cond ((string= status "DONE") "✅ DONE")
-						((string= status "CANCELED") "❌ CANCELED")
-						((string= status "WAITING") "⏳ WAITING")
-						((string= status "TODO") "🔥 TODO")
-						((string= status "STARTED") "🐢 STARTED")
-						((string= status "REVIEW") "🔎 REVIEW")
-						((string= status "MAYBE") "🤔 MAYBE")
-						((string= status "DEFERRED") "⏸️ DELAYED")
-						((string= status "TODAY")   "📌 TODAY")
-						(t "🔄 IN-PROGRESS"))))
-		      ;; Insert the formatted line using status as bullet
-		      (insert (format "%s [[id:%s][%s]]\n" status-bullet id headline)))))))))
+  (insert (format "* %s\n" year))
+  (let ((year-ht (gethash year todos-by-date)))
+    (dolist (month (cl-sort (hash-table-keys year-ht) #'string<))
+      (let* ((month-name (format-time-string "%B" (encode-time 0 0 0 1 (string-to-number month) (string-to-number year))))
+       (month-ht (gethash month year-ht)))
+        (insert (format "** %s-%s %s\n" year month month-name))
+        (dolist (week (cl-sort (hash-table-keys month-ht) #'string<))
+    (insert (format "*** Week %s\n" week))
+    (let ((task-list (gethash week month-ht)))
+      (dolist (item (reverse task-list))
+        (let* ((headline (car item))
+         (id (cadr item))
+         (status (caddr item))
+         ;; Determine the color and text based on the status
+         (status-info (cond ((string= status "DONE")        (cons "DONE" "forest green"))
+                ((string= status "CANCELED")    (cons "CANCELED" "royal blue"))
+                ((string= status "WAITING")     (cons "WAITING" "dark orange"))
+                ((string= status "TODO")        (cons "TODO" "grey40"))
+                ((string= status "STARTED")        (cons "STARTED" "grey40"))
+                ((string= status "REVIEW")        (cons "REVIEW" "grey40"))
+                ((string= status "MAYBE")        (cons "MAYBE" "grey40"))
+                ((string= status "DEFERRED")        (cons "DEFERRED" "grey40"))
+                ((string= status "TODAY")        (cons "TODAY" "grey40"))
+                (t(cons "IN-PROGRESS" "firebrick"))))
+         (tag-text (car status-info))
+         (color (cdr status-info))
+         ;; Create visible status bullets
+         (status-bullet (cond ((string= status "DONE") "✅ DONE")
+            ((string= status "CANCELED") "❌ CANCELED")
+            ((string= status "WAITING") "⏳ WAITING")
+            ((string= status "TODO") "🔥 TODO")
+            ((string= status "STARTED") "🐢 STARTED")
+            ((string= status "REVIEW") "🔎 REVIEW")
+            ((string= status "MAYBE") "🤔 MAYBE")
+            ((string= status "DEFERRED") "⏸️ DELAYED")
+            ((string= status "TODAY")   "📌 TODAY")
+            (t "🔄 IN-PROGRESS"))))
+          ;; Insert the formatted line using status as bullet
+          (insert (format "%s [[id:%s][%s]]\n" status-bullet id headline)))))))))
       (message "Hierarchical TODO index with colored tags rebuilt successfully.")))))
 
 (defun todos-open-index-file ()
@@ -240,6 +240,19 @@
     (goto-char (point-min))
     (re-search-forward day-heading nil t)))
 
+(defun open-single-buffer ()
+  "Open current org heading in indirect buffer and close all other windows."
+  (interactive)
+  ;; Create indirect buffer with current subtree
+  (org-tree-to-indirect-buffer)
+  (other-window 1)
+  (delete-other-windows)
+  (darkroom-tentative-mode 1)
+  (end-of-buffer 1)
+  (recenter-top-bottom t)
+  ;; Close all other windows (buffers remain available in background)
+  )
+
 ;;; === Keybindings ===
 (global-set-key (kbd "C-c t") (lambda () (interactive) (org-capture nil "t")))  ;; New TODO
 (global-set-key (kbd "C-c m") (lambda () (interactive) (org-capture nil "m")))  ;; New Meeting
@@ -261,7 +274,7 @@
 (global-set-key (kbd "C-x i") #'org-clock-in) ; "clock in "
 (global-set-key (kbd "C-x j") #'org-clock-out) ; "clock out"
 
-(global-set-key (kbd "C-c o b") 'org-tree-to-indirect-buffer);;open a heading in a new buffer
+(global-set-key (kbd "C-c o b") 'open-single-buffer);;open a heading in a new buffer
 
 
 
