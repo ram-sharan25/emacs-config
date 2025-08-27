@@ -33,6 +33,7 @@
     (dolist (file files)
       (message "Loading %s" file)
       (load (file-name-sans-extension file)))))
+
 ;; Install & configure swiper
 (use-package swiper
   :bind ("C-s" . swiper))
@@ -69,7 +70,7 @@
 ;; run jedi in virtual environment
  (setq jedi:server-command
       '("/Users/rrimal/.emacs.d/.venv-jedi/bin/python"
-  "/Users/rrimal/.emacs.d/elpa/jedi-core-*/jediepcserver.py"))
+	"/Users/rrimal/.emacs.d/elpa/jedi-core-*/jediepcserver.py"))
 
 
 (use-package exec-path-from-shell
