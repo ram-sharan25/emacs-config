@@ -55,3 +55,19 @@ Uses `current-date-time-format' for the formatting the date/time."
 ;;
 ;; 4. Cmd-Shift-k to delete the whole line
 (global-set-key (kbd "s-k") 'kill-whole-line)
+
+(defun rsr/open-kitty ()
+  "Open a new Kitty terminal window asynchronously.
+This command is OS-aware, using 'open -a' on macOS
+and the direct 'kitty' command on Linux."
+  (interactive)
+  (cond
+   ((eq system-type 'darwin)  ; macOS
+    (async-shell-command "open -a kitty" nil))
+   ((eq system-type 'gnu/linux) ; Linux
+    (async-shell-command "kitty &" nil))
+   (t
+    (message "Unsupported OS for this function."))))
+
+(global-set-key (kbd "M-<return>") #'rsr/open-kitty)
+(global-set-key (kbd "s-<return>") #'rsr/open-kitty)

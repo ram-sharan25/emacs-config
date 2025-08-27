@@ -21,7 +21,8 @@
 
 ;; Add personal directory to load path
 (add-to-list 'load-path (expand-file-name "modules/personal" user-emacs-directory))
-
+;; Use the Super key (now the middle key) as Meta
+(setq x-super-modifier 'meta)
 (define-prefix-command 'rsr/global-prefix-map)
 (define-key global-map (kbd "M-m") 'rsr/global-prefix-map) ;
 
@@ -32,7 +33,6 @@
     (dolist (file files)
       (message "Loading %s" file)
       (load (file-name-sans-extension file)))))
-
 ;; Install & configure swiper
 (use-package swiper
   :bind ("C-s" . swiper))
@@ -69,7 +69,7 @@
 ;; run jedi in virtual environment
  (setq jedi:server-command
       '("/Users/rrimal/.emacs.d/.venv-jedi/bin/python"
-	"/Users/rrimal/.emacs.d/elpa/jedi-core-*/jediepcserver.py"))
+  "/Users/rrimal/.emacs.d/elpa/jedi-core-*/jediepcserver.py"))
 
 
 (use-package exec-path-from-shell
