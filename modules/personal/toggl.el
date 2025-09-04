@@ -1,0 +1,7 @@
+(add-to-list 'load-path "~/.emacs.d/modules/git-modules/org-toggle/")
+(setq toggl-auth-token "0672de70c5ae0da9b1461ec72d72cb47")
+(setq toggl-workspace-id 8843824)
+(setq org-toggl-inherit-toggl-properties t)
+(require 'org-toggl)
+(toggl-get-projects)
+(org-toggl-integration-mode)
