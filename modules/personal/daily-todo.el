@@ -3,10 +3,12 @@
 (require 'org)
 (require 'org-capture)
 (require 'org-id)
+(require 'org-element)
 
 (setq personal-dir "~/Stillness/Personal/Writings/")
  ;;"Base directory for personal writings."
-(setq diary-file (concat personal-dir "Diary.org"))
+(setq diary-file (concat personal-dir "Tasks.org"))
+(setq projects-file (concat personal-dir "Projects.org"))
 (setq log-file (concat personal-dir "LogBook.org"))
 (setq journal-file (concat personal-dir "Journal.org"))
 (setq notes-file (concat personal-dir "RoughNotes.org"))
@@ -15,29 +17,38 @@
 
 (defun ensure-date-tree ()
   "Create the year/month/day heading structure for today if it doesn't exist."
-  (let ((year (format-time-string "%Y"))
-  (month (format-time-string "%Y-%m %B"))
-  (day (format-time-string "%Y-%m-%d %A")))
-    (save-excursion
-      (goto-char (point-min))
-      ;; Find or create Year headline
-      (unless (re-search-forward (format "^\\* %s$" year) nil t)
-  (goto-char (point-max))
-  (insert (format "\n* %s" year)))
-      ;; Find or create Month headline
-      (goto-char (point-min))
-      (re-search-forward (format "^\\* %s$" year))
-      (unless (re-search-forward (format "^\\** %s$" month) nil t)
-  (org-end-of-subtree)
-  (insert (format "\n** %s" month)))
-      ;; Find or create Day headline
-      (goto-char (point-min))
-      (re-search-forward (format "^\\* %s$" year))
-      (re-search-forward (format "^** %s$" month))
-      (unless (re-search-forward (format "^\\*** %s$" day) nil t)
-  (org-end-of-subtree)
-  (insert (format "\n*** %s" day))))))
+  (save-excursion
+    (let* ((year (format-time-string "%Y"))
+	   (month (format-time-string "%Y-%m %B"))
+	   (day (format-time-string "%Y-%m-%d %A"))
+	   (year-regex (format "^\\* %s$" year))
+	   (month-regex (format "^\\** %s$" month))
+	   (day-regex (format "^\\*** %s$" day)))
 
+      (goto-char (point-min))
+
+      ;; 1. Find or create Year headline (* Year)
+      (unless (re-search-forward year-regex nil t)
+	(goto-char (point-max))
+	(insert (format "\n* %s" year))
+	;; Land the cursor on the new heading for the next search limit calculation
+	(re-search-backward year-regex (point-min) t))
+
+      ;; 2. Find or create Month headline (** Month) inside the Year
+      (let ((year-end (org-end-of-subtree nil t)))
+	(unless (re-search-forward month-regex year-end t)
+	  ;; If not found within the year, insert it at the end of the year's content
+	  (goto-char year-end)
+	  (insert (format "\n** %s" month))
+	  ;; Land on the new month headline
+	  (re-search-backward month-regex (point-min) t)))
+
+      ;; 3. Find or create Day headline (*** Day) inside the Month
+      (let ((month-end (org-end-of-subtree nil t)))
+	(unless (re-search-forward day-regex month-end t)
+	  ;; If not found within the month, insert it at the end of the month's content
+	  (goto-char month-end)
+	  (insert (format "\n*** %s" day)))))))
 
 (defun diary--now ()
   "Return the current timestamp string."
@@ -49,17 +60,7 @@
 ;;; === Capture Templates ===
 
 (setq org-capture-templates
-      `(("t" "TODO Entry" entry
-   (file ,diary-file)
-   "* TODO %^{Title} :TODO:\n :PROPERTIES:\n :ID:    %(org-id-new)\n :NAME:  %\\1\n :KEYWORDS: \n :TIME: %(diary--now)\n :END:\n\n- Description: \n  - %?\n\n- TODO:[/]\n  - [ ] \n \n- DONE: \n  - "
-   :empty-lines 1)
-
-  ("m" "Meeting Entry" entry
-   (file ,diary-file)
-   "*  %^{Person} :MEETING:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:NAME: %\\1\n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Agenda: %^{Agenda}\n- Discussions:\n  - %?"
-   :empty-lines 1)
-
-  ("i" "Idea Entry" entry
+      `(("i" "Idea Entry" entry
    (file ,notes-file)
    "* %^{Title} :IDEA:\n:PROPERTIES: \n:ID:    %(org-id-new)\n:NAME: %\\1\n:TAGS:  \n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
    :empty-lines 1)
@@ -70,16 +71,16 @@
    :empty-lines 1)
 
   ("h" "Log Time" entry (file+datetree,log-file )
-         "* %? \n" :clock-in t :clock-keep t :clock-resume t)
+	 "* %? \n" :clock-in t :clock-keep t :clock-resume t)
 
   ("j" "Journal " plain ; Use 'plain' type to insert text directly
    (file+function ,journal-file
       (lambda ()
-        ;; Navigate to the end of today's entry
-        (let ((day-heading (format-time-string "^\\*\\*\\* %Y-%m-%d")))
-          (goto-char (point-min))
-          (re-search-forward day-heading nil t)
-          (org-end-of-subtree))))
+	;; Navigate to the end of today's entry
+	(let ((day-heading (format-time-string "^\\*\\*\\* %Y-%m-%d")))
+	  (goto-char (point-min))
+	  (re-search-forward day-heading nil t)
+	  (org-end-of-subtree))))
    ;; This template creates a list item instead of a new headline
    "**** %<%I:%M %p>:\n - %? \n - [[%F][source]]")))
 
@@ -91,7 +92,7 @@
 
 (advice-add 'org-capture :before
       (lambda (&rest _)
-        (with-current-buffer (find-file-noselect journal-file)
+	(with-current-buffer (find-file-noselect journal-file)
     (ensure-date-tree))))
 
 (defun notes-rebuild-index ()
@@ -108,14 +109,14 @@
     (time (and time-str (org-time-string-to-seconds time-str))))
      (when (and id time)
        (let* ((year  (format-time-string "%Y" time))
-        (month (format-time-string "%m" time))
-        (week  (format-time-string "%V" time))
-        (year-ht   (or (gethash year notes-by-date) (make-hash-table :test 'equal)))
-        (month-ht  (or (gethash month year-ht) (make-hash-table :test 'equal)))
-        (week-list (or (gethash week month-ht) '())))
-         (setf (gethash week month-ht) (cons (list headline id) week-list))
-         (setf (gethash month year-ht) month-ht)
-         (setf (gethash year notes-by-date) year-ht)))))
+	(month (format-time-string "%m" time))
+	(week  (format-time-string "%V" time))
+	(year-ht   (or (gethash year notes-by-date) (make-hash-table :test 'equal)))
+	(month-ht  (or (gethash month year-ht) (make-hash-table :test 'equal)))
+	(week-list (or (gethash week month-ht) '())))
+	 (setf (gethash week month-ht) (cons (list headline id) week-list))
+	 (setf (gethash month year-ht) month-ht)
+	 (setf (gethash year notes-by-date) year-ht)))))
        "NOTE|IDEA" 'file))
 
     (with-temp-file index-file
@@ -127,12 +128,12 @@
       ;; This is the line that was fixed
       (let* ((month-name (format-time-string "%B" (encode-time 0 0 0 1 (string-to-number month) (string-to-number year))))
        (month-ht (gethash month year-ht)))
-        (insert (format "** %s-%s %s\n" year month month-name))
-        (dolist (week (cl-sort (hash-table-keys month-ht) #'string<))
+	(insert (format "** %s-%s %s\n" year month month-name))
+	(dolist (week (cl-sort (hash-table-keys month-ht) #'string<))
     (let ((note-list (gethash week month-ht)))
       (insert (format "*** Week %s\n" week))
       (dolist (item (reverse note-list))
-        (insert (format "- [[id:%s][%s]]\n" (cadr item) (car item))))))))))))
+	(insert (format "- [[id:%s][%s]]\n" (cadr item) (car item))))))))))))
   (message "Hierarchical notes index rebuilt successfully."))
 
 ;; <<< NEW function to open the index file
@@ -140,84 +141,6 @@
   "Open the notes index file."
   (interactive)
   (find-file index-file))
-
-;; <<< MODIFIED function to build a hierarchical index with status tags
-
-(defun todos-rebuild-index ()
-  "Rebuild the TODO index file, using tags to denote status."
-  (interactive)
-  (let ((todos-by-date (make-hash-table :test 'equal)))
-    ;; 1. Collect all tasks and their statuses, grouping by Y/M/W
-    (with-current-buffer (find-file-noselect diary-file)
-      (org-map-entries
-       (lambda ()
-   (let* ((id (org-entry-get (point) "ID"))
-    (headline (org-get-heading t t))
-    (status (org-get-todo-state)) ; Get the task's status
-    (time-str (org-entry-get (point) "TIME"))
-    (time (and time-str (org-time-string-to-seconds time-str))))
-     (when (and id time status)
-       (let* ((year  (format-time-string "%Y" time))
-        (month (format-time-string "%m" time))
-        (week  (format-time-string "%V" time))
-        (year-ht   (or (gethash year todos-by-date) (make-hash-table :test 'equal)))
-        (month-ht  (or (gethash month year-ht) (make-hash-table :test 'equal)))
-        ;; Store the task with its status in a single list
-        (week-list (or (gethash week month-ht) '())))
-         (setf (gethash week month-ht) (cons (list headline id status) week-list))
-         (setf (gethash month year-ht) month-ht)
-         (setf (gethash year todos-by-date) year-ht)))))
-       "TODO|IN-PROGRESS|WAITING|DONE|CANCELED|STARTED|REVIEW|MAYBE|DEFERRED" 'file))
-
-    ;; 2. Write the index file
-    (with-temp-file todo-index-file
-      (insert "#+TITLE: TODO Index by Status\n\n")
-      (dolist (year (cl-sort (hash-table-keys todos-by-date) #'string<))
-  (insert (format "* %s\n" year))
-  (let ((year-ht (gethash year todos-by-date)))
-    (dolist (month (cl-sort (hash-table-keys year-ht) #'string<))
-      (let* ((month-name (format-time-string "%B" (encode-time 0 0 0 1 (string-to-number month) (string-to-number year))))
-       (month-ht (gethash month year-ht)))
-        (insert (format "** %s-%s %s\n" year month month-name))
-        (dolist (week (cl-sort (hash-table-keys month-ht) #'string<))
-    (insert (format "*** Week %s\n" week))
-    (let ((task-list (gethash week month-ht)))
-      (dolist (item (reverse task-list))
-        (let* ((headline (car item))
-         (id (cadr item))
-         (status (caddr item))
-         ;; Determine the color and text based on the status
-         (status-info (cond ((string= status "DONE")        (cons "DONE" "forest green"))
-                ((string= status "CANCELED")    (cons "CANCELED" "royal blue"))
-                ((string= status "WAITING")     (cons "WAITING" "dark orange"))
-                ((string= status "TODO")        (cons "TODO" "grey40"))
-                ((string= status "STARTED")        (cons "STARTED" "grey40"))
-                ((string= status "REVIEW")        (cons "REVIEW" "grey40"))
-                ((string= status "MAYBE")        (cons "MAYBE" "grey40"))
-                ((string= status "DEFERRED")        (cons "DEFERRED" "grey40"))
-                ((string= status "TODAY")        (cons "TODAY" "grey40"))
-                (t(cons "IN-PROGRESS" "firebrick"))))
-         (tag-text (car status-info))
-         (color (cdr status-info))
-         ;; Create visible status bullets
-         (status-bullet (cond ((string= status "DONE") "✅ DONE")
-            ((string= status "CANCELED") "❌ CANCELED")
-            ((string= status "WAITING") "⏳ WAITING")
-            ((string= status "TODO") "🔥 TODO")
-            ((string= status "STARTED") "🐢 STARTED")
-            ((string= status "REVIEW") "🔎 REVIEW")
-            ((string= status "MAYBE") "🤔 MAYBE")
-            ((string= status "DEFERRED") "⏸️ DELAYED")
-            ((string= status "TODAY")   "📌 TODAY")
-            (t "🔄 IN-PROGRESS"))))
-          ;; Insert the formatted line using status as bullet
-          (insert (format "%s [[id:%s][%s]]\n" status-bullet id headline)))))))))
-      (message "Hierarchical TODO index with colored tags rebuilt successfully.")))))
-
-(defun todos-open-index-file ()
-  "Open the TODO index file."
-  (interactive)
-  (find-file todo-index-file))
 
 (defun logbook-open-file ()
   "Open the logbook  file."
@@ -229,6 +152,12 @@
   "Open daily file and jump to today's entry."
   (interactive)
   (find-file diary-file))
+
+(defun open-project-file ()
+  "Open daily file and jump to today's entry."
+  (interactive)
+  (find-file projects-file))
+
 
 
 (defun open-journal-file ()
@@ -254,8 +183,6 @@
   )
 
 ;;; === Keybindings ===
-(global-set-key (kbd "C-c t") (lambda () (interactive) (org-capture nil "t")))  ;; New TODO
-(global-set-key (kbd "C-c m") (lambda () (interactive) (org-capture nil "m")))  ;; New Meeting
 (global-set-key (kbd "C-c i") (lambda () (interactive) (org-capture nil "i")))  ;; New Idea
 (global-set-key (kbd "C-c j") (lambda () (interactive) (org-capture nil "j")))  ;; New Journal
 (global-set-key (kbd "C-c h") (lambda () (interactive) (org-capture nil "h")))  ;; New Log Entry
@@ -264,18 +191,22 @@
 (global-set-key (kbd "C-c o j") 'open-journal-file)
 (global-set-key (kbd "C-c o d") 'open-diary-file)
 (global-set-key (kbd "C-c o h") 'logbook-open-file)
+(global-set-key (kbd "C-c o p") 'open-project-file)
 
 (global-set-key (kbd "C-c b n") #'notes-rebuild-index) ; "Notes - Rebuild"
 (global-set-key (kbd "C-c o n") #'notes-open-index-file) ; "Notes - Open"
 
-(global-set-key (kbd "C-c b t") #'todos-rebuild-index) ; "TODOS - Rebuild"
-(global-set-key (kbd "C-c o t") #'todos-open-index-file) ; "TODOS - Open"
 
 (global-set-key (kbd "C-x i") #'org-clock-in) ; "clock in "
 (global-set-key (kbd "C-x j") #'org-clock-out) ; "clock out"
 
 (global-set-key (kbd "C-c o b") 'open-single-buffer);;open a heading in a new buffer
 
+
+(setq org-agenda-files
+      '("~/Stillness/Personal/Writings/Tasks.org"
+	"~/Stillness/Personal/Writings/Diary.org"
+	"~/Stillness/Personal/Writings/RoughNotes.org"))
 
 
 (provide 'flat-diary-config)
