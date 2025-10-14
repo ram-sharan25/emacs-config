@@ -2,7 +2,7 @@
 
 
 (defvar my-leetcode-notes-default-directory
-  "~/Stillness/Personal/Software/Projects/NeetCode/"
+  "~/Stillness/Development/NeetCode/"
   "Default directory to save LeetCode notes.")
 (defvar-local my-is-leetcode-note-buffer nil
   "Non-nil if the current buffer is a new LeetCode note buffer.")
@@ -87,7 +87,7 @@ If it's a new LeetCode note buffer, use custom save logic. Otherwise, normal sav
 ;; For example, if you have a personal prefix map like "C-c p", you could use "C-c p n".
 ;;(global-set-key (kbd "s-n") #'my-create-new-leetcode-note) ; "s" stands for Super/Cmd/Windows key
 ;; Alternatively, for a "C-c" based binding (less "global" but common for user commands):
-(define-key global-map (kbd "C-c l") #'my-create-new-leetcode-note)
+(define-key global-map (kbd "C-c m") #'my-create-new-leetcode-note)
 ;; Note: C-c followed by a letter is often reserved for major modes.
 ;; Using Super key or a personal prefix map is safer for truly global bindings.
 
