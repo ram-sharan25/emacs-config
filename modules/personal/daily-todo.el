@@ -176,7 +176,6 @@
   (org-tree-to-indirect-buffer)
   (other-window 1)
   (delete-other-windows)
-  (darkroom-tentative-mode 1)
   (end-of-buffer 1)
   (recenter-top-bottom t)
   ;; Close all other windows (buffers remain available in background)
