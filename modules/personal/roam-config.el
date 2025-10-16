@@ -21,8 +21,8 @@
   (setq org-roam-capture-templates
   '(("d" "default" plain
      "%?"
-     :if-new (file+head "${slug}.org"
-            "#+title: ${title}\n")
+     :if-new (file+head "Notes/${slug}.org"
+	    "#+title: ${title}\n")
      :unnarrowed t)))
 
   (setf org-id-link-to-org-use-id t))
