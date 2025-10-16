@@ -73,3 +73,4 @@ and the direct 'kitty' command on Linux."
 (global-set-key (kbd "C-c c i") #'org-toggl-clock-in)
 (global-set-key (kbd "C-c c s") #'toggl-start-time-entry)
 (global-set-key (kbd "C-c c o") #'org-toggl-clock-out)
+(global-set-key (kbd "C-c l") 'org-store-link)
