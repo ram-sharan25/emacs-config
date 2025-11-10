@@ -213,7 +213,6 @@
 
 (setq org-agenda-files
       '("~/Stillness/Personal/Writings/Tasks.org"
-	"~/Stillness/Personal/Writings/Diary.org"
 	"~/Stillness/Personal/Writings/RoughNotes.org"))
 
 
