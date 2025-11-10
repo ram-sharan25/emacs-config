@@ -97,7 +97,7 @@
 ;;; --- 8. Agenda Views ---
 
 ;; Set agenda files
-(setq org-agenda-files (list my/projects-file my/tasks-file my/diary-file))
+(setq org-agenda-files (list my/projects-file my/tasks-file ))
 
 ;; Use org-super-agenda's built-in auto-grouping features
 (setq org-super-agenda-groups
