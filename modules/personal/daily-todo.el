@@ -14,6 +14,8 @@
 (setq notes-file (concat personal-dir "RoughNotes.org"))
 (setq index-file (concat personal-dir "NotesIndex.org"))
 (setq todo-index-file (concat personal-dir "TodoIndex.org"))
+(setq shortcut-file "~/Stillness/Personal/Notes/shortcuts_in_emacs.org")
+
 
 (defun ensure-date-tree ()
   "Create the year/month/day heading structure for today if it doesn't exist."
@@ -159,6 +161,11 @@
   (find-file projects-file))
 
 
+(defun open-shortcut-file ()
+  "Open daily file and jump to today's entry."
+  (interactive)
+  (find-file shortcut-file))
+
 
 (defun open-journal-file ()
   "Open daily file and jump to today's entry."
@@ -191,6 +198,8 @@
 (global-set-key (kbd "C-c o d") 'open-diary-file)
 (global-set-key (kbd "C-c o h") 'logbook-open-file)
 (global-set-key (kbd "C-c o p") 'open-project-file)
+(global-set-key (kbd "C-c o s") 'open-shortcut-file)
+
 
 (global-set-key (kbd "C-c b n") #'notes-rebuild-index) ; "Notes - Rebuild"
 (global-set-key (kbd "C-c o n") #'notes-open-index-file) ; "Notes - Open"
