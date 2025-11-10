@@ -27,3 +27,4 @@ init.elc
 company-statistics*
 tramp
 multisession/
+request/
