@@ -1,7 +1,8 @@
-;; Company Mode Core Setup
 (use-package company
   :ensure t
   :demand t
+  :after lsp-mode ; Ensure company loads after lsp-mode
+  :hook (lsp-mode . company-mode) ; Automatically enable company-mode when LSP is active
   :custom
   (company-idle-delay 0.1)               ;; Faster response for experienced users
   (company-minimum-prefix-length 2)
@@ -16,24 +17,10 @@
 
   ;; Smart backends prioritization
   (setq company-backends
-	'(company-files          ;; File path completion
-	  (company-capf          ;; Completion-at-point
-	   company-dabbrev-code  ;; Code-aware dabbrev
-	   company-keywords)     ;; Language keywords
-	   company-yasnippet)))  ;; Snippet expansion
-
-
-;; Language-Specific Support
-
-;; Python
-(use-package company-jedi
-  :ensure t
-  :hook (python-mode . (lambda () (add-to-list 'company-backends 'company-jedi))))
-
-;; C/C++
-(use-package company-rtags
-  :ensure t
-  :hook (c-mode-common . (lambda () (add-to-list 'company-backends 'company-rtags))))
+	'((company-capf company-yasnippet) ;; Completion-at-point  ;; Snippet expansion
+	  (company-dabbrev-code)  ;; Code-aware dabbrev
+	  (company-keywords)   ;; Language keywords
+	  (company-files))))  ;; File path completion
 
 
 ;; Enhanced UI & Features
