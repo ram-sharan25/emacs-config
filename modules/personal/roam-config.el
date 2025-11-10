@@ -30,13 +30,13 @@
 (use-package org-download
   :ensure t
   :bind (:map org-mode-map
-        (("s-r" . org-download-clipboard)))
+	(("s-r" . org-download-clipboard)))
   :custom
   (org-download-heading-lvl nil) ; Don't organize by heading
   (org-download-image-dir "./data/") ; Default, overridden by our function
-  (org-download-image-org-width 100)
+  (org-download-image-org-width 800)
   (org-download-image-html-width 800)
-  (org-download-image-latex-width 600)
+  (org-download-image-latex-width 10)
   :config
   ;; Ensure ./data/ exists relative to the current buffer file
   (defun org-download--dir-2 ()
