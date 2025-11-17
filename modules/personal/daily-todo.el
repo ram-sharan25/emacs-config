@@ -73,18 +73,22 @@
    :empty-lines 1)
 
   ("h" "Log Time" entry (file+datetree,log-file )
-	 "* %? \n" :clock-in t :clock-keep t :clock-resume t)
+   "* %? \n" :clock-in t :clock-keep t :clock-resume t)
 
   ("j" "Journal " plain ; Use 'plain' type to insert text directly
    (file+function ,journal-file
       (lambda ()
-	;; Navigate to the end of today's entry
-	(let ((day-heading (format-time-string "^\\*\\*\\* %Y-%m-%d")))
-	  (goto-char (point-min))
-	  (re-search-forward day-heading nil t)
-	  (org-end-of-subtree))))
+  ;; Navigate to the end of today's entry
+  (let ((day-heading (format-time-string "^\\*\\*\\* %Y-%m-%d")))
+    (goto-char (point-min))
+    (re-search-forward day-heading nil t)
+    (org-end-of-subtree))))
    ;; This template creates a list item instead of a new headline
-   "**** %<%I:%M %p>:\n - %? \n - [[%F][source]]")))
+   "* %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n - %? \n - [[%F][source]]"
+    :clock-in t       ;; Start Toggl/Clock immediately
+         :clock-resume t   ;; Go back to previous task when done
+         :empty-lines 0)))
+
 
 (defun diary--entry-date (time-string)
   "Extract date (YYYY-MM-DD) from a TIME property string like [2025-05-05 Mon 18:00]."
