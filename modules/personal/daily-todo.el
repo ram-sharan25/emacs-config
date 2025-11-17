@@ -17,40 +17,6 @@
 (setq shortcut-file "~/Stillness/Personal/Notes/shortcuts_in_emacs.org")
 
 
-(defun ensure-date-tree ()
-  "Create the year/month/day heading structure for today if it doesn't exist."
-  (save-excursion
-    (let* ((year (format-time-string "%Y"))
-	   (month (format-time-string "%Y-%m %B"))
-	   (day (format-time-string "%Y-%m-%d %A"))
-	   (year-regex (format "^\\* %s$" year))
-	   (month-regex (format "^\\** %s$" month))
-	   (day-regex (format "^\\*** %s$" day)))
-
-      (goto-char (point-min))
-
-      ;; 1. Find or create Year headline (* Year)
-      (unless (re-search-forward year-regex nil t)
-	(goto-char (point-max))
-	(insert (format "\n* %s" year))
-	;; Land the cursor on the new heading for the next search limit calculation
-	(re-search-backward year-regex (point-min) t))
-
-      ;; 2. Find or create Month headline (** Month) inside the Year
-      (let ((year-end (org-end-of-subtree nil t)))
-	(unless (re-search-forward month-regex year-end t)
-	  ;; If not found within the year, insert it at the end of the year's content
-	  (goto-char year-end)
-	  (insert (format "\n** %s" month))
-	  ;; Land on the new month headline
-	  (re-search-backward month-regex (point-min) t)))
-
-      ;; 3. Find or create Day headline (*** Day) inside the Month
-      (let ((month-end (org-end-of-subtree nil t)))
-	(unless (re-search-forward day-regex month-end t)
-	  ;; If not found within the month, insert it at the end of the month's content
-	  (goto-char month-end)
-	  (insert (format "\n*** %s" day)))))))
 
 (defun diary--now ()
   "Return the current timestamp string."
@@ -58,7 +24,19 @@
 (setq org-todo-keywords
       '((sequence "TODO(t)" "IN-PROGRESS(p)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)" "STARTED(s)" "REVIEW(r)" "MAYBE(m)" "DEFERRED(f)" "TODAY(n)")))
 
-
+(defun journal--ensure-daily-heading ()
+  "Create the top-level daily heading (* YYYY-MM-DD Day) for today if it doesn't exist, and position point after it."
+  (goto-char (point-min))
+  (let* ((day-heading-text (format-time-string "%Y-%m-%d %A"))
+         (day-regex (format "^\\* %s$" day-heading-text)))
+    ;; Search for a top-level heading matching today's date
+    (unless (re-search-forward day-regex nil t)
+      ;; If not found, insert it at the bottom of the file
+      (goto-char (point-max))
+      (unless (bolp) (insert "\n"))  ; Ensure we're on a new line
+      (insert (format "\n* %s\n" day-heading-text)))
+    ;; Move to end of the heading line (whether found or created)
+    (end-of-line)))
 ;;; === Capture Templates ===
 
 (setq org-capture-templates
@@ -74,20 +52,13 @@
 
   ("h" "Log Time" entry (file+datetree,log-file )
    "* %? \n" :clock-in t :clock-keep t :clock-resume t)
+  ("j" "Journal" plain
+   (file+function ,journal-file journal--ensure-daily-heading)
+   "** %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n:LOGBOOK:\n:END:\n- %?"
+   :clock-in t
+   :clock-resume t
+   :empty-lines 1)))
 
-  ("j" "Journal " plain ; Use 'plain' type to insert text directly
-   (file+function ,journal-file
-      (lambda ()
-  ;; Navigate to the end of today's entry
-  (let ((day-heading (format-time-string "^\\*\\*\\* %Y-%m-%d")))
-    (goto-char (point-min))
-    (re-search-forward day-heading nil t)
-    (org-end-of-subtree))))
-   ;; This template creates a list item instead of a new headline
-   "* %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n - %? \n - [[%F][source]]"
-    :clock-in t       ;; Start Toggl/Clock immediately
-         :clock-resume t   ;; Go back to previous task when done
-         :empty-lines 0)))
 
 
 (defun diary--entry-date (time-string)
@@ -95,11 +66,6 @@
   (when (string-match "\\[\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\)" time-string)
     (match-string 1 time-string)))
 
-
-(advice-add 'org-capture :before
-      (lambda (&rest _)
-	(with-current-buffer (find-file-noselect journal-file)
-    (ensure-date-tree))))
 
 (defun notes-rebuild-index ()
   "Rebuild the notes index file with a Year->Month->Week structure."
