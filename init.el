@@ -70,7 +70,7 @@
 ;; run jedi in virtual environment
  (setq jedi:server-command
       '("/Users/rrimal/.emacs.d/.venv-jedi/bin/python"
-	"/Users/rrimal/.emacs.d/elpa/jedi-core-*/jediepcserver.py"))
+  "/Users/rrimal/.emacs.d/elpa/jedi-core-*/jediepcserver.py"))
 
 
 (use-package exec-path-from-shell
@@ -84,3 +84,30 @@
     ;; 2. Enable caching. Emacs will only re-run the shell command
     ;;    if your shell config files (like .zshrc) have changed.
     (exec-path-from-shell-initialize)))
+
+
+(setq org-hide-emphasis-markers t)
+
+(use-package all-the-icons
+  :commands
+  all-the-icons-insert all-the-icons-insert-faicon all-the-icons-insert-fileicon
+  all-the-icons-insert-material all-the-icons-insert-octicon all-the-icons-insert-wicon
+  all-the-icons-icon-for-dir all-the-icons-icon-for-file all-the-icons-icon-for-mode
+  all-the-icons-icon-for-url all-the-icons-icon-family all-the-icons-icon-family-for-buffer
+  all-the-icons-icon-family-for-file all-the-icons-icon-family-for-mode
+  all-the-icons-icon-for-buffer all-the-icons-faicon all-the-icons-octicon
+  all-the-icons-fileicon all-the-icons-material all-the-icons-wicon
+  all-the-icons-default-adjust all-the-icons-color-icons all-the-icons-scale-factor
+  all-the-icons-icon-alist all-the-icons-dir-icon-alist all-the-icons-weather-icon-alist
+  all-the-icons-icon-for-dir-with-chevron)
+
+
+(use-package all-the-icons-ibuffer
+  :commands all-the-icons-ibuffer-mode
+  :hook
+  (after-init-hook . all-the-icons-ibuffer-mode))
+
+(use-package org-bullets
+  :commands org-bullets-mode
+  :init
+  (add-hook 'org-mode-hook #'org-bullets-mode))
