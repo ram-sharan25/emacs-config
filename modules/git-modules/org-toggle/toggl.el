@@ -30,6 +30,8 @@
 
 (require 'json)
 (require 'request)
+(require 'json)
+
 
 (defcustom toggl-auth-token ""
   "Authentication token for Toggl."
@@ -144,14 +146,60 @@ its id.")
    (cl-function
     (lambda (&key data &allow-other-keys)
       (setq toggl-projects
-	    (mapcar (lambda (project)
-		      (cons (substring-no-properties (alist-get 'name project))
-			    (alist-get 'id project)))
-		    (alist-get 'projects data)))
+      (mapcar (lambda (project)
+          (cons (substring-no-properties (alist-get 'name project))
+          (alist-get 'id project)))
+        (alist-get 'projects data)))
       (message "Toggl projects successfully downloaded.")))
    (cl-function
     (lambda (&key error-thrown &allow-other-keys)
       (message "Fetching projects failed because %s" error-thrown)))))
+
+
+
+(defvar toggl-projects nil
+  "A list of cons cells: (ProjectName . ProjectID).")
+
+
+(defun rsr/update-toggl-projects ()
+  "Fetch ALL data from Toggl, extract Projects, and save to `toggl-projects`."
+  (interactive)
+  ;; 1. Setup the Request
+  (let* ((auth (base64-encode-string (concat toggl-auth-token ":api_token") t))
+         (url-request-method "GET")
+         (url-request-extra-headers
+          `(("Authorization" . ,(concat "Basic " auth))
+            ("Content-Type" . "application/json")))
+         ;; Using the 'me' endpoint which returns everything (projects, tags, etc)
+         (url "https://api.track.toggl.com/api/v9/me?with_related_data=true"))
+
+    (message "Fetching Toggl projects...")
+
+    ;; 2. Make the Call
+    (with-current-buffer (url-retrieve-synchronously url)
+      (goto-char (point-min))
+      (re-search-forward "^$" nil 'move) ; Skip HTTP headers
+
+      (let* ((full-data (json-read)) ; Parse the JSON
+             ;; Extract the 'projects' vector from the big structure
+             (projects-vector (alist-get 'projects full-data)))
+
+        (kill-buffer (current-buffer))
+
+        ;; 3. Process the Vector -> List of Cons Cells
+        (setq toggl-projects
+              ;; FIX: delq nil removes the 'nil' entries created by mapcar
+              (delq nil
+                    (mapcar (lambda (item)
+                              (if (not (eq (alist-get 'active item) :json-false))
+                                  (cons (alist-get 'name item)  ; The Name
+                                        (alist-get 'id item))   ; The ID
+                                nil)) ; Return nil if archived
+                            ;; Convert vector to list so mapcar works
+                            (append projects-vector nil))))
+
+        (message "Synced %d ACTIVE projects. Example: %s"
+                 (length toggl-projects) (car toggl-projects))))))
 
 (defvar toggl-default-project nil
   "Id of the default Toggl project.")
