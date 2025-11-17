@@ -116,7 +116,7 @@
               (when (re-search-forward day-heading nil t)
                 (forward-line 1)
                 ;; Insert the entry
-                (insert (format "** %s:\n:PROPERTIES:\n:PROJECT: Mind-State\n:END:\n- %s\n"
+                (insert (format "** %s:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n- %s\n"
                                 (format-time-string "%I:%M %p")
                                 entry-text)))))
           (save-buffer)))
