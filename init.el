@@ -106,8 +106,3 @@
   :commands all-the-icons-ibuffer-mode
   :hook
   (after-init-hook . all-the-icons-ibuffer-mode))
-
-(use-package org-bullets
-  :commands org-bullets-mode
-  :init
-  (add-hook 'org-mode-hook #'org-bullets-mode))

@@ -6,6 +6,10 @@
 ;;(load-theme ../../themes/mac-os-theme.el t)
 
 
+
+(use-package org-bullets
+  :ensure t
+  :hook (org-mode-hook . org-bullets-mode))
 ;; (use-package gruvbox-theme
 ;;   :ensure t
 ;;   :config
