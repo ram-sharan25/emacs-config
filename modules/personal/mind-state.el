@@ -6,19 +6,6 @@
 (defvar journal-file (expand-file-name "~/org/journal.org")
   "Path to the Org mode journal file for mind-state tracking.")
 
-(defun ensure-date-tree ()
-  "Ensure the journal file has a heading for today's date."
-  (let* ((today (format-time-string "%Y-%m-%d %A"))
-	 (year (format-time-string "%Y"))
-	 (month-name (format-time-string "%B")))
-    (with-current-buffer (find-file-noselect journal-file)
-      (unless (org-find-heading-in-buffer (concat "* " year))
-	(goto-char (point-max)) (insert (concat "\n* " year "\n")))
-      (unless (org-find-heading-in-buffer (concat "** " month-name))
-	(org-find-heading-in-buffer (concat "* " year)) (org-end-of-subtree) (insert (concat "\n** " month-name "\n")))
-      (unless (org-find-heading-in-buffer (concat "*** " today))
-	(org-find-heading-in-buffer (concat "** " month-name)) (org-end-of-subtree) (insert (concat "\n*** " today "\n"))))))
-
 (defun org-find-heading-in-buffer (heading)
   "Search for an Org heading from the beginning of the buffer."
   (save-excursion
@@ -58,19 +45,21 @@
   (let ((today (mind-state--current-date-string)))
     (unless (string= today mind-state-today-date)
       (setq mind-state-today-date today
-	    mind-state-prompts-today 0))))
+      mind-state-prompts-today 0))))
 
 (defun mind-state--within-active-hours-p ()
   (let* ((current-hour (string-to-number (format-time-string "%H")))
-	 (start-hour (car mind-state-active-hours))
-	 (end-hour (cadr mind-state-active-hours)))
+   (start-hour (car mind-state-active-hours))
+   (end-hour (cadr mind-state-active-hours)))
     (and (>= current-hour start-hour)
-	 (< current-hour end-hour))))
+   (< current-hour end-hour))))
 
 (defun mind-state--user-is-active-p ()
   "Return t if user has been active in Emacs recently."
-  ;; FIX: Convert the time object from `current-idle-time` to seconds.
-  (< (time-to-seconds (or (current-idle-time) '(0 . 0))) mind-state-idle-threshold))
+  (let ((idle-time (current-idle-time)))
+    (if idle-time
+        (< (float-time idle-time) mind-state-idle-threshold)
+      t))) ;; If no idle time, assume user is active
 
 (defun mind-state--should-prompt-p ()
   (interactive)
@@ -81,43 +70,60 @@
 (defun mind-state--calculate-next-interval ()
   "Calculate random interval in seconds until next prompt."
   (let* ((remaining-prompts (max 1 (- mind-state-target-prompts mind-state-prompts-today)))
-	 (remaining-hours (max 1 (- (cadr mind-state-active-hours)
-				    (string-to-number (format-time-string "%H")))))
-	 (avg-interval (/ (* remaining-hours 60) remaining-prompts))
-	 (min-interval (max mind-state-min-interval (/ avg-interval 2)))
-	 ;; FIX: Ensure max-interval is never smaller than min-interval.
-	 (max-interval (max min-interval (min mind-state-max-interval (* avg-interval 2))))
-	 (random-interval (+ min-interval (random (1+ (- max-interval min-interval))))))
+   (remaining-hours (max 1 (- (cadr mind-state-active-hours)
+            (string-to-number (format-time-string "%H")))))
+   (avg-interval (/ (* remaining-hours 60) remaining-prompts))
+   (min-interval (max mind-state-min-interval (/ avg-interval 2)))
+   ;; FIX: Ensure max-interval is never smaller than min-interval.
+   (max-interval (max min-interval (min mind-state-max-interval (* avg-interval 2))))
+   (random-interval (+ min-interval (random (1+ (- max-interval min-interval))))))
     (* random-interval 60))) ; Convert to seconds
+
+(defun mind-state--ensure-daily-heading ()
+  "Create the top-level daily heading (* YYYY-MM-DD Day) for today if it doesn't exist."
+  (goto-char (point-min))
+  (let* ((day-heading-text (format-time-string "%Y-%m-%d %A"))
+         (day-regex (format "^\\* %s$" day-heading-text)))
+    (unless (re-search-forward day-regex nil t)
+      (goto-char (point-max))
+      (unless (bolp) (insert "\n"))
+      (insert (format "\n* %s\n" day-heading-text)))
+    (end-of-line)))
 
 ;; === Core Prompt Function ===
 (defun mind-state--prompt-user ()
   (interactive)
   (when (mind-state--should-prompt-p)
     (let* ((state-with-completion
-	    (completing-read "How are you feeling right now? " mind-state-options nil nil))
-	   (custom-state (if (string-empty-p state-with-completion)
-			     (read-string "Describe your current mind-state: ")
-			   state-with-completion))
-	   (additional-notes (read-string "Any additional notes (optional): ")))
-      (ensure-date-tree)
+            (completing-read "How are you feeling right now? " mind-state-options nil nil))
+           (custom-state (if (string-empty-p state-with-completion)
+                             (read-string "Describe your current mind-state: ")
+                           state-with-completion))
+           (additional-notes (read-string "Any additional notes (optional): ")))
+
       (let ((entry-text (concat "Mind-State: " custom-state
-				(if (not (string-empty-p additional-notes))
-				    (concat " | Notes: " additional-notes)
-				  ""))))
-	(with-current-buffer (find-file-noselect journal-file)
-	  (save-excursion
-	    (let ((day-heading (format-time-string "^\\*\\*\\* %Y-%m-%d")))
-	      (goto-char (point-min))
-	      (when (re-search-forward day-heading nil t)
-		(org-end-of-subtree)
-		(unless (bolp) (insert "\n"))
-		(insert (format "**** %s :MIND-STATE:\n - %s\n"
-				(format-time-string "%I:%M %p")
-				entry-text)))))))
+                                (if (not (string-empty-p additional-notes))
+                                    (concat " | Notes: " additional-notes)
+                                  ""))))
+        (with-current-buffer (find-file-noselect journal-file)
+          (save-excursion
+            ;; Ensure daily heading exists
+            (mind-state--ensure-daily-heading)
+
+            ;; Now insert the time-based entry
+            (goto-char (point-min))
+            (let ((day-heading (format-time-string "^\\* %Y-%m-%d %A$")))
+              (when (re-search-forward day-heading nil t)
+                (forward-line 1)
+                ;; Insert the entry
+                (insert (format "** %s:\n:PROPERTIES:\n:PROJECT: Mind-State\n:END:\n- %s\n"
+                                (format-time-string "%I:%M %p")
+                                entry-text)))))
+          (save-buffer)))
+
       (setq mind-state-prompts-today (1+ mind-state-prompts-today))
       (message "Mind-state logged: %s (%d/%d today)"
-	       custom-state mind-state-prompts-today mind-state-target-prompts)))
+               custom-state mind-state-prompts-today mind-state-target-prompts)))
   (mind-state--schedule-next-prompt))
 
 ;; === Timer Management ===
