@@ -131,5 +131,6 @@
 ;; --- GLOBAL KEYBINDINGS ---
 (global-set-key (kbd "C-c c i") #'org-clock-in)
 (global-set-key (kbd "C-c c o") #'org-clock-out)
+(global-set-key (kbd "C-c c g") #'org-clock-goto)
 ;; Optional: Refresh projects manually if you add a new one on the web
 ;; (global-set-key (kbd "C-c t r") #'rsr/update-toggl-projects)

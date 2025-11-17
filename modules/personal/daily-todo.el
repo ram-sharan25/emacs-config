@@ -141,8 +141,8 @@
   "Open daily file and jump to today's entry."
   (interactive)
   (find-file journal-file)
-  (ensure-date-tree)
-  (let ((day-heading (format-time-string "^\\*\\*\\* %Y-%m-%d")))
+  (journal--ensure-daily-heading)
+  (let ((day-heading (format-time-string "^\\* %Y-%m-%d")))
     (goto-char (point-min))
     (re-search-forward day-heading nil t)))
 
