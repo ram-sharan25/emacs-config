@@ -28,3 +28,6 @@ company-statistics*
 tramp
 multisession/
 request/
+.org-generic-id-locations
+oauth2-auto.plist
+persist/
