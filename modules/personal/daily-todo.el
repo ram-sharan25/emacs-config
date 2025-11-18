@@ -81,14 +81,14 @@
     (time (and time-str (org-time-string-to-seconds time-str))))
      (when (and id time)
        (let* ((year  (format-time-string "%Y" time))
-	(month (format-time-string "%m" time))
-	(week  (format-time-string "%V" time))
-	(year-ht   (or (gethash year notes-by-date) (make-hash-table :test 'equal)))
-	(month-ht  (or (gethash month year-ht) (make-hash-table :test 'equal)))
-	(week-list (or (gethash week month-ht) '())))
-	 (setf (gethash week month-ht) (cons (list headline id) week-list))
-	 (setf (gethash month year-ht) month-ht)
-	 (setf (gethash year notes-by-date) year-ht)))))
+  (month (format-time-string "%m" time))
+  (week  (format-time-string "%V" time))
+  (year-ht   (or (gethash year notes-by-date) (make-hash-table :test 'equal)))
+  (month-ht  (or (gethash month year-ht) (make-hash-table :test 'equal)))
+  (week-list (or (gethash week month-ht) '())))
+   (setf (gethash week month-ht) (cons (list headline id) week-list))
+   (setf (gethash month year-ht) month-ht)
+   (setf (gethash year notes-by-date) year-ht)))))
        "NOTE|IDEA" 'file))
 
     (with-temp-file index-file
@@ -100,12 +100,12 @@
       ;; This is the line that was fixed
       (let* ((month-name (format-time-string "%B" (encode-time 0 0 0 1 (string-to-number month) (string-to-number year))))
        (month-ht (gethash month year-ht)))
-	(insert (format "** %s-%s %s\n" year month month-name))
-	(dolist (week (cl-sort (hash-table-keys month-ht) #'string<))
+  (insert (format "** %s-%s %s\n" year month month-name))
+  (dolist (week (cl-sort (hash-table-keys month-ht) #'string<))
     (let ((note-list (gethash week month-ht)))
       (insert (format "*** Week %s\n" week))
       (dolist (item (reverse note-list))
-	(insert (format "- [[id:%s][%s]]\n" (cadr item) (car item))))))))))))
+  (insert (format "- [[id:%s][%s]]\n" (cadr item) (car item))))))))))))
   (message "Hierarchical notes index rebuilt successfully."))
 
 ;; <<< NEW function to open the index file
@@ -183,7 +183,9 @@
 
 (setq org-agenda-files
       '("~/Stillness/Personal/Writings/Tasks.org"
-	"~/Stillness/Personal/Writings/RoughNotes.org"))
+        "~/Stillness/Personal/Writings/RoughNotes.org"
+        "~/Stillness/Personal/Writings/gcal.org"
+        "~/Stillness/Personal/Writings/gtasks/Tasks.org"))
 
 
 (provide 'flat-diary-config)

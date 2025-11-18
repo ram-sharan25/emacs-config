@@ -7,7 +7,7 @@
 
   :init
   ;; --- CREDENTIALS ---
-  (setq toggl-auth-token "0672de70c5ae0da9b1461ec72d72cb47")
+  (setq toggl-auth-token my/toggl-auth-token)
   (setq toggl-workspace-id 8843824)
 
   ;; --- INHERITANCE ---
