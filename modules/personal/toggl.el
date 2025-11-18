@@ -50,6 +50,12 @@
                               (append projects-vector nil))))
           (message "Synced %d active projects." (length toggl-projects))))))
 
+  (with-eval-after-load 'org-toggl
+  (message "Toggl: Running project cache update...")
+  ;; Call the function we defined to fetch and populate `toggl-projects`.
+  (rsr/update-toggl-projects))
+
+
   ;; --- 2. SMART CLOCK-IN HOOK ---
 
   (defun rsr/toggl-clock-in-hook ()

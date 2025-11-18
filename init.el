@@ -106,8 +106,3 @@
   :commands all-the-icons-ibuffer-mode
   :hook
   (after-init-hook . all-the-icons-ibuffer-mode))
-
-(with-eval-after-load 'org-toggl
-  (message "Toggl: Running project cache update...")
-  ;; Call the function we defined to fetch and populate `toggl-projects`.
-  (rsr/update-toggl-projects))
