@@ -1,0 +1,4 @@
+# Added automatically by ‘eldev init’.
+/.eldev
+run-tests.sh
+*.elc

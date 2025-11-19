@@ -3,7 +3,7 @@
 (require 'org)
 (require 'org-capture)
 (require 'org-id)
-
+(add-to-list 'load-path "~/.emacs.d/modules/git-modules/org-timeblock/")
 ;;; --- 1. File Paths ---
 
 (defvar my/projects-file "~/Stillness/Personal/Writings/Projects.org"
@@ -93,7 +93,37 @@
 
 ;;; --- 7. Keybinding ---
 
+
+
+
 (global-set-key (kbd "C-c t") (lambda () (interactive) (org-capture nil "p")))
+
+
+(use-package org-timeblock
+  :load-path  "~/.emacs.d/modules/git-modules/org-timeblock/"
+  :config
+  (setq org-timeblock-span 1)              ;; Show 1 Day
+  (setq org-timeblock-day-start-hour 6)    ;; Start at 7 AM (Hide 0-6 AM)
+  (setq org-timeblock-day-end-hour 23)
+  (setq org-timeblock-scale 0.8)          ;; Zoom out (Fit day on screen)
+  (setq org-timeblock-inbox-file my/tasks-file)
+  ;; 2. GRID SETTINGS
+  (setq org-timeblock-show-future-repeats t)
+  (setq org-timeblock-time-grid-step 60))
+
+(defun rsr/org-timeblock-split-view ()
+  "Open Org Timeblock on the left and the daily list on the right."
+  (interactive)
+  ;; Open the standard grid
+  (org-timeblock)
+  ;; Remove other windows to clean up
+  (delete-other-windows)
+  ;; Split the screen horizontally
+  (split-window-right)
+  ;; Move to the right window
+  (other-window 1)
+  ;; Switch to the "List View" of the current timeblock
+  (org-timeblock-list))
 
 
 (defun my/org-agenda-project-suffix ()
@@ -139,5 +169,6 @@
 
 (setq org-agenda-span 'day)
 (global-set-key (kbd "C-c a") 'org-agenda)
+(global-set-key (kbd "C-c d") 'rsr/org-timeblock-split-view)
 
 (provide 'project-tasks-config)
