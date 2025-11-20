@@ -125,6 +125,23 @@
   ;; Switch to the "List View" of the current timeblock
   (org-timeblock-list))
 
+(defun my-org-clock-on-state-change ()
+  "Clock in/out when TODO state changes to/from 'IN PROGRESS'.
+  This function checks `org-state' and `org-last-state'."
+
+  ;; 1. Clock IN when moving TO "IN PROGRESS"
+  (when (string= org-state "IN-PROGRESS")
+    ;; We removed (unless (org-clock-is-active)) so it ALWAYS clocks in
+    (org-clock-in))
+
+  ;; 2. Clock OUT when moving FROM "IN PROGRESS" to anything else
+  (when (and (string= org-last-state "IN-PROGRESS")
+             (not (string= org-state "IN-PROGRESS")))
+    (when (org-clock-is-active)
+      (org-clock-out))))
+
+(add-hook 'org-after-todo-state-change-hook 'my-org-clock-on-state-change)
+
 
 (defun my/org-agenda-project-suffix ()
   "Format as [Project]:Category, pad to fixed width, and hide 'nil'."
