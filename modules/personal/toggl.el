@@ -55,33 +55,6 @@
   ;; Call the function we defined to fetch and populate `toggl-projects`.
   (rsr/update-toggl-projects))
 
-
-  ;; --- 2. SMART CLOCK-IN HOOK ---
-
-  (defun rsr/toggl-clock-in-hook ()
-    "Start Toggl. Use :PROJECT: if exists, otherwise prompt from list."
-    ;; Only run in Org mode to prevent errors in other modes
-    (when (derived-mode-p 'org-mode)
-      (let* ((heading (org-get-heading t t t t))
-             (prop-project (org-entry-get (point) "PROJECT" t))
-             (user-task (read-string (format "Task (default: %s): " heading)))
-
-             ;; Determine Project ID
-             (final-project-id
-              (if prop-project
-                  (cdr (assoc prop-project toggl-projects))
-                ;; If no property, prompt user to pick from cached list
-                (let ((choice (completing-read "Select Toggl Project: " toggl-projects)))
-                  (cdr (assoc choice toggl-projects)))))
-
-             ;; Determine Task Name (Heading vs User Input)
-             (final-desc (if (string-equal user-task "") heading user-task)))
-
-        ;; Send to Toggl
-        (if final-project-id
-            (toggl-start-time-entry final-desc final-project-id)
-          (message "Warning: Starting Toggl without a project.")
-          (toggl-start-time-entry final-desc)))))
   (defun rsr/toggl-clock-in-hook ()
   "Starts Toggl. Uses a combination of capture mode and project name for fixed description."
   (when (derived-mode-p 'org-mode)
