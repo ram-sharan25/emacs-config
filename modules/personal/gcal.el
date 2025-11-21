@@ -3,7 +3,7 @@
 (add-to-list 'load-path "~/.emacs.d/modules/git-modules/org-gtasks/")
 (load "~/.emacs.d/secrets.el.gpg")
 (setq epg-pinentry-mode 'loopback)
-(setq google-task-file "~/Stillness/Personal/Writings/gtasks/Tasks.org")
+(setq google-task-file "~/Stillness/Personal/Writings/gtasks/GoogleTasks.org")
 
 (use-package org-gcal
   :ensure t
