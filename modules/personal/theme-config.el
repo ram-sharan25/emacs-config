@@ -2,7 +2,7 @@
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/") ;; Assumes this is the correct path
 
 ;; Now, load the theme by its symbol name
-(load-theme 'timu-macos t)
+(load-theme 'zenburn t)
 ;;(load-theme ../../themes/mac-os-theme.el t)
 
 
