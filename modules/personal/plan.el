@@ -144,45 +144,48 @@
 
 
 (defun my/org-agenda-project-suffix ()
-  "Format as [Project]:Category, pad to fixed width, and hide 'nil'."
+  "Format as [Project]:Category, pad to fixed width, and hide 'nil' or '???'."
   (let* ((cat (org-get-category))
-         (project (org-entry-get nil "PROJECT"))
-         (width 25)) ;; Adjust column width here
+	 (width 25))
 
-    (if (or (null cat) (string= (format "%s" cat) "nil"))
-        ;; Time Grid lines get empty space
-        (make-string width ?\s)
+    ;; 1. FIRST, check if it's a Time Grid line ("???") or empty
+    (if (or (null cat)
+	    (string= (format "%s" cat) "nil")
+	    (string= (format "%s" cat) "???")) ;; <--- This catches the 8:00 lines
 
-      ;; Build the string
-      (let ((output-str
-             (if project
-                 ;; SWAPPED: [Project] first, then Category
-                 (concat (propertize (format "[%s]" project)
-                                     'face '(:foreground "orange" :weight bold))
-                         ":" cat)
-               ;; If no project, just "Category:"
-               (format "%s:" cat))))
+	;; If it is Time Grid, just print whitespace and STOP.
+	(make-string width ?\s)
 
-        ;; Pad result to fixed width
-        (format (format "%%-%ds" width) output-str)))))
+      ;; 2. ONLY NOW is it safe to look for the project property
+      ;; We wrap it in ignore-errors just in case
+      (let* ((project (ignore-errors (org-entry-get nil "PROJECT")))
+	     (output-str
+	      (if project
+		  (concat (propertize (format "[%s]" project)
+				      'face '(:foreground "orange" :weight bold))
+			  ":" cat)
+		(format "%s:" cat))))
 
+	;; Pad result to fixed width
+	(format (format "%%-%ds" width) output-str)))))
+
+;; Re-apply the setting
 (setq org-agenda-prefix-format
       '((agenda . " %i %(my/org-agenda-project-suffix) %?-12t% s")
-        (todo   . " %i %(my/org-agenda-project-suffix) ")
-        (tags   . " %i %(my/org-agenda-project-suffix) ")
-        (search . " %i %(my/org-agenda-project-suffix) ")))
-
+	(todo   . " %i %(my/org-agenda-project-suffix) ")
+	(tags   . " %i %(my/org-agenda-project-suffix) ")
+	(search . " %i %(my/org-agenda-project-suffix) ")))
 
 (setq org-agenda-custom-commands
       '(("p" "Projects Dashboard" alltodo ""
-         (
-          ;; 1. Configure Super Agenda to group by the "PROJECT" property
-          (org-super-agenda-groups
-           '((:auto-property "PROJECT")
-             (:auto-todo t)))
-          (org-agenda-prefix-format
-           '((todo . "  %-12:c %?-12t% s")))
-          ))))
+	 (
+	  ;; 1. Configure Super Agenda to group by the "PROJECT" property
+	  (org-super-agenda-groups
+	   '((:auto-property "PROJECT")
+	     (:auto-todo t)))
+	  (org-agenda-prefix-format
+	   '((todo . "  %-12:c %?-12t% s")))
+	  ))))
 
 (setq org-agenda-span 'day)
 (global-set-key (kbd "C-c a") 'org-agenda)
