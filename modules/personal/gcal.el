@@ -158,5 +158,5 @@
 ;; Format: (run-at-time START-TIME REPEAT-INTERVAL FUNCTION)
 ;; nil = Start immediately
 ;; 1800 = Repeat every 1800 seconds (30 minutes)
-(run-at-time nil 1800 #'sync-google-services)
+(run-at-time nil 3600 #'sync-google-services)
 (setq plstore-cache-passphrase-for-symmetric-encryption t)
