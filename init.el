@@ -106,3 +106,5 @@
   :commands all-the-icons-ibuffer-mode
   :hook
   (after-init-hook . all-the-icons-ibuffer-mode))
+;; Use spaces instead of tabs for indentation
+(setq-default indent-tabs-mode nil)
