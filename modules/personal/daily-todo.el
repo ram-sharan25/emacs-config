@@ -185,7 +185,7 @@
       '("~/Stillness/Personal/Writings/Tasks.org"
         "~/Stillness/Personal/Writings/RoughNotes.org"
         "~/Stillness/Personal/Writings/gcal.org"
-        "~/Stillness/Personal/Writings/gtasks/Tasks.org"))
+        "~/Stillness/Personal/Writings/gtasks/GoogleTasks.org"))
 
 
 (provide 'flat-diary-config)
