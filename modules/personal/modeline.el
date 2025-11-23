@@ -1,9 +1,5 @@
 (use-package nerd-icons
-  :ensure t
-  :config
-  ;; Initialize Nerd Icons
-  (nerd-icons-install-fonts) ; Only needed once to install the font files
-  )
+  :ensure t )
 
 (use-package doom-modeline
   :ensure t
