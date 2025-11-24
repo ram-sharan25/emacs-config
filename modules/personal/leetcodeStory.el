@@ -1,9 +1,9 @@
+(require 'paths)
 (require 'org-id)
 
 
-(defvar my-leetcode-notes-default-directory
-  "~/Stillness/Development/NeetCode/"
-  "Default directory to save LeetCode notes.")
+(defvar my-leetcode-notes-default-directory my/leetcode-dir
+  "Default directory to save LeetCode notes, using standardized path.")
 (defvar-local my-is-leetcode-note-buffer nil
   "Non-nil if the current buffer is a new LeetCode note buffer.")
 
@@ -12,8 +12,8 @@
   (replace-regexp-in-string "[\\/:*?\"<>| \[\]]" "_" filename))
 
 ;; Define the path for your index file
-(defvar leetcode-index-file (expand-file-name "Index.org" my-leetcode-notes-default-directory)
-  "The full path to the LeetCode index file.")
+(defvar leetcode-index-file my/leetcode-index-file
+  "The full path to the LeetCode index file, using standardized path.")
 
 (defun my-create-new-leetcode-note ()
   "Prompt for a LeetCode problem title, create an Org note, and save it with that title."
@@ -140,7 +140,7 @@ Leaves point on the line inside the source block."
 (defun leetcode-open-index ()
   "Open the LeetCode index file."
   (interactive)
-  (find-file my-leetcode-index-file))
+  (find-file my/leetcode-index-file))
 
 ;; Define a keybinding to open the index
 (define-key global-map (kbd "C-c o l") #'leetcode-open-index)
