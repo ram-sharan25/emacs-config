@@ -16,7 +16,7 @@
   (org-gcal-down-days 365)
   (org-gcal-up-days 365)
   (org-gcal-fetch-file-alist
-   '(("primary" . my/gcal-file)))) ; Use standardized variable)
+   `(("primary" . ,my/gcal-file))))
 
 (use-package org-gtasks
   :ensure nil
