@@ -4,17 +4,16 @@
 (require 'org-capture)
 (require 'org-id)
 (require 'org-element)
+(require 'paths)
 
-(setq personal-dir "~/Stillness/Personal/Writings/")
- ;;"Base directory for personal writings."
-(setq diary-file (concat personal-dir "Tasks.org"))
-(setq projects-file (concat personal-dir "Projects.org"))
-(setq log-file (concat personal-dir "LogBook.org"))
-(setq journal-file (concat personal-dir "Journal.org"))
-(setq notes-file (concat personal-dir "RoughNotes.org"))
-(setq index-file (concat personal-dir "NotesIndex.org"))
-(setq todo-index-file (concat personal-dir "TodoIndex.org"))
-(setq shortcut-file "~/Stillness/Personal/Notes/shortcuts_in_emacs.org")
+;; Use standardized paths from paths.el
+(setq diary-file my/tasks-file)
+(setq projects-file my/projects-file)
+(setq log-file my/logbook-file)
+(setq journal-file my/journal-file)
+(setq notes-file my/rough-notes-file)
+(setq index-file my/notes-index-file)
+(setq shortcut-file my/shortcuts-file)
 
 
 
@@ -181,11 +180,7 @@
 (global-set-key (kbd "C-c o b") 'open-single-buffer);;open a heading in a new buffer
 
 
-(setq org-agenda-files
-      '("~/Stillness/Personal/Writings/Tasks.org"
-        "~/Stillness/Personal/Writings/RoughNotes.org"
-        "~/Stillness/Personal/Writings/gcal.org"
-        "~/Stillness/Personal/Writings/gtasks/GoogleTasks.org"))
+(setq org-agenda-files my/org-agenda-files)
 
 
 (provide 'flat-diary-config)
