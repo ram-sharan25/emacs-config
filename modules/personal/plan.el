@@ -17,6 +17,11 @@
 
 ;;; --- 3. Helper Functions to Read Project Names ---
 
+(defun my/get-area-names ()
+  "Return a list of Area names (filenames without extension) from `my/areas-dir`."
+  (let ((files (directory-files my/areas-dir nil "\\.org$")))
+    (mapcar #'file-name-sans-extension files)))
+
 (defun my/org-get-project-headings ()
   "Return a list of all level-1 headings from `my/projects-file`."
   (with-current-buffer (find-file-noselect my/projects-file)
@@ -83,7 +88,7 @@
          project-name
          goal-link-string))))
 
-         :empty-lines 1))
+        :empty-lines 1))
 
 ;;; --- 7. Keybinding ---
 
