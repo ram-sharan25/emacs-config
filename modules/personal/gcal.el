@@ -3,7 +3,8 @@
 (add-to-list 'load-path "~/.emacs.d/modules/git-modules/org-gtasks/")
 (load "~/.emacs.d/secrets.el.gpg")
 (setq epg-pinentry-mode 'loopback)
-(setq google-task-file "~/Stillness/Personal/Writings/gtasks/GoogleTasks.org")
+(require 'paths) ; Load standardized path variables
+(setq google-task-file my/gtasks-file) ; Use standardized variable
 
 (use-package org-gcal
   :ensure t
@@ -15,7 +16,7 @@
   (org-gcal-down-days 365)
   (org-gcal-up-days 365)
   (org-gcal-fetch-file-alist
-   '(("primary" . "~/Stillness/Personal/Writings/gcal.org"))))
+   '(("primary" . my/gcal-file))) ; Use standardized variable)
 
 (use-package org-gtasks
   :ensure nil
@@ -23,7 +24,7 @@
   :after my-secrets
   :config
   (org-gtasks-register-account :name "Perso"
-             :directory "~/Stillness/Personal/Writings/gtasks/"
+             :directory my/gtasks-dir
              :login "rimal.ram25@gmail.com"
              :client-id my/google-client-id
              :client-secret my/google-client-secret))
@@ -146,7 +147,7 @@
 (defun open-google-tasks-file ()
   "Open daily file and jump to today's entry."
   (interactive)
-  (find-file google-task-file))
+  (find-file my/gtasks-file) ; Use standardized variable)
 
 
 (global-set-key (kbd "C-c f") 'my-org-process-gtask-and-file)
