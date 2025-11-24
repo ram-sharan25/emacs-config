@@ -1,3 +1,4 @@
+(require 'paths)
 (use-package org-roam
   :ensure t
   :bind (:map global-map
@@ -14,7 +15,7 @@
          ("M-m r a" . org-roam-alias-add)
          ("M-m r t" . org-roam-tag-add)))
   :config
-  (setq org-roam-directory "~/Stillness/Personal/")
+  (setq org-roam-directory my/brain-dir)
 
   (org-roam-db-autosync-mode t)
 
