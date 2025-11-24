@@ -1,19 +1,13 @@
 ;;; project-tasks.el --- A system for capturing tasks linked to projects -*- lexical-binding: t; -*-
 
-(require 'org)
-(require 'org-capture)
-(require 'org-id)
+(require 'paths)
 (add-to-list 'load-path "~/.emacs.d/modules/git-modules/org-timeblock/")
 ;;; --- 1. File Paths ---
 
-(defvar my/projects-file "~/Stillness/Personal/Writings/Projects.org"
-  "The file containing high-level project definitions.")
-
-(defvar my/tasks-file "~/Stillness/Personal/Writings/Tasks.org"
-  "The file where all daily, actionable tasks will be captured.")
-(defvar my/diary-file "~/Stillness/Personal/Writings/Diary.org"
-  "The file where all daily, actionable tasks will be captured.")
-(defvar my/google-calendar-file "~/Stillness/Personal/Writings/gcal.org")
+(defvar my/projects-file my/projects-file)
+(defvar my/tasks-file my/tasks-file)
+(defvar my/diary-file my/diary-file)
+(defvar my/google-calendar-file my/gcal-file)
 ;;; --- 2. Packages ---
 
 (use-package org-super-agenda
