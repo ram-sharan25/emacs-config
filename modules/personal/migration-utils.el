@@ -14,6 +14,7 @@
 (require 'org)
 (require 'org-id)
 (require 'paths)
+(require 'project-tasks-config)
 
 (defun my/get-area-names ()
   "Return a list of Area names."
@@ -55,55 +56,72 @@ If an Area file is empty or missing an ID, initialize it."
           (push (cons name id) areas))))
     (nreverse areas)))
 
-(defun my/process-legacy-note ()
-  "Interactively assign AREA and PROJECT to the current heading, insert links, then archive it.
-Prompts for:
-1. Area (Name)
-2. Project (Name, filtered by Area)
-Sets :AREA: and :PROJECT: properties.
-Inserts :LINKS: [[id:AREA_ID][Area]] [[id:PROJECT_ID][Project]].
-Archives the subtree."
+(defun my/archive-task-or-note ()
+  "Archive the current entry.
+   If AREA/PROJECT are missing, prompt for them.
+   Adds ID-based links to Resources before archiving."
   (interactive)
-  (let* ((areas (my/get-areas-alist))
-         (area-names (mapcar #'car areas))
-         ;; Prompt for Area
-         (selected-area-name (completing-read "Select Area: " area-names nil t))
-         (selected-area-id (cdr (assoc selected-area-name areas)))
-         
-         ;; Get projects filtered by Area
-         (projects (my/get-projects-alist selected-area-name))
-         (project-names (mapcar #'car projects))
-         ;; Prompt for Project
-         (selected-project-name (completing-read (format "Select Project for %s (or None): " selected-area-name) 
-                                                 (cons "None" project-names) nil t))
-         (selected-project-id (cdr (assoc selected-project-name projects))))
+  
+  ;; 1. Get or Prompt for Metadata
+  (let* ((area-name (org-entry-get nil "AREA"))
+         (project-name (org-entry-get nil "PROJECT"))
+         (area-id nil)
+         (project-id nil))
 
-    ;; Set Properties
-    (org-set-property "AREA" selected-area-name)
-    (if (and selected-project-name (not (string= selected-project-name "None")))
-        (org-set-property "PROJECT" selected-project-name)
-      (org-delete-property "PROJECT"))
-
-    ;; Insert Links
-    (unless (save-excursion 
-              (re-search-forward "^:LINKS: \\[\\[id:" (save-excursion (org-end-of-subtree) (point)) t))
-      (save-excursion
-        (org-back-to-heading t)
-        (forward-line 1)
-        ;; Skip properties/drawer
-        (while (looking-at-p "^[ \t]*:[A-Za-z]+:") (forward-line 1))
-        (while (looking-at-p "^[ \t]*:END:") (forward-line 1))
-        
-        (insert "\n")
-        (insert (format ":LINKS: [[id:%s][%s]]" selected-area-id selected-area-name))
-        (when (and selected-project-id (not (string= selected-project-name "None")))
-          (insert (format " [[id:%s][%s]]" selected-project-id selected-project-name)))
-        (insert "\n")))
+    ;; Prompt if missing
+    (unless area-name
+      (setq area-name (my/select-area-default-misc))
+      (org-entry-put nil "AREA" area-name))
     
-    ;; Archive
+    (unless project-name
+      (let* ((project-cons (my/org-select-project-allow-empty area-name)))
+        (setq project-name (car project-cons))
+        (org-entry-put nil "PROJECT" project-name)))
+
+    ;; Retrieve IDs
+    (setq area-id (my/get-area-id-by-name area-name))
+    (let ((project-cons (assoc project-name (my/org-get-project-headings area-name))))
+      (setq project-id (cdr project-cons)))
+
+    ;; 2. Add Resources Links
+    (save-excursion
+      (let* ((end-pos (org-entry-end-position))
+             (resources-pos (save-excursion
+                              (org-back-to-heading t)
+                              (re-search-forward "^\\*+ Resources" end-pos t))))
+        
+        (if resources-pos
+            ;; Case A: Resources Exists -> Append Links
+            (progn
+              (goto-char resources-pos)
+              (org-end-of-subtree t) ;; Go to end of Resources content
+              (unless (bolp) (insert "\n"))
+              
+              ;; Append Project Link if missing
+              (when (and project-id 
+                         (not (save-excursion 
+                                (goto-char resources-pos) 
+                                (re-search-forward (format "id:%s" project-id) (point-max) t))))
+                (insert (format "- Project: [[id:%s][%s]]\n" project-id project-name)))
+              
+              ;; Append Area Link if missing
+              (when (and area-id 
+                         (not (save-excursion 
+                                (goto-char resources-pos) 
+                                (re-search-forward (format "id:%s" area-id) (point-max) t))))
+                (insert (format "- Area: [[id:%s][%s]]\n" area-id area-name))))
+
+          ;; Case B: Resources Missing -> Create New
+          (goto-char end-pos)
+          (insert "\n** Resources\n")
+          (when project-id
+            (insert (format "- Project: [[id:%s][%s]]\n" project-id project-name)))
+          (insert (format "- Area: [[id:%s][%s]]\n" area-id area-name)))))
+
+    ;; 3. Archive
     (org-archive-subtree)
-    (message "Processed and archived: %s -> Area: %s, Project: %s"
-             (org-get-heading t t t t) selected-area-name selected-project-name)))
+    (message "Archived: %s (Area: %s, Project: %s)" 
+             (org-get-heading t t t t) area-name project-name)))
 
 (defun my/batch-add-links ()
   "Scan the current buffer for notes with :AREA: and :PROJECT: properties.
