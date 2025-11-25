@@ -23,13 +23,13 @@
     (mapcar #'file-name-sans-extension files)))
 
 (defun my/org-get-project-headings ()
-  "Return a list of all level-1 headings from `my/projects-file`."
+  "Return a list of all level-1 headings from `my/projects-file` that have the ACTIVE property set to TRUE."
   (with-current-buffer (find-file-noselect my/projects-file)
     (let ((headings '()))
       (org-map-entries
        (lambda ()
    (push (org-get-heading t t) headings))
-       "LEVEL=1" 'file)
+       "LEVEL=1+ACTIVE=\"TRUE\"" 'file)
       (nreverse headings))))
 
 (defun my/org-select-project-allow-empty ()
