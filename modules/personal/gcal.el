@@ -4,6 +4,7 @@
 (load "~/.emacs.d/secrets.el.gpg")
 (setq epg-pinentry-mode 'loopback)
 (require 'paths) ; Load standardized path variables
+(require 'project-tasks-config)
 (setq google-task-file my/gtasks-file) ; Use standardized variable
 
 (use-package org-gcal
@@ -76,73 +77,78 @@
 ;; This is much safer than a save hook.
 (run-at-time "5 min" 1200 'sync-google-services)
 
-(defun my/org-get-project-headings ()
-  "Return a list of all level-1 headings from `my/projects-file`."
-  (with-current-buffer (find-file-noselect my/projects-file)
-    (let ((headings '()))
-      (org-map-entries
-       (lambda ()
-	 ;; (org-get-heading t t t t) -> No tags, no todo, no priority, no comment
-	 (push (org-get-heading t t t t) headings))
-       "LEVEL=1" 'file)
-      (nreverse headings))))
 
-(defun my-org-process-gtask-and-file ()
-  "Copy task, swap old ID to 'gtaskId', generate FRESH Org ID,
-   assign Project, and mark original DONE."
+
+(defun my-org-gtask-assign-metadata ()
+  "Prompt for Area/Project, set properties, and add resource links to the current task."
   (interactive)
+  (let* ((area-name (my/select-area-default-misc))
+         (project-cons (my/org-select-project-allow-empty area-name))
+         (project-name (car project-cons))
+         (project-id (cdr project-cons)))
 
-  (let ((selected-project
-	 (completing-read "Select Project: " (my/org-get-project-headings) nil t))
-	;; 1. Grab the CURRENT ID (from Google Task) before we leave this buffer
-	(original-google-id (org-entry-get nil "ID"))
-	(task-content nil))
+    ;; 1. Set Properties
+    (org-entry-put nil "AREA" area-name)
+    (org-entry-put nil "PROJECT" project-name)
 
-    (when selected-project
+    ;; 2. Add Resources (if not already present)
+    (save-excursion
+      (let ((end-pos (org-entry-end-position)))
+        (goto-char end-pos)
+        ;; Check if "Resources" heading already exists in the subtree
+        (unless (save-excursion
+                  (org-back-to-heading t)
+                  (re-search-forward "^\\*+ Resources" end-pos t))
+          (insert "\n** Resources\n")
+          (when project-id
+            (insert (format "- Project: [[id:%s][%s]]\n" project-id project-name)))
+          (insert (format "- Area: [[id:%s][%s]]\n" (my/get-area-id-by-name area-name) area-name)))))
+    
+    (message "Assigned Area: %s, Project: %s" area-name project-name)))
 
-      ;; 2. Capture the content (Still TODO, keeping original properties for now)
+(defun my-org-gtask-process ()
+  "Move current task to tasks.org.
+   If Area/Project are missing, prompt for them first.
+   Generates new ID, saves old ID, and marks original DONE."
+  (interactive)
+  
+  ;; 1. Ensure Metadata Exists
+  (unless (org-entry-get nil "AREA")
+    (my-org-gtask-assign-metadata))
+
+  (let ((original-google-id (org-entry-get nil "ID"))
+        (task-content nil))
+
+    ;; 2. Capture Content
+    (save-excursion
+      (org-back-to-heading t)
+      (let ((beg (point))
+            (end (progn (org-end-of-subtree t t) (point))))
+        (setq task-content (buffer-substring beg end))))
+
+    ;; 3. Paste to Destination
+    (with-current-buffer (find-file-noselect my/tasks-file)
       (save-excursion
-	(org-back-to-heading t)
-	(let ((beg (point))
-	      (end (progn (org-end-of-subtree t t) (point))))
-	  (setq task-content (buffer-substring beg end))))
+        (goto-char (point-max))
+        (insert "\n")
+        (let ((paste-start-pos (point)))
+          (insert task-content)
+          (insert "\n")
+          
+          ;; 4. Update New Entry
+          (goto-char paste-start-pos)
+          (org-back-to-heading t)
+          
+          ;; Swap IDs
+          (when original-google-id
+            (org-entry-put nil "gtaskId" original-google-id))
+          (org-entry-put nil "ID" (org-id-new))
+          
+          (save-buffer))))
 
-      ;; 3. Switch to DESTINATION and Paste
-      (with-current-buffer (find-file-noselect my/tasks-file)
-	(save-excursion
-	  (goto-char (point-max))
-	  (insert "\n")
-
-	  ;; Record where we started pasting so we can edit the new entry
-	  (let ((paste-start-pos (point)))
-	    (insert task-content)
-	    (insert "\n")
-
-	    ;; Move point to the newly pasted headline to edit its properties
-	    (goto-char paste-start-pos)
-	    (org-back-to-heading t)
-
-	    ;; --- PROPERTY TRANSFORMATION HAPPENS HERE ---
-	    ;; A. Set the Project
-	    (org-entry-put nil "PROJECT" selected-project)
-
-	    ;; B. Move the OLD ID to "gtaskId"
-	    (when original-google-id
-	      (org-entry-put nil "gtaskId" original-google-id))
-
-	    ;; C. Generate a FRESH Org ID for the standard ID property
-	    ;; This ensures the new task is a unique entity in your Org system
-	    (org-entry-put nil "ID" (org-id-new)))
-
-	  (save-buffer)))
-
-      ;; 4. Mark Original (Google Task) as DONE
-      ;; We do this LAST so the copy acts on the "active" version
-      (org-todo "DONE")
-
-      (message "Task moved to %s. Old ID saved as gtaskId."
-	       (file-name-nondirectory my/tasks-file)))))
-
+    ;; 5. Mark Original DONE
+    (org-todo "DONE")
+    (message "Task processed and moved to %s." (file-name-nondirectory my/tasks-file))))
 
 (defun open-google-tasks-file ()
   "Open daily file and jump to today's entry."
@@ -150,7 +156,8 @@
   (find-file my/gtasks-file)) ; Use standardized variable)
 
 
-(global-set-key (kbd "C-c f") 'my-org-process-gtask-and-file)
+(global-set-key (kbd "C-c f") 'my-org-gtask-process)
+(global-set-key (kbd "C-c g") 'my-org-gtask-assign-metadata)
 (global-set-key (kbd "C-c o f") 'open-google-tasks-file)
 
 
