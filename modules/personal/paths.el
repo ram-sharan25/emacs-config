@@ -40,6 +40,12 @@
 (defconst my/tasks-file (expand-file-name "tasks.org" my/dashboard-dir)
   "Actionable tasks file.")
 
+(defconst my/areas-dir (expand-file-name "Areas/" my/brain-dir)
+  "Directory for Area Hubs (Ongoing Responsibilities).")
+
+(defconst my/resources-dir (expand-file-name "Resources/" my/brain-dir)
+  "Directory for Resource Hubs (Topics, Books, Interests).")
+
 (defconst my/projects-file (expand-file-name "projects.org" my/dashboard-dir)
   "High-level project definitions file.")
 
@@ -112,6 +118,12 @@
 
 (defconst my/rclone-sync-dir my/brain-dir
   "Directory to sync via Rclone (entire Brain directory).")
+
+(defconst my/archive-dir (expand-file-name "Archives/" my/brain-dir)
+  "Directory for archived tasks and projects.")
+
+(defconst my/archive-file-template (expand-file-name "%s_archive.org" my/archive-dir)
+  "Template for archive filenames (e.g. tasks_archive.org).")
 
 (provide 'paths)
 ;;; paths.el ends here
