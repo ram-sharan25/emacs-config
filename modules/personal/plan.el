@@ -198,7 +198,7 @@ Returns a cons cell (Name . ID). Includes 'Dump' as the first option."
 (defun my/org-agenda-project-suffix ()
   "Format as [Project]:Category, pad to fixed width, and hide 'nil' or '???'."
   (let* ((cat (org-get-category))
-	 (width 25))
+	 (width 40))
 
     ;; 1. FIRST, check if it's a Time Grid line ("???") or empty
     (if (or (null cat)
