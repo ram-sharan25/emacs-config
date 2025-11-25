@@ -113,4 +113,4 @@
 
 (setq-default auto-fill-function 'do-auto-fill)
 (setq-default fill-column 80)
-(setq org-id-link-to-org-use-id 'create-if-interactive)
+

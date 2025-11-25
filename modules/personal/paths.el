@@ -21,6 +21,9 @@
 (defconst my/public-dir (expand-file-name "Public/" my/brain-dir)
   "Public knowledge notes directory (Git-synced).")
 
+(defconst my/data-dir (expand-file-name "data/" my/brain-dir)
+  "Central directory for all media assets (images, PDFs, etc).")
+
 (defconst my/dashboard-dir (expand-file-name "Dashboard/" my/brain-dir)
   "Dashboard directory for PARA workflow (Projects, Tasks, etc).")
 

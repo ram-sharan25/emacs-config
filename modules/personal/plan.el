@@ -22,21 +22,51 @@
   (let ((files (directory-files my/areas-dir nil "\\.org$")))
     (mapcar #'file-name-sans-extension files)))
 
-(defun my/org-get-project-headings ()
-  "Return a list of all level-1 headings from `my/projects-file` that have the ACTIVE property set to TRUE."
+(defun my/get-area-id-by-name (area-name)
+  "Return the ID of the Area file corresponding to AREA-NAME.
+Creates the ID if it doesn't exist."
+  (let ((file (expand-file-name (concat area-name ".org") my/areas-dir)))
+    (when (file-exists-p file)
+      (with-current-buffer (find-file-noselect file)
+	(org-id-get-create)))))
+
+(defun my/org-get-project-headings (&optional area-filter)
+  "Return an alist of (Project Name . ID) from `my/projects-file` with ACTIVE=TRUE.
+If AREA-FILTER is provided, only include projects with a matching :AREA: property."
   (with-current-buffer (find-file-noselect my/projects-file)
-    (let ((headings '()))
+    (let ((projects '()))
       (org-map-entries
        (lambda ()
-   (push (org-get-heading t t) headings))
+	 (let* ((heading (org-get-heading t t))
+		(id (org-id-get-create))
+		(area (org-entry-get nil "AREA")))
+	   ;; Filter by Area if provided
+	   (when (or (null area-filter)
+		     (string= area area-filter))
+	     (push (cons heading id) projects))))
        "LEVEL=1+ACTIVE=\"TRUE\"" 'file)
-      (nreverse headings))))
+      (nreverse projects))))
 
-(defun my/org-select-project-allow-empty ()
-  "Prompt user to select a project, allowing empty input."
-  (let ((project-list (my/org-get-project-headings)))
-    (completing-read "Select Project (or leave empty for Dump): "
-         project-list nil t)))
+(defun my/select-area-default-misc ()
+  "Prompt for Area, defaulting to 'Misc' and showing it first."
+  (let* ((areas (my/get-area-names))
+	 ;; Ensure Misc is first and unique
+	 (options (cons "Misc" (remove "Misc" areas)))
+	 (selected (completing-read "Area: " options nil t nil nil "Misc")))
+    (if (string-empty-p selected) "Misc" selected)))
+
+(defun my/org-select-project-allow-empty (&optional area-filter)
+  "Prompt user to select a project, optionally filtered by AREA-FILTER.
+Returns a cons cell (Name . ID). Includes 'Dump' as the first option."
+  (let* ((project-alist (my/org-get-project-headings area-filter))
+	 ;; Prepend "Dump" option explicitly so it appears first
+	 (options (cons '("Dump" . nil) project-alist))
+	 (project-names (mapcar #'car options))
+	 (selected-name (completing-read "Select Project: "
+					 project-names nil t nil nil "Dump")))
+    (if (string-empty-p selected-name)
+	'("Dump" . nil)
+      (assoc selected-name options))))
 
 ;;; --- 4. TODO Keywords ---
 
@@ -63,32 +93,55 @@
 
 (add-to-list 'org-capture-templates
        '("p" "Project Task" entry
-         (file my/tasks-file)
-         (function
-    (lambda ()
-      (let (project-name goal-link-string)
-        ;; Check if we are capturing from a project heading
-        (if (and (buffer-file-name)
-           (equal (expand-file-name (buffer-file-name))
-            (expand-file-name my/projects-file))
-           (org-at-heading-p))
-      ;; Context: from a Project heading
-      (progn
-        (setq project-name (org-get-heading t t))
-        (setq goal-link-string
-        (concat "** Goal: " (org-store-link nil) "\n")))
-          ;; Context: anywhere else
-          (let ((selected (my/org-select-project-allow-empty)))
-      (setq project-name (if (string-empty-p selected)
-                 "Dump" selected))
-      (setq goal-link-string "")))
-        ;; Final template string
-        (format
-"* TODO %%^{Task Title}\n:PROPERTIES:\n:PROJECT: %s\n:ID: %%(org-id-new)\n:CREATED:  %%U\n:END:\n  \n** Description\n- %%? \n\n** Walkthrough\n- [ ] "
-         project-name
-         goal-link-string))))
+	 (file my/tasks-file)
+	 (function
+	  (lambda ()
+	    (let* ((area-name (my/select-area-default-misc))
+		   ;; Select Project (filtered by Area) - returns (Name . ID)
+		   (project-cons (my/org-select-project-allow-empty area-name))
+		   (project-name (car project-cons))
+		   (project-id (cdr project-cons))
+		   template-string)
 
-        :empty-lines 1))
+	      ;; Select Template based on Project
+	      (if (equal project-name "Dump")
+		  ;; Simple Template for Dump
+		  (setq template-string "* TODO %%^{Task Title}\n:PROPERTIES:\n:AREA: %s\n:PROJECT: %s\n:ID: %%(org-id-new)\n:CREATED: %%U\n:END:\n")
+		;; Complex Template for Projects
+		;; We construct the Project Link: [[id:ID][Name]]
+		(let ((project-link (format "[[id:%s][%s]]" project-id project-name)))
+		  (setq template-string
+			(concat "* TODO %%^{Task Title}\n"
+				":PROPERTIES:\n"
+				":AREA: %s\n"
+				":PROJECT: %s\n"
+				":ID: %%(org-id-new)\n"
+				":CREATED: %%U\n"
+				":END:\n"
+				":THOUGHTS:\n"
+				"- %%? \n"
+				":END:\n\n"
+				"** Sub-tasks\n- [ ] \n\n"
+				"** Resources\n"
+				"- Project: " project-link "\n"
+				"- Area: [[id:%s][%s]]\n"))))
+
+	      ;; Return formatted string
+	      (format template-string area-name project-name area-name (my/get-area-id-by-name area-name) area-name))))
+	 :empty-lines 1))
+
+(add-to-list 'org-capture-templates
+       '("q" "New Project" entry
+	 (file my/projects-file)
+	 (function
+	  (lambda ()
+	    (let ((area-name (completing-read "Area (default Misc): " (my/get-area-names) nil t)))
+	      (when (string-empty-p area-name)
+		(setq area-name "Misc"))
+	      (format
+	       "* %%^{Project Name}\n:PROPERTIES:\n:AREA: %s\n:ACTIVE: TRUE\n:ID: %%(org-id-new)\n:CREATED: %%U\n:END:\n\n** Description\n- %%?\n"
+	       area-name))))
+	 :empty-lines 1))
 
 ;;; --- 7. Keybinding ---
 
@@ -96,7 +149,7 @@
 
 
 (global-set-key (kbd "C-c t") (lambda () (interactive) (org-capture nil "p")))
-
+(global-set-key (kbd "C-c q") (lambda () (interactive) (org-capture nil "q")))
 
 (use-package org-timeblock
   :load-path  "~/.emacs.d/modules/git-modules/org-timeblock/"
@@ -135,7 +188,7 @@
 
   ;; 2. Clock OUT when moving FROM "IN PROGRESS" to anything else
   (when (and (string= org-last-state "IN-PROGRESS")
-             (not (string= org-state "IN-PROGRESS")))
+	     (not (string= org-state "IN-PROGRESS")))
     (when (org-clock-is-active)
       (org-clock-out))))
 
@@ -184,10 +237,33 @@
 	     (:auto-todo t)))
 	  (org-agenda-prefix-format
 	   '((todo . "  %-12:c %?-12t% s")))
+	  ))
+      ("q" "Area Dashboard" alltodo ""
+	 (
+	  ;; 1. Configure Super Agenda to group by the "PROJECT" property
+	  (org-super-agenda-groups
+	   '((:auto-property "AREA")
+	     (:auto-todo t)))
+	  (org-agenda-prefix-format
+	   '((todo . "  %-12:c %?-12t% s")))
 	  ))))
 
 (setq org-agenda-span 'day)
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c d") 'rsr/org-timeblock-split-view)
+
+;;; --- 8. Workflow Configuration ---
+
+;; Archiving
+(setq org-archive-location (concat my/archive-dir "%s_archive.org::"))
+
+;; Agenda Files
+(setq org-agenda-files (list my/tasks-file my/projects-file))
+
+;; Refiling
+(setq org-refile-targets
+      '((my/projects-file :maxlevel . 1)
+	(my/tasks-file :maxlevel . 1)
+	(my/areas-dir :maxlevel . 1)))
 
 (provide 'project-tasks-config)

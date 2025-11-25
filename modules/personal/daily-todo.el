@@ -5,6 +5,7 @@
 (require 'org-id)
 (require 'org-element)
 (require 'paths)
+(require 'project-tasks-config)
 
 ;; Use standardized paths from paths.el
 (setq diary-file my/tasks-file)
@@ -46,7 +47,15 @@
 
   ("u" "Scratch Note " entry
    (file ,notes-file)
-   "* %^{Title} :NOTE:\n:PROPERTIES:\n:ID:    %(org-id-new)\n:TOPIC: %\\1\n:TAGS: \n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
+   (function
+    (lambda ()
+      (let* ((area-name (my/select-area-default-misc))
+             (project-cons (my/org-select-project-allow-empty area-name))
+             (project-name (car project-cons))
+             (project-id (cdr project-cons))
+             (project-link (if project-id (format "[[id:%s][%s]]" project-id project-name) project-name)))
+        (format "* %%^{Title} :NOTE:\n:PROPERTIES:\n:ID: %%(org-id-new)\n:AREA: %s\n:PROJECT: %s\n:TIME: %%(diary--now)\n:END:\n:THOUGHTS:\n- %%? \n:END:\n\n** Context\n- Project: %s\n- Area: [[id:%s][%s]]\n"
+                area-name project-name project-link (my/get-area-id-by-name area-name) area-name))))
    :empty-lines 1)
 
   ("h" "Log Time" entry (file+datetree,log-file )

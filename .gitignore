@@ -31,3 +31,5 @@ request/
 .org-generic-id-locations
 oauth2-auto.plist
 persist/
+.agent/
+.emacs.d.code-workspace
