@@ -127,7 +127,7 @@ Returns a cons cell (Name . ID). Includes 'Dump' as the first option."
 				"- Area: [[id:%s][%s]]\n"))))
 
 	      ;; Return formatted string
-	      (format template-string area-name project-name area-name (my/get-area-id-by-name area-name) area-name))))
+	      (format template-string area-name project-name (my/get-area-id-by-name area-name) area-name))))
 	 :empty-lines 1))
 
 (add-to-list 'org-capture-templates
@@ -258,7 +258,8 @@ Returns a cons cell (Name . ID). Includes 'Dump' as the first option."
 (setq org-archive-location (concat my/archive-dir "%s_archive.org::"))
 
 ;; Agenda Files
-(setq org-agenda-files (list my/tasks-file my/projects-file))
+(setq org-agenda-files (list my/tasks-file my/projects-file
+			     my/google-calendar-file my/gtasks-dir))
 
 ;; Refiling
 (setq org-refile-targets
