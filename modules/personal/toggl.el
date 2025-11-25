@@ -1,3 +1,5 @@
+;;; toggl.el --- Toggl configuration -*- lexical-binding: t; -*-
+
 ;; 1. Define Local Path
 (add-to-list 'load-path "~/.emacs.d/modules/git-modules/org-toggle/")
 
@@ -55,51 +57,75 @@
   ;; Call the function we defined to fetch and populate `toggl-projects`.
   (rsr/update-toggl-projects))
 
+  ;; --- 2. OVERRIDE: Support Tags in Time Entry ---
+  (defun toggl-start-time-entry (description &optional pid tags show-message)
+    "Start Toggl time entry with optional PID and TAGS."
+    (interactive "MDescription: \ni\np")
+    (setq pid (or pid toggl-default-project))
+    (toggl-request-post
+     (format "workspaces/%s/time_entries" toggl-workspace-id)
+     (json-encode `(("description" . ,description)
+                    ("duration" . -1)
+                    ("project_id" . ,pid)
+                    ("tags" . ,(or tags [])) ; Send tags array
+                    ("created_with" . "mbork's Emacs toggl client")
+                    ("start" . ,(format-time-string "%FT%TZ" nil t))
+                    ("workspace_id" . ,toggl-workspace-id)))
+     nil
+     (cl-function
+      (lambda (&key data &allow-other-keys)
+        (setq toggl-current-time-entry data)
+        (when show-message (message "Toggl time entry started."))))
+     (cl-function
+      (lambda (&key error-thrown &allow-other-keys)
+        (when show-message (message "Starting time entry failed because %s" error-thrown))))))
+
   (defun rsr/toggl-clock-in-hook ()
-  "Starts Toggl. Uses a combination of capture mode and project name for fixed description."
-  (when (derived-mode-p 'org-mode)
-    (let* ((heading (org-get-heading t t t t))
-           (prop-project (org-entry-get (point) "PROJECT" t))
+    "Starts Toggl. Maps AREA -> Project. Sends PROJECT + Tags as Toggl Tags."
+    (when (derived-mode-p 'org-mode)
+      (let* ((heading (org-get-heading t t t t))
+             ;; 1. Get Metadata
+             (prop-area (org-entry-get (point) "AREA" t))     ; Maps to Toggl Project
+             (prop-project (org-entry-get (point) "PROJECT" t)) ; Maps to Toggl Tag
+             (org-tags (org-get-tags))                        ; Org Tags -> Toggl Tags
 
-           ;; 🔑 NEW CHECK: Are we currently capturing AND is the project 'Habits'?
-           (is-journal-capture-active (and org-capture-mode
-                                           (string-equal prop-project "Habits")))
+             ;; 2. Construct Tag List (Sanitized)
+             (project-tag (when prop-project
+                            (replace-regexp-in-string "[^a-zA-Z0-9-_]" "_" 
+                                                      (replace-regexp-in-string " " "_" prop-project))))
+             (final-tags (append org-tags 
+                                 (when project-tag (list project-tag))))
 
-           (final-desc nil)
-           (final-project-id nil))
+             ;; 3. Check for Journal Capture
+             (is-journal-capture-active (and org-capture-mode
+                                             (string-equal prop-project "Habits")))
 
-      (if is-journal-capture-active
-          ;; --- PATH 1: JOURNAL CAPTURE (Fixed Name, Fixed Project) ---
-          (let ((project-name "Habits"))
-            (setq final-desc "Daily Journal Entry")
-            (setq final-project-id (cdr (assoc project-name toggl-projects)))
+             (final-desc nil)
+             (final-project-id nil))
 
-            (unless final-project-id
-              (message "ERROR: Project '%s' not found in Toggl cache. Refresh projects!" project-name)))
+        (if is-journal-capture-active
+            ;; --- PATH 1: JOURNAL CAPTURE ---
+            (let ((project-name "Habits"))
+              (setq final-desc "Daily Journal Entry")
+              (setq final-project-id (cdr (assoc project-name toggl-projects)))
+              (unless final-project-id
+                (message "ERROR: Project '%s' not found in Toggl cache." project-name)))
 
-        ;; --- PATH 2: REGULAR CLOCK-IN (Standard Prompt Logic) ---
-        (let* (;; Get raw input from user (e.g., what they type, or "" if they hit Enter)
-               (raw-input (read-string (format "Task (default: %s): " heading)))
+          ;; --- PATH 2: REGULAR CLOCK-IN ---
+          (let* ((raw-input (read-string (format "Task (default: %s): " heading)))
+                 ;; Use AREA for Toggl Project selection
+                 (project-choice (if prop-area
+                                     prop-area
+                                   (completing-read "Select Toggl Project (Area): " toggl-projects))))
 
-               ;; Determine Project Choice (use property or prompt)
-               (project-choice (if prop-project
-                                   prop-project
-                                 (completing-read "Select Toggl Project: " toggl-projects))))
+            (setq final-desc (if (string-equal raw-input "") heading raw-input))
+            (setq final-project-id (cdr (assoc project-choice toggl-projects)))))
 
-          ;; Set Final Description (This is where the time heading comes from if raw-input is empty)
-          (setq final-desc
-                (if (string-equal raw-input "")
-                    heading
-                  raw-input))
-
-          ;; Set the Final Project ID
-          (setq final-project-id (cdr (assoc project-choice toggl-projects)))))
-
-      ;; --- START TIMER ---
-      (if final-project-id
-          (toggl-start-time-entry final-desc final-project-id)
-        (message "Warning: Starting Toggl without a project.")
-        (toggl-start-time-entry final-desc)))))
+        ;; --- START TIMER ---
+        (if final-project-id
+            (toggl-start-time-entry final-desc final-project-id final-tags t)
+          (message "Warning: Starting Toggl without a project.")
+          (toggl-start-time-entry final-desc nil final-tags t)))))
 
   ;; --- 3. HOOK ASSIGNMENTS ---
   :hook
