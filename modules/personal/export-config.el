@@ -3,8 +3,7 @@
 (require 'paths)
 (require 'org)
 
-(defvar my/export-output-dir (expand-file-name "output/" my/brain-dir)
-  "Centralized directory for all Org exports.")
+
 
 (unless (file-directory-p my/export-output-dir)
   (make-directory my/export-output-dir t))

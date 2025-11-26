@@ -5,7 +5,7 @@
 (require 'org-id)
 (require 'org-element)
 (require 'paths)
-(require 'project-tasks-config)
+(require 'plan)
 
 ;; Use standardized paths from paths.el
 (setq diary-file my/tasks-file)

@@ -128,5 +128,8 @@
 (defconst my/archive-file-template (expand-file-name "%s_archive.org" my/archive-dir)
   "Template for archive filenames (e.g. tasks_archive.org).")
 
+(defconst my/export-output-dir (expand-file-name "output/" my/brain-dir)
+  "Centralized directory for all Org exports.")
+
 (provide 'paths)
 ;;; paths.el ends here

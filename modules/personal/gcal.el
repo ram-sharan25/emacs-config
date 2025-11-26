@@ -4,7 +4,7 @@
 (load "~/.emacs.d/secrets.el.gpg")
 (setq epg-pinentry-mode 'loopback)
 (require 'paths) ; Load standardized path variables
-(require 'project-tasks-config)
+(require 'plan)
 (setq google-task-file my/gtasks-file) ; Use standardized variable
 
 (use-package org-gcal
@@ -83,9 +83,9 @@
   "Prompt for Area/Project, set properties, and add resource links to the current task."
   (interactive)
   (let* ((area-name (my/select-area-default-misc))
-         (project-cons (my/org-select-project-allow-empty area-name))
-         (project-name (car project-cons))
-         (project-id (cdr project-cons)))
+	 (project-cons (my/org-select-project-allow-empty area-name))
+	 (project-name (car project-cons))
+	 (project-id (cdr project-cons)))
 
     ;; 1. Set Properties
     (org-entry-put nil "AREA" area-name)
@@ -94,16 +94,16 @@
     ;; 2. Add Resources (if not already present)
     (save-excursion
       (let ((end-pos (org-entry-end-position)))
-        (goto-char end-pos)
-        ;; Check if "Resources" heading already exists in the subtree
-        (unless (save-excursion
-                  (org-back-to-heading t)
-                  (re-search-forward "^\\*+ Resources" end-pos t))
-          (insert "\n** Resources\n")
-          (when project-id
-            (insert (format "- Project: [[id:%s][%s]]\n" project-id project-name)))
-          (insert (format "- Area: [[id:%s][%s]]\n" (my/get-area-id-by-name area-name) area-name)))))
-    
+	(goto-char end-pos)
+	;; Check if "Resources" heading already exists in the subtree
+	(unless (save-excursion
+		  (org-back-to-heading t)
+		  (re-search-forward "^\\*+ Resources" end-pos t))
+	  (insert "\n** Resources\n")
+	  (when project-id
+	    (insert (format "- Project: [[id:%s][%s]]\n" project-id project-name)))
+	  (insert (format "- Area: [[id:%s][%s]]\n" (my/get-area-id-by-name area-name) area-name)))))
+
     (message "Assigned Area: %s, Project: %s" area-name project-name)))
 
 (defun my-org-gtask-process ()
@@ -111,40 +111,40 @@
    If Area/Project are missing, prompt for them first.
    Generates new ID, saves old ID, and marks original DONE."
   (interactive)
-  
+
   ;; 1. Ensure Metadata Exists
   (unless (org-entry-get nil "AREA")
     (my-org-gtask-assign-metadata))
 
   (let ((original-google-id (org-entry-get nil "ID"))
-        (task-content nil))
+	(task-content nil))
 
     ;; 2. Capture Content
     (save-excursion
       (org-back-to-heading t)
       (let ((beg (point))
-            (end (progn (org-end-of-subtree t t) (point))))
-        (setq task-content (buffer-substring beg end))))
+	    (end (progn (org-end-of-subtree t t) (point))))
+	(setq task-content (buffer-substring beg end))))
 
     ;; 3. Paste to Destination
     (with-current-buffer (find-file-noselect my/tasks-file)
       (save-excursion
-        (goto-char (point-max))
-        (insert "\n")
-        (let ((paste-start-pos (point)))
-          (insert task-content)
-          (insert "\n")
-          
-          ;; 4. Update New Entry
-          (goto-char paste-start-pos)
-          (org-back-to-heading t)
-          
-          ;; Swap IDs
-          (when original-google-id
-            (org-entry-put nil "gtaskId" original-google-id))
-          (org-entry-put nil "ID" (org-id-new))
-          
-          (save-buffer))))
+	(goto-char (point-max))
+	(insert "\n")
+	(let ((paste-start-pos (point)))
+	  (insert task-content)
+	  (insert "\n")
+
+	  ;; 4. Update New Entry
+	  (goto-char paste-start-pos)
+	  (org-back-to-heading t)
+
+	  ;; Swap IDs
+	  (when original-google-id
+	    (org-entry-put nil "gtaskId" original-google-id))
+	  (org-entry-put nil "ID" (org-id-new))
+
+	  (save-buffer))))
 
     ;; 5. Mark Original DONE
     (org-todo "DONE")

@@ -1,5 +1,5 @@
 (require 'paths)
-(require 'project-tasks-config)
+(require 'plan)
 (use-package org-roam
   :ensure t
   :bind (:map global-map
@@ -21,6 +21,11 @@
   (setq org-roam-list-files-commands nil) ; Force internal scanning (ignores .gitignore)
 
   (org-roam-db-autosync-mode t)
+
+  ;; Link Abbreviation for portable data links
+  ;; Usage: [[data:image.png]] -> expands to my/data-dir/image.png
+  (setq org-link-abbrev-alist
+	(list (cons "data" (concat my/data-dir "%s"))))
 
   (setq org-roam-capture-templates
   '(("z" "Zettel" plain

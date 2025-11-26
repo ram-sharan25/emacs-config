@@ -267,4 +267,4 @@ Returns a cons cell (Name . ID). Includes 'Dump' as the first option."
 	(my/tasks-file :maxlevel . 1)
 	(my/areas-dir :maxlevel . 1)))
 
-(provide 'project-tasks-config)
+(provide 'plan)
