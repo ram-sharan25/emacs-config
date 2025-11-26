@@ -96,30 +96,18 @@
              (final-tags (append org-tags 
                                  (when project-tag (list project-tag))))
 
-             ;; 3. Check for Journal Capture
-             (is-journal-capture-active (and org-capture-mode
-                                             (string-equal prop-project "Habits")))
-
              (final-desc nil)
              (final-project-id nil))
 
-        (if is-journal-capture-active
-            ;; --- PATH 1: JOURNAL CAPTURE ---
-            (let ((project-name "Habits"))
-              (setq final-desc "Daily Journal Entry")
-              (setq final-project-id (cdr (assoc project-name toggl-projects)))
-              (unless final-project-id
-                (message "ERROR: Project '%s' not found in Toggl cache." project-name)))
+        ;; --- REGULAR CLOCK-IN LOGIC ---
+        (let* ((raw-input (read-string (format "Task (default: %s): " heading)))
+               ;; Use AREA for Toggl Project selection
+               (project-choice (if prop-area
+                                   prop-area
+                                 (completing-read "Select Toggl Project (Area): " toggl-projects))))
 
-          ;; --- PATH 2: REGULAR CLOCK-IN ---
-          (let* ((raw-input (read-string (format "Task (default: %s): " heading)))
-                 ;; Use AREA for Toggl Project selection
-                 (project-choice (if prop-area
-                                     prop-area
-                                   (completing-read "Select Toggl Project (Area): " toggl-projects))))
-
-            (setq final-desc (if (string-equal raw-input "") heading raw-input))
-            (setq final-project-id (cdr (assoc project-choice toggl-projects)))))
+          (setq final-desc (if (string-equal raw-input "") heading raw-input))
+          (setq final-project-id (cdr (assoc project-choice toggl-projects))))
 
         ;; --- START TIMER ---
         (if final-project-id

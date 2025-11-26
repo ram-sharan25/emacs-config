@@ -63,8 +63,6 @@
   ("j" "Journal" plain
    (file+function ,journal-file journal--ensure-daily-heading)
    "** %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n:LOGBOOK:\n:END:\n- %?"
-   :clock-in t
-   :clock-resume t
    :empty-lines 1)))
 
 

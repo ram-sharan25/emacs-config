@@ -266,5 +266,7 @@ Returns a cons cell (Name . ID). Includes 'Dump' as the first option."
       '((my/projects-file :maxlevel . 1)
 	(my/tasks-file :maxlevel . 1)
 	(my/areas-dir :maxlevel . 1)))
+;;;this to remove the dialog bod of the timer in elisp
+(setq org-confirm-elisp-link-function nil)
 
 (provide 'plan)
