@@ -109,3 +109,7 @@ buffer's text scale."
 
 (add-hook 'org-mode-hook #'my/activate-thought-highlighting)
 (add-hook 'org-mode-hook #'org-bullets-mode)
+
+;; Clean Emacs Way: Use standard variables to control visibility
+(setq org-startup-folded 'content) ;; Show headlines, hide content/drawers
+(setq org-hide-drawer-startup t)   ;; Explicitly collapse all drawers
