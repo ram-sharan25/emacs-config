@@ -33,3 +33,8 @@ oauth2-auto.plist
 persist/
 .agent/
 .emacs.d.code-workspace
+*.bak
+*.code-workspace
+*PLANNING.md
+*TASKS.md
+design-document.md
