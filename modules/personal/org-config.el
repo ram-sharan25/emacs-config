@@ -59,11 +59,11 @@ buffer's text scale."
   "Face for QUESTION tags.")
 
 (defface my/thought-tag-h-face
-  '((t (:foreground "#DC8CC3" :weight bold :background "#4a5750" :extend t))) ;; Zenburn Purple (Mystery)
+  '((t (:foreground "#94BFF3" :weight bold :background "#4a5750" :extend t))) ;; Zenburn Blue (Theory)
   "Face for HYPOTHESIS tags.")
 
 (defface my/thought-tag-a-face
-  '((t (:foreground "#8CD0D3" :weight bold :background "#4a5750" :extend t)))
+  '((t (:foreground "#F4F4D0" :weight bold :background "#4a5750" :extend t))) ;; Zenburn Yellowish Cream (Fact)
   "Face for ANALYSIS tags.")
 
 (defun my/thought-drawer-extend-region ()
@@ -99,7 +99,7 @@ buffer's text scale."
 (defun my/activate-thought-highlighting ()
   "Add custom font-lock keywords for THOUGHTS drawers."
   (add-hook 'font-lock-extend-region-functions #'my/thought-drawer-extend-region nil t)
-  
+
   (font-lock-add-keywords nil
     '((my/match-thought-drawer 0 'my/thought-face t)
       ("\\<\\(QUESTION\\|Q\\):.*$" (0 'my/thought-tag-q-face t))
