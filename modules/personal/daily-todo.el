@@ -21,8 +21,6 @@
 (defun diary--now ()
   "Return the current timestamp string."
   (format-time-string "[%Y-%m-%d %a %H:%M]"))
-(setq org-todo-keywords
-      '((sequence "TODO(t)" "IN-PROGRESS(p)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)" "STARTED(s)" "REVIEW(r)" "MAYBE(m)" "DEFERRED(f)" "TODAY(n)")))
 
 (defun journal--ensure-daily-heading ()
   "Create the top-level daily heading (* YYYY-MM-DD Day) for today if it doesn't exist, and position point after it."

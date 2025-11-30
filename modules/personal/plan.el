@@ -37,50 +37,50 @@ If AREA-FILTER is provided, only include projects with a matching :AREA: propert
     (let ((projects '()))
       (org-map-entries
        (lambda ()
-	 (let* ((heading (org-get-heading t t))
-		(id (org-id-get-create))
-		(area (org-entry-get nil "AREA")))
-	   ;; Filter by Area if provided
-	   (when (or (null area-filter)
-		     (string= area area-filter))
-	     (push (cons heading id) projects))))
+         (let* ((heading (org-get-heading t t))
+                (id (org-id-get-create))
+                (area (org-entry-get nil "AREA")))
+           ;; Filter by Area if provided
+           (when (or (null area-filter)
+                     (string= area area-filter))
+             (push (cons heading id) projects))))
        "LEVEL=1+ACTIVE=\"TRUE\"" 'file)
       (nreverse projects))))
 
 (defun my/select-area-default-misc ()
   "Prompt for Area, defaulting to 'Misc' and showing it first."
   (let* ((areas (my/get-area-names))
-	 ;; Ensure Misc is first and unique
-	 (options (cons "Misc" (remove "Misc" areas)))
-	 (selected (completing-read "Area: " options nil t nil nil "Misc")))
+         ;; Ensure Misc is first and unique
+         (options (cons "Misc" (remove "Misc" areas)))
+         (selected (completing-read "Area: " options nil t nil nil "Misc")))
     (if (string-empty-p selected) "Misc" selected)))
 
 (defun my/org-select-project-allow-empty (&optional area-filter)
   "Prompt user to select a project, optionally filtered by AREA-FILTER.
 Returns a cons cell (Name . ID). Includes 'Dump' as the first option."
   (let* ((project-alist (my/org-get-project-headings area-filter))
-	 ;; Prepend "Dump" option explicitly so it appears first
-	 (options (cons '("Dump" . nil) project-alist))
-	 (project-names (mapcar #'car options))
-	 (selected-name (completing-read "Select Project: "
-					 project-names nil t nil nil "Dump")))
+         ;; Prepend "Dump" option explicitly so it appears first
+         (options (cons '("Dump" . nil) project-alist))
+         (project-names (mapcar #'car options))
+         (selected-name (completing-read "Select Project: "
+                                         project-names nil t nil nil "Dump")))
     (if (string-empty-p selected-name)
-	'("Dump" . nil)
+        '("Dump" . nil)
       (assoc selected-name options))))
 
 ;;; --- 4. TODO Keywords ---
 
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "IN-PROGRESS(p)" "WAITING(w)" "|" "DONE(d)"
-      "CANCELED(c)"  "REVIEW(r)" "MAYBE(m)"
-      "DEFERRED(f)" )))
+      '((sequence "TODO(t)" "IN-PROGRESS(p)" "STARTED(s)" "WAITING(w)" "REVIEW(r)" "MAYBE(m)" "|" "DONE(d)"
+      "CANCELED(c)" "DEFERRED(f)" )))
 
 ;;; --- 5. Shared Status Groups ---
 
 (defvar my/org-super-agenda-status-groups
   '((:name "TODO"        :todo "TODO"        :order 1)
     (:name "IN-PROGRESS" :todo "IN-PROGRESS" :order 2)
-    (:name "WAITING"     :todo "WAITING"     :order 3)
+    (:name "STARTED"     :todo "STARTED"     :order 3)
+    (:name "WAITING"     :todo "WAITING"     :order 4)
     (:name "REVIEW"      :todo "REVIEW"      :order 5)
     (:name "MAYBE"       :todo "MAYBE"       :order 6)
     (:name "DEFERRED"    :todo "DEFERRED"    :order 7)
