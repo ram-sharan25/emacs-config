@@ -62,4 +62,8 @@
 
 (setq backup-directory-alist '(("." . "/Users/rrimal/.emacs.d/backupfiles/")))
 
+
+;; Disable export of drawers (like :THOUGHTS:, :PROPERTIES:, :LOGBOOK:)
+(setq org-export-with-drawers nil)
+
 (provide 'export-config)
