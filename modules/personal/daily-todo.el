@@ -38,12 +38,7 @@
 ;;; === Capture Templates ===
 
 (setq org-capture-templates
-      `(("i" "Idea Entry" entry
-   (file ,notes-file)
-   "* %^{Title} :IDEA:\n:PROPERTIES: \n:ID:    %(org-id-new)\n:NAME: %\\1\n:TAGS:  \n:KEYWORDS: \n:TIME: %(diary--now)\n:END:\n- Description: %?"
-   :empty-lines 1)
-
-  ("u" "Scratch Note " entry
+      `(("u" "Scratch Note " entry
    (file ,notes-file)
    (function
     (lambda ()
@@ -183,9 +178,5 @@
 (global-set-key (kbd "C-x j") #'org-clock-out) ; "clock out"
 
 (global-set-key (kbd "C-c o b") 'open-single-buffer);;open a heading in a new buffer
-
-
-(setq org-agenda-files my/org-agenda-files)
-
 
 (provide 'flat-diary-config)
