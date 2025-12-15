@@ -267,6 +267,57 @@ See also `org-save-all-org-buffers'"
   (call-interactively 'my/org-agenda-set-effort)
   (org-agenda-refile nil nil t))
 
+
+(use-package org-timeblock
+  :load-path  "~/.emacs.d/modules/git-modules/org-timeblock/"
+  :config
+  (setq org-timeblock-span 1)              ;; Show 1 Day
+  (setq org-timeblock-day-start-hour 6)    ;; Start at 7 AM (Hide 0-6 AM)
+  (setq org-timeblock-day-end-hour 23)
+  (setq org-timeblock-scale 0.8)          ;; Zoom out (Fit day on screen)
+  (setq org-timeblock-inbox-file my/tasks-file)
+  ;; 2. GRID SETTINGS
+  (setq org-timeblock-show-future-repeats t)
+  (setq org-timeblock-time-grid-step 60))
+
+(defun rsr/org-timeblock-split-view ()
+  "Open Org Timeblock on the left and the daily list on the right."
+  (interactive)
+  ;; Open the standard grid
+  (org-timeblock)
+  ;; Remove other windows to clean up
+  (delete-other-windows)
+  ;; Split the screen horizontally
+  (split-window-right)
+  ;; Move to the right window
+  (other-window 1)
+  ;; Switch to the "List View" of the current timeblock
+  (org-timeblock-list))
+
+(defun my-org-clock-on-state-change ()
+  "Clock in/out when TODO state changes to/from 'IN PROGRESS'.
+  This function checks `org-state' and `org-last-state'."
+
+  ;; 1. Clock IN when moving TO "IN PROGRESS"
+  (when (string= org-state "IN-PROGRESS")
+    ;; We removed (unless (org-clock-is-active)) so it ALWAYS clocks in
+    (org-clock-in))
+
+  ;; 2. Clock OUT when moving FROM "IN PROGRESS" to anything else
+  (when (and (string= org-last-state "IN-PROGRESS")
+             (not (string= org-state "IN-PROGRESS")))
+    (when (org-clock-is-active)
+      (org-clock-out))))
+
+(add-hook 'org-after-todo-state-change-hook 'my-org-clock-on-state-change)
+(setq org-archive-location (concat my/archive-dir "%s_archive.org::"))
+;;;this to remove the dialog bod of the timer in elisp
+(setq org-confirm-elisp-link-function nil)
+(global-set-key (kbd "C-c d") 'rsr/org-timeblock-split-view)
+
 (define-key org-agenda-mode-map "j" 'my/org-agenda-process-inbox-item)
 
+
+
+(provide 'gtd-config)
 ;;; gtd-config.el ends here
