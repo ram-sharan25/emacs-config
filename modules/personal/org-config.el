@@ -113,3 +113,74 @@ buffer's text scale."
 ;; Clean Emacs Way: Use standard variables to control visibility
 (setq org-startup-folded 'content) ;; Show headlines, hide content/drawers
 (setq org-hide-drawer-startup t)   ;; Explicitly collapse all drawers
+
+;; -------------------------------------------------------------------------
+;; Custom Timer for Grounding Break
+;; -------------------------------------------------------------------------
+
+(defcustom my/timer-sound-file "/Users/rrimal/.emacs.d/data/alarm_sound.mp3"
+  "Path to a sound file to play for timer notifications.
+If nil, a system beep is used."
+  :type '(choice (const :tag "None" nil)
+                 (file :tag "Sound File")))
+
+(defvar my/custom-timer-notification-object nil
+  "Stores the timer object for the pre-notification warning.")
+
+(defun my/org-play-notification-sound ()
+  "Play the notification sound using afplay (macOS) or beep."
+  (let ((sound-file (and my/timer-sound-file (expand-file-name my/timer-sound-file))))
+    (if (and sound-file (file-exists-p sound-file))
+        (progn
+          (message "Playing sound: %s" sound-file)
+          (let ((proc (start-process "org-timer-sound" nil "afplay" sound-file)))
+            (set-process-sentinel proc
+                                  (lambda (p e)
+                                    (when (not (eq 0 (process-exit-status p)))
+                                      (message "Sound process failed: %s" e))))))
+      (message "Sound file not found: %s. Beeping." sound-file)
+      (beep))))
+
+(defun my/org-start-custom-timer ()
+  "Start a timer based on :TIMER_MINUTES: property with a pre-notification.
+Reads :TIMER_MINUTES: and :NOTIFY_BEFORE_MINUTES: from the current heading."
+  (interactive)
+  ;; Cancel any existing notification timer first
+  (when my/custom-timer-notification-object
+    (cancel-timer my/custom-timer-notification-object)
+    (setq my/custom-timer-notification-object nil))
+
+  (let* ((minutes-str (org-entry-get (point) "TIMER_MINUTES"))
+         (notify-str (org-entry-get (point) "NOTIFY_BEFORE_MINUTES"))
+         (minutes (if minutes-str (string-to-number minutes-str) 0))
+         (notify-mins (if notify-str (string-to-number notify-str) 0)))
+
+    (if (or (not minutes) (<= minutes 0))
+        (message "No :TIMER_MINUTES: property found or invalid.")
+      ;; 1. Start the main Org timer
+      (org-timer-set-timer (format "%d" minutes))
+
+      ;; 2. Schedule the pre-notification if configured
+      (when (and notify-mins (> notify-mins 0) (< notify-mins minutes))
+        (let ((notify-delay-sec (* (- minutes notify-mins) 60)))
+          (setq my/custom-timer-notification-object
+                (run-at-time (format "%d sec" notify-delay-sec) nil
+                             (lambda (rem-mins)
+                               (my/org-play-notification-sound)
+                               (message "⚠️ Time is almost up! %d minutes remaining." rem-mins))
+                             notify-mins)))))))
+
+(defun my/org-timer-on-clock-in ()
+  "Automatically start custom timer if :TIMER_MINUTES: property exists."
+  (when (org-entry-get (point) "TIMER_MINUTES")
+    (my/org-start-custom-timer)))
+
+(defun my/org-cancel-timer-on-clock-out ()
+  "Cancel the custom timer and notification when clocking out."
+  (ignore-errors (org-timer-stop)) ;; Prevent error if no timer is running
+  (when my/custom-timer-notification-object
+    (cancel-timer my/custom-timer-notification-object)
+    (setq my/custom-timer-notification-object nil)))
+
+(add-hook 'org-clock-in-hook #'my/org-timer-on-clock-in)
+(add-hook 'org-clock-out-hook #'my/org-cancel-timer-on-clock-out)
