@@ -27,6 +27,10 @@
 (defconst my/dashboard-dir (expand-file-name "Dashboard/" my/brain-dir)
   "Dashboard directory for PARA workflow (Projects, Tasks, etc).")
 
+(defconst my/gtd-dir (expand-file-name "gtd/" my/brain-dir)
+  "Dashboard directory for gtd workflow).")
+
+
 (defconst my/private-dir (expand-file-name "Private/" my/brain-dir)
   "Private notes directory (Git-ignored, sensitive content).")
 
@@ -105,16 +109,23 @@
   "Org-roam root directory (points to Brain for all notes).")
 
 ;;; ============================================================================
-;;; ORG AGENDA CONFIGURATION
+;;; ORG AGENDA Files
 ;;; ============================================================================
-
-(defconst my/org-agenda-files
-  (list my/tasks-file
-        my/rough-notes-file
-        my/gcal-file
-        my/gtasks-file)
-  "List of files for org-agenda.")
-
+(defconst my/next-file (expand-file-name "next.org" my/gtd-dir)
+  "File for
+next tasks in line ")
+(defconst my/inbox-file (expand-file-name "inbox.org" my/gtd-dir)
+  "Inbox file for GTD workflow ")
+(defconst my/someday-file (expand-file-name "someday.org" my/gtd-dir)
+  "Someday file for GTD workflow ")
+(defconst my/waiting-file (expand-file-name "waiting.org" my/gtd-dir)
+  "Waiting file for GTD workflow ")
+(defconst my/gtd-projects-file (expand-file-name "projects.org" my/gtd-dir)
+  "Projects file for GTD workflow ")
+(defconst my/rituals-file (expand-file-name "rituals.org" my/gtd-dir)
+  "Rituals file for GTD workflow ")
+(defconst my/discarded-file (expand-file-name "discarded.org" my/gtd-dir)
+  "Discarded file for GTD workflow ")
 ;;; ============================================================================
 ;;; BACKUP/SYNC CONFIGURATION
 ;;; ============================================================================
