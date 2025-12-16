@@ -32,6 +32,10 @@
                                      my/gtasks-dir)
                                (my/get-area-files)))
 
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "IN-PROGRESS(p)" "HOLD(h)" "WAITING(w)" "|" "DONE(d)"
+      "CANCELED(c)"  "DELAYED(f)" )))
+
 (setq org-tag-alist
       '(;; Locations (Where) - No grouping to allow multiple
         ("@home" . ?h)
@@ -114,18 +118,18 @@
               '((:name "Today's Schedule"
                        :time-grid t)
                 (:name "Scheduled"
-                       :and (:scheduled today :todo "TODO"))
+                       :todo "TODO")
                 (:name "Deadlines"
                   :deadline t)
                 (:name "Overdue"
                        :deadline past
                        :scheduled past)
                 (:discard (:anything t))))))
-    (todo "STARTED|IN-PROGRESS|WAITING"
+    (todo "HOLD|IN-PROGRESS"
           ((org-agenda-overriding-header "In Progress")
            (org-agenda-files (append (list my/gtd-projects-file
                                            my/next-file)
-                                   (my/get-area-files)))))))
+                                     (my/get-area-files)))))))
 
 (defun my/generate-gtd-agenda-commands ()
   "Generate agenda commands for each location and mode."
@@ -145,7 +149,7 @@
                  (desc (format "%s @ %s" mode-name loc-name))
                  (header (format "%s %s @ %s" mode-icon mode-name loc-name))
                  ;; Strict Tagging: MUST have Location AND Mode tag
-                 (tags-query (format "+%s+%s" loc-tag mode-tag)))
+                 (tags-query (format "+%s+%s/TODO" loc-tag mode-tag)))
 
             (push (list key desc
                         (append (my/gtd-standard-header)
@@ -155,15 +159,16 @@
     (nreverse commands)))
 
 (setq org-agenda-custom-commands
-      `(("a" "View All (GTD Dashboard)"
+      `(("o" "View All (GTD Dashboard)"
          (,@(my/gtd-standard-header)
+
           (todo "TODO"
                 ((org-agenda-overriding-header "To Refile")
                  (org-agenda-files (list my/inbox-file))))
-           (todo "WAITING|STARTED"
+           (todo "TODO|WAITING|HOLD"
                 ((org-agenda-overriding-header "Waiting")
                  (org-agenda-files (list my/waiting-file))))
-          (todo "TODO"
+          (todo "TODO|HOLD|WAITING"
                 ((org-agenda-overriding-header "Projects & Areas (Backlog)")
                  (org-agenda-files (append (list my/gtd-projects-file)
                                            (my/get-area-files)))
@@ -175,7 +180,7 @@
                  (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled)))))
          nil)
 
-        ("o" "Only Agenda"
+        ("a" "Only Agenda"
          (,@(my/gtd-standard-header))
          nil)
 
@@ -184,12 +189,12 @@
         ("m" . "Work Modes (Global)")
         ("md" "Deep Work Mode (All Contexts)"
          ,(append (my/gtd-standard-header)
-                  '((tags-todo "+@deep"
-                               ((org-agenda-overriding-header " All Deep Work Tasks"))))))
+                  '((tags-todo "+@deep/TODO"
+                               ((org-agenda-overriding-header " Deep Work Tasks"))))))
         ("ms" "Shallow Work Mode (All Contexts)"
          ,(append (my/gtd-standard-header)
-                  '((tags-todo "+@shallow"
-                               ((org-agenda-overriding-header " All Shallow Work Tasks"))))))
+                  '((tags-todo "+@shallow/TODO"
+                               ((org-agenda-overriding-header " Shallow Work Tasks"))))))
 
         ("p" "Projects Dashboard" alltodo ""
          ((org-agenda-overriding-header "Active Project Tasks")
@@ -209,10 +214,10 @@
       `((,my/gtd-projects-file :regexp . "Tasks\\|Notes")
         (my/get-area-files :regexp . "Tasks\\|Notes")
         (,my/next-file :maxlevel . 1)
-        ;; (,my/someday-file :maxlevel . 0)
-        ;; (,my/waiting-file :maxlevel . 0)
-        ;; (,my/inbox-file :maxlevel . 0)
-        ;; (,my/discarded-file :maxlevel . 0)
+        (,my/someday-file :maxlevel . 1)
+        (,my/waiting-file :maxlevel . 1)
+        (,my/inbox-file :maxlevel . 1)
+        (,my/discarded-file :maxlevel . 1)
         ))
 
 (setq org-refile-use-outline-path 'file)
@@ -317,7 +322,16 @@ See also `org-save-all-org-buffers'"
 
 (define-key org-agenda-mode-map "j" 'my/org-agenda-process-inbox-item)
 
+(defun my/org-agenda-add-effort-suffix (original-fn &rest args)
+  "Advice to append Effort property to the agenda line."
+  (let* ((effort (org-entry-get (org-get-at-bol 'org-hd-marker) "Effort"))
+         (result (apply original-fn args)))
+    (if effort
+        (concat result (propertize (format " (%s)" effort)
+                                   'face '(:foreground "cyan" :slant italic)))
+      result)))
 
+(advice-add 'org-agenda-format-item :around #'my/org-agenda-add-effort-suffix)
 
 (provide 'gtd-config)
 ;;; gtd-config.el ends here
