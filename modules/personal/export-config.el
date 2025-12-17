@@ -20,12 +20,12 @@
       ;; File Export: Use #+TITLE or File Name (fallback to buffer name)
       (setq base-name (or (cadar (org-collect-keywords '("TITLE")))
                           (file-name-base (or (buffer-file-name) (buffer-name))))))
-    
+
     ;; Clean: Remove TODO keywords and Tags manually (extra safety)
     (let ((todo-re (concat "^\\(" (mapconcat 'identity org-todo-keywords-1 "\\|") "\\) ")))
       (setq base-name (replace-regexp-in-string todo-re "" (or base-name ""))))
     (setq base-name (replace-regexp-in-string ":[[:alnum:]_@#%]+:$" "" base-name))
-    
+
     ;; Sanitize: Remove illegal characters, replace spaces with underscores
     (setq base-name (replace-regexp-in-string "[^a-zA-Z0-9-_ ]" "" base-name))
     (setq base-name (replace-regexp-in-string " " "_" base-name))
@@ -40,10 +40,10 @@
          (new-base (my/get-export-filename (buffer-name) subtreep))
          ;; Force output directory
          (final-dir my/export-output-dir))
-    
+
     (unless (file-directory-p final-dir)
       (make-directory final-dir t))
-    
+
     (setq ad-return-value (expand-file-name (concat new-base extension) final-dir))))
 
 ;; Image handling for HTML export (Relative to the new output dir)
@@ -51,12 +51,12 @@
   "Modify the <img src=... /> link to point to path relative to html file."
   (let ((org-file (buffer-file-name)))
     (cond ((and org-file
-		(not (file-name-absolute-p source)))
-	   (let* ((source-absolute (file-truename source))
+                (not (file-name-absolute-p source)))
+           (let* ((source-absolute (file-truename source))
                   (relative-path (file-relative-name source-absolute my/export-output-dir)))
-	     (funcall original-function relative-path attribute info)))
-	  (t
-	   (funcall original-function source attribute info)))))
+             (funcall original-function relative-path attribute info)))
+          (t
+           (funcall original-function source attribute info)))))
 
 (advice-add 'org-html--format-image :around #'bp/org-html--format-image-relative)
 
@@ -65,5 +65,18 @@
 
 ;; Disable export of drawers (like :THOUGHTS:, :PROPERTIES:, :LOGBOOK:)
 (setq org-export-with-drawers nil)
+
+;; -------------------------------------------------------------------------
+;; ODT / DOCX Export via Pandoc
+;; -------------------------------------------------------------------------
+(use-package ox-pandoc
+  :ensure t
+  :after org
+  :config
+  ;; Define standard options for docx export if needed, e.g. reference doc
+  ;; (setq org-pandoc-options-for-docx '((reference-doc . "~/.emacs.d/data/custom-reference.docx")))
+
+  ;; Add 'pandoc' as a valid export dispatch option
+  (add-to-list 'org-export-backends 'pandoc))
 
 (provide 'export-config)
