@@ -53,14 +53,10 @@
 (defconst my/resources-dir (expand-file-name "Resources/" my/brain-dir)
   "Directory for Resource Hubs (Topics, Books, Interests).")
 
-(defconst my/projects-file (expand-file-name "projects.org" my/dashboard-dir)
-  "High-level project definitions file.")
 
-(defconst my/rough-notes-file (expand-file-name "rough_notes.org" my/dashboard-dir)
+(defconst my/rough-notes-file (expand-file-name "fleeting_notes.org" my/dashboard-dir)
   "Quick capture scratchpad for unprocessed thoughts.")
 
-(defconst my/notes-index-file (expand-file-name "notes_index.org" my/dashboard-dir)
-  "Auto-generated index of notes.")
 
 (defconst my/logbook-file (expand-file-name "log-book.org" my/dashboard-dir)
   "Time tracking and clock-in log.")
@@ -72,10 +68,10 @@
 ;;; GOOGLE INTEGRATIONS - Calendar & Tasks
 ;;; ============================================================================
 
-(defconst my/gcal-file (expand-file-name "gcal.org" my/dashboard-dir)
+(defconst my/gcal-file (expand-file-name "gcal.org" my/gtd-dir)
   "Google Calendar sync file.")
 
-(defconst my/gtasks-dir (expand-file-name "gtasks/" my/dashboard-dir)
+(defconst my/gtasks-dir (expand-file-name "gtasks/" my/gtd-dir)
   "Google Tasks sync directory.")
 
 (defconst my/gtasks-file (expand-file-name "GoogleTasks.org" my/gtasks-dir)
@@ -142,5 +138,6 @@ next tasks in line ")
 (defconst my/export-output-dir (expand-file-name "output/" my/brain-dir)
   "Centralized directory for all Org exports.")
 
+(defconst my/dsa-lectures (expand-file-name "dsa_lectures/" my/data-dir))
 (provide 'paths)
 ;;; paths.el ends here
