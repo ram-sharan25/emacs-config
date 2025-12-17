@@ -1,3 +1,4 @@
+(require 'my-secrets)
 (use-package gptel
   :ensure t
   :bind (:map rsr/global-prefix-map
@@ -12,4 +13,4 @@
   ;; machine generativelanguage.googleapis.com apikey password <<YOUR_API_KEY>>
   (setf gptel-default-mode 'org-mode
         gptel-model 'gemini-flash-latest
-        gptel-backend (gptel-make-gemini "Gemini" :stream t :key "AIzaSyC0mCZbQ2Q6msc2Fc7Z30qnJm18GNlMHTE")))
+        gptel-backend (gptel-make-gemini "Gemini" :stream t :key my/gemini-key)))
