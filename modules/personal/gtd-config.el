@@ -1,25 +1,76 @@
+```
 ;;; gtd-config.el --- GTD Workflow Configuration -*- lexical-binding: t; -*-
 
 
 (require 'paths)
 (require 'org-capture)
+(require 'org-id)
+
 (defun my/get-area-files ()
   "Get all .org files in the Areas directory."
   (directory-files my/areas-dir t "\\.org$"))
 
-;;; Inbox Capture
-;;; Capture tasks directly to the Inbox (tasks.org) without immediate processing.
-(add-to-list 'org-capture-templates
-             '("i" "Inbox" entry
-               (file my/inbox-file)
-               "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"
-               :empty-lines 1))
+;; =============================================================================
+;; Helper Functions for Capture
+;; =============================================================================
 
-(add-to-list 'org-capture-templates
-             '("q" "New Project" entry
-               (file my/gtd-projects-file)
-               "* %^{Project Name} [/]\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:COOKIE_DATA: todo recursive\n:CATEGORY: %\\1\n:END:\n- Tags: %?\n\n** Description\n\n** Dashboard\n*** Tasks\n\n*** Notes\n"
-               :empty-lines 1))
+(defun my/get-capture-link-compact ()
+  "Return the captured link formatted as [[link][#]].
+Falls back to empty string if no link is captured."
+  (let ((link (or (alist-get 'annotation org-store-link-plist)
+                  (org-capture-get :annotation))))
+    (if (and link (string-match "\\[\\[\\(.*?\\)\\]\\[.*?\\]\\]" link))
+        (format "[[%s][#]]" (match-string 1 link))
+      (if link
+          (format "[[%s][#]]" link)
+        ""))))
+
+(defun journal--ensure-daily-heading ()
+  "Create the top-level daily heading (* YYYY-MM-DD Day) for today if it doesn't exist, and position point after it."
+  (goto-char (point-min))
+  (let* ((day-heading-text (format-time-string "%Y-%m-%d %A"))
+         (day-regex (format "^\\* %s$" day-heading-text)))
+    ;; Search for a top-level heading matching today's date
+    (unless (re-search-forward day-regex nil t)
+      ;; If not found, insert it at the bottom of the file
+      (goto-char (point-max))
+      (unless (bolp) (insert "\n"))  ; Ensure we're on a new line
+      (insert (format "\n* %s\n" day-heading-text)))
+    ;; Move to end of the heading line (whether found or created)
+    (end-of-line)))
+
+;; =============================================================================
+;; Capture Templates (Consolidated)
+;; =============================================================================
+
+(setq org-capture-templates
+      `(("i" "Inbox" entry
+         (file my/inbox-file)
+         "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"
+         :empty-lines 1)
+
+        ("q" "New Project" entry
+         (file my/gtd-projects-file)
+         "* %^{Project Name} [/]\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:COOKIE_DATA: todo recursive\n:CATEGORY: %\\1\n:END:\n- Tags: %?\n\n** Description\n\n** Dashboard\n*** Tasks\n\n*** Notes\n"
+         :empty-lines 1)
+
+        ("u" "Fleeting Note" entry
+         (file ,my/rough-notes-file)
+         "* %^{Title}\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n:THOUGHTS:\n- %? \n:END:\n- Source: %(my/get-capture-link-compact)\n"
+         :empty-lines 1)
+
+        ("w" "Web Capture" entry
+         (file my/inbox-file)
+         "* [[%:link][%:description]]\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n%?"
+         :empty-lines 1)
+
+        ("h" "Log Time" entry (file+datetree ,my/logbook-file)
+         "* %? \n" :clock-in t :clock-keep t :clock-resume t)
+
+        ("j" "Journal" plain
+         (file+function ,my/journal-file journal--ensure-daily-heading)
+         "** %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n:LOGBOOK:\n:END:\n- %?"
+         :empty-lines 1)))
 
 
 (setq org-agenda-files (append (list my/inbox-file
@@ -332,6 +383,16 @@ See also `org-save-all-org-buffers'"
       result)))
 
 (advice-add 'org-agenda-format-item :around #'my/org-agenda-add-effort-suffix)
+
+;; =============================================================================
+;; Keybindings for Capture
+;; =============================================================================
+(global-set-key (kbd "C-c i") (lambda () (interactive) (org-capture nil "i")))  ;; Inbox
+(global-set-key (kbd "C-c q") (lambda () (interactive) (org-capture nil "q")))  ;; New Project
+(global-set-key (kbd "C-c n") (lambda () (interactive) (org-capture nil "u")))  ;; Note
+(global-set-key (kbd "C-c j") (lambda () (interactive) (org-capture nil "j")))  ;; Journal
+(global-set-key (kbd "C-c h") (lambda () (interactive) (org-capture nil "h")))  ;; Log Time
+(global-set-key (kbd "C-c w") (lambda () (interactive) (org-protocol-capture nil "w"))) ;; Web Capture (manual trigger)
 
 (provide 'gtd-config)
 ;;; gtd-config.el ends here

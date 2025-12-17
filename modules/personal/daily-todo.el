@@ -5,7 +5,6 @@
 (require 'org-id)
 (require 'org-element)
 (require 'paths)
-(require 'plan)
 
 ;; Use standardized paths from paths.el
 (setq diary-file my/tasks-file)
@@ -15,9 +14,6 @@
 (setq notes-file my/rough-notes-file)
 (setq index-file my/notes-index-file)
 (setq shortcut-file my/shortcuts-file)
-
-
-
 (defun diary--now ()
   "Return the current timestamp string."
   (format-time-string "[%Y-%m-%d %a %H:%M]"))
@@ -35,28 +31,7 @@
       (insert (format "\n* %s\n" day-heading-text)))
     ;; Move to end of the heading line (whether found or created)
     (end-of-line)))
-;;; === Capture Templates ===
 
-(setq org-capture-templates
-      `(("u" "Scratch Note " entry
-   (file ,notes-file)
-   (function
-    (lambda ()
-      (let* ((area-name (my/select-area-default-misc))
-             (project-cons (my/org-select-project-allow-empty area-name))
-             (project-name (car project-cons))
-             (project-id (cdr project-cons))
-             (project-link (if project-id (format "[[id:%s][%s]]" project-id project-name) project-name)))
-        (format "* %%^{Title} :NOTE:\n:PROPERTIES:\n:ID: %%(org-id-new)\n:AREA: %s\n:PROJECT: %s\n:TIME: %%(diary--now)\n:END:\n:THOUGHTS:\n- %%? \n:END:\n\n** Context\n- Project: %s\n- Area: [[id:%s][%s]]\n"
-                area-name project-name project-link (my/get-area-id-by-name area-name) area-name))))
-   :empty-lines 1)
-
-  ("h" "Log Time" entry (file+datetree,log-file )
-   "* %? \n" :clock-in t :clock-keep t :clock-resume t)
-  ("j" "Journal" plain
-   (file+function ,journal-file journal--ensure-daily-heading)
-   "** %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n:LOGBOOK:\n:END:\n- %?"
-   :empty-lines 1)))
 
 
 
@@ -108,10 +83,10 @@
   (message "Hierarchical notes index rebuilt successfully."))
 
 ;; <<< NEW function to open the index file
-(defun notes-open-index-file ()
+(defun open-notes-file ()
   "Open the notes index file."
   (interactive)
-  (find-file index-file))
+  (find-file notes-file))
 
 (defun logbook-open-file ()
   "Open the logbook  file."
@@ -157,11 +132,7 @@
   ;; Close all other windows (buffers remain available in background)
   )
 
-;;; === Keybindings ===
-(global-set-key (kbd "C-c i") (lambda () (interactive) (org-capture nil "i")))  ;; New Idea
-(global-set-key (kbd "C-c j") (lambda () (interactive) (org-capture nil "j")))  ;; New Journal
-(global-set-key (kbd "C-c h") (lambda () (interactive) (org-capture nil "h")))  ;; New Log Entry
-(global-set-key (kbd "C-c n") (lambda () (interactive) (org-capture nil "u")))  ;; New Note
+
 
 (global-set-key (kbd "C-c o j") 'open-journal-file)
 (global-set-key (kbd "C-c o d") 'open-diary-file)
@@ -171,7 +142,7 @@
 
 
 (global-set-key (kbd "C-c b n") #'notes-rebuild-index) ; "Notes - Rebuild"
-(global-set-key (kbd "C-c o n") #'notes-open-index-file) ; "Notes - Open"
+(global-set-key (kbd "C-c o n") #'open-notes-file) ; "Notes - Open"
 
 
 (global-set-key (kbd "C-x i") #'org-clock-in) ; "clock in "
