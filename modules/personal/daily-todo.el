@@ -8,11 +8,10 @@
 
 ;; Use standardized paths from paths.el
 (setq diary-file my/tasks-file)
-(setq projects-file my/projects-file)
+(setq projects-file my/gtd-projects-file)
 (setq log-file my/logbook-file)
 (setq journal-file my/journal-file)
 (setq notes-file my/rough-notes-file)
-(setq index-file my/notes-index-file)
 (setq shortcut-file my/shortcuts-file)
 (defun diary--now ()
   "Return the current timestamp string."
