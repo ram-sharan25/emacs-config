@@ -40,3 +40,4 @@ persist/
 design-document.md
 history
 *.authinfo
+.DS_Store
