@@ -132,12 +132,23 @@ next tasks in line ")
 (defconst my/archive-dir (expand-file-name "Archives/" my/brain-dir)
   "Directory for archived tasks and projects.")
 
+
+;;; ============================================================================
+;;; MISC CONFIGURATION
+;;; ============================================================================
+
 (defconst my/archive-file-template (expand-file-name "%s_archive.org" my/archive-dir)
   "Template for archive filenames (e.g. tasks_archive.org).")
 
 (defconst my/export-output-dir (expand-file-name "output/" my/brain-dir)
   "Centralized directory for all Org exports.")
 
-(defconst my/dsa-lectures (expand-file-name "dsa_lectures/" my/data-dir))
+(defconst my/classes-dir (expand-file-name "Classes/" my/root-dir))
+
+(defconst my/third-sem-dir (expand-file-name "Third Sems (2025 Fall)/" my/classes-dir))
+
+
+(defconst my/dsa-lectures (expand-file-name "Data Structures and Algorithms/Class Lectures/" my/third-sem-dir))
+
 (provide 'paths)
 ;;; paths.el ends here

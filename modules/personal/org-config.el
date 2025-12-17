@@ -3,10 +3,12 @@
 (require 'paths)
 (require 'org-protocol)
 
-;; Link Abbreviation for portable data links
-  ;; Usage: [[data:image.png]] -> expands to my/data-dir/image.png
-  (setq org-link-abbrev-alist
-        (list (cons "data" (concat my/data-dir "%s"))))
+;; Link Abbreviations
+;; Usage: [[data:image.png]] -> expands to my/data-dir/image.png
+(add-to-list 'org-link-abbrev-alist (cons "data" (concat my/data-dir "%s")))
+
+;; Usage: [[dsa_lec:video.mp4]] -> expands to my/dsa-lectures/video.mp4
+(add-to-list 'org-link-abbrev-alist (cons "dsa_lec" (concat my/dsa-lectures "%s")))
 
 (org-link-set-parameters "imap-message"
   :follow (lambda (path)
