@@ -1,5 +1,18 @@
 (setq org-html-head-include-default-style nil)
 
+(require 'paths)
+(require 'org-protocol)
+
+;; Link Abbreviation for portable data links
+  ;; Usage: [[data:image.png]] -> expands to my/data-dir/image.png
+  (setq org-link-abbrev-alist
+        (list (cons "data" (concat my/data-dir "%s"))))
+
+(org-link-set-parameters "imap-message"
+  :follow (lambda (path)
+            (browse-url (concat "imap-message:" path))))
+
+
 (defun bp/org-publish--add-setupfile (&rest args)
   (goto-char (point-min))
   (search-forward "#+title")
