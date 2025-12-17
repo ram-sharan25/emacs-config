@@ -2,6 +2,8 @@
   :ensure t
   :demand t)
 
+(require 'paths)
+
 (use-package org-mpv-notes
   :ensure t
   :commands (org-mpv-notes-mode org-mpv-notes-open)
