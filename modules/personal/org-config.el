@@ -2,6 +2,7 @@
 
 (require 'paths)
 (require 'org-protocol)
+(require 'org-tempo)
 
 ;; Link Abbreviations
 ;; Usage: [[data:image.png]] -> expands to my/data-dir/image.png
