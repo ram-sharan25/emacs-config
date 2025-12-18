@@ -10,6 +10,38 @@
   "Get all .org files in the Areas directory."
   (directory-files my/areas-dir t "\\.org$"))
 
+(defvar my/resource-capture-title nil "Temporary storage for resource title during capture.")
+(defvar my/resource-capture-author nil "Temporary storage for resource author during capture.")
+(defvar my/resource-capture-type nil "Temporary storage for resource type during capture.")
+
+(defun my/sanitize-filename (string)
+  "Sanitize STRING for use in filenames by replacing invalid chars with hyphens."
+  (replace-regexp-in-string "[^A-Za-z0-9]+" "-" (downcase string)))
+
+(defun my/capture-resource-file ()
+  "Prompt for resource details, set global vars, and return file path.
+   Structure: Brain/Resources/Type_Name_Author.org"
+  (let* ((type (completing-read "Resource Type: "
+                                '("Article" "Video" "Podcast" "Paper" "Book" "Blog" "News" "Course")))
+         (name (read-string "Resource Name: "))
+         (author (read-string "Author: "))
+         (filename (format "%s_%s_%s.org"
+                           (my/sanitize-filename type)
+                           (my/sanitize-filename name)
+                           (my/sanitize-filename author)))
+         (path (expand-file-name filename my/resources-dir)))
+
+    ;; Set global variables for the template to use
+    (setq my/resource-capture-type type)
+    (setq my/resource-capture-title name)
+    (setq my/resource-capture-author author)
+
+    ;; Ensure directory exists
+    (unless (file-exists-p my/resources-dir)
+      (make-directory my/resources-dir t))
+
+    path))
+
 ;; =============================================================================
 ;; Helper Functions for Capture
 ;; =============================================================================
@@ -70,7 +102,13 @@ Falls back to empty string if no link is captured."
         ("j" "Journal" plain
          (file+function ,my/journal-file journal--ensure-daily-heading)
          "** %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n:LOGBOOK:\n:END:\n- %?"
-         :empty-lines 1)))
+         :empty-lines 1)
+
+        ("r" "Resource" plain
+         (file (lambda () (my/capture-resource-file)))
+         ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+TITLE: %(symbol-value 'my/resource-capture-type):%(symbol-value 'my/resource-capture-title):%(symbol-value 'my/resource-capture-author)\n#+DATE: %U\n#+FILETAGS: \n#+AUTHOR: %(symbol-value 'my/resource-capture-author)\n#+SOURCE_TYPE: %(symbol-value 'my/resource-capture-type)\n#+URL: %^{URL}\n\n* Summary\n%?\n\n* Key Concepts\n\n* Quotes\n#+BEGIN_QUOTE\n%i\n#+END_QUOTE"
+         :unnarrowed t)
+         ))
 
 
 (setq org-agenda-files (append (list my/inbox-file
@@ -392,6 +430,8 @@ See also `org-save-all-org-buffers'"
 (global-set-key (kbd "C-c n") (lambda () (interactive) (org-capture nil "u")))  ;; Note
 (global-set-key (kbd "C-c j") (lambda () (interactive) (org-capture nil "j")))  ;; Journal
 (global-set-key (kbd "C-c h") (lambda () (interactive) (org-capture nil "h")))  ;; Log Time
+(global-set-key (kbd "C-c r") (lambda () (interactive) (org-capture nil "r")))
+;; Resource note
 (global-set-key (kbd "C-c w") (lambda () (interactive) (org-protocol-capture nil "w"))) ;; Web Capture (manual trigger)
 
 (provide 'gtd-config)
