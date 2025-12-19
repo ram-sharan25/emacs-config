@@ -214,7 +214,7 @@ Falls back to empty string if no link is captured."
                        :deadline past
                        :scheduled past)
                 (:discard (:anything t))))))
-    (todo "HOLD|IN-PROGRESS"
+    (todo "HOLD|IN-PROGRESS|WAITING"
           ((org-agenda-overriding-header "In Progress")
            (org-agenda-files (append (list my/gtd-projects-file
                                            my/next-file)
