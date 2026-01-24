@@ -114,3 +114,17 @@
 (setq-default auto-fill-function 'do-auto-fill)
 (setq-default fill-column 80)
 
+(defvar org-mid-link-email-program
+  (cl-case system-type
+    (darwin "/Applications/Thunderbird.app/Contents/MacOS/thunderbird")
+    (t "thunderbird")))
+
+(defun org-imap-message-follow (path &optional _arg)
+  "Open the email at PATH in Thunderbird."
+  (let ((url (concat "imap-message:" path)))
+    (message "Opening Thunderbird with: %s" url)  ;; Debug message
+    (start-process "thunderbird" nil org-mid-link-email-program url)))
+
+;; IMPORTANT: Register the link type with Org
+(org-link-set-parameters "imap-message"
+                         :follow #'org-imap-message-follow)
