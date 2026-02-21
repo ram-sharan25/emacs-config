@@ -15,6 +15,12 @@
 (defconst my/root-dir "~/Stillness/"
   "Root directory of the Stillness system.")
 
+(defconst my/job-applications-dir "~/Stillness/Personal/Applications/"
+  "Path to my applications files")
+
+(defconst my/job-applications-file (expand-file-name "applications.org" my/job-applications-dir)
+  "Path to my applications files")
+
 (defconst my/brain-dir (expand-file-name "Brain/" my/root-dir)
   "Brain directory containing all org-roam notes (Public + Dashboard + Private).")
 

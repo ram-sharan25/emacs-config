@@ -104,10 +104,31 @@ Falls back to empty string if no link is captured."
          "** %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n:LOGBOOK:\n:END:\n- %?"
          :empty-lines 1)
 
-        ("r" "Resource" plain
+        ("t" "Resource" plain
          (file (lambda () (my/capture-resource-file)))
          ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+TITLE: %(symbol-value 'my/resource-capture-type):%(symbol-value 'my/resource-capture-title):%(symbol-value 'my/resource-capture-author)\n#+DATE: %U\n#+FILETAGS: \n#+AUTHOR: %(symbol-value 'my/resource-capture-author)\n#+SOURCE_TYPE: %(symbol-value 'my/resource-capture-type)\n#+URL: %^{URL}\n\n* Summary\n%?\n\n* Key Concepts\n\n* Quotes\n#+BEGIN_QUOTE\n%i\n#+END_QUOTE"
          :unnarrowed t)
+
+        ("a" "Activity" entry
+         (file+datetree my/logbook-file)
+         "* IN-PROGRESS %^{Activity}\n:PROPERTIES:\n:CREATED: %U\n:ACTIVITY_TYPE: t\n:END:\n- %?"
+         :clock-in t :clock-keep t :empty-lines 1)
+
+        ("y" "Job Application" entry
+ (file+headline my/job-applications-file "Applications")
+ "* %^{Job Title} @ %^{Company}
+:PROPERTIES:
+:Job_Title: %\\1
+:Company_Name: %\\2
+:Application_Date: %u
+:CV: (pending generation)
+:Cover_Letter: %^{Cover Letter Status|In Progress|Not Submitted yet|Submitted|Generated}
+:References:
+:Follow_Up_Actions: %^{Follow Up Timeline|week|3days|10days|15days|month|none}
+:Status: %^{Status|Pending|CV Generated|Applied|Interview Scheduled|Rejected|Offered|Withdrawn}
+:Link_to_Job: %^{Job Posting URL}
+:END:"
+         :empty-lines 1)
          ))
 
 
@@ -430,9 +451,11 @@ See also `org-save-all-org-buffers'"
 (global-set-key (kbd "C-c n") (lambda () (interactive) (org-capture nil "u")))  ;; Note
 (global-set-key (kbd "C-c j") (lambda () (interactive) (org-capture nil "j")))  ;; Journal
 (global-set-key (kbd "C-c h") (lambda () (interactive) (org-capture nil "h")))  ;; Log Time
-(global-set-key (kbd "C-c r") (lambda () (interactive) (org-capture nil "r")))
-;; Resource note
+(global-set-key (kbd "C-c r") (lambda () (interactive) (org-capture nil "t")))
 (global-set-key (kbd "C-c w") (lambda () (interactive) (org-protocol-capture nil "w"))) ;; Web Capture (manual trigger)
+(global-set-key (kbd "C-c t") (lambda () (interactive) (org-capture nil "a")))  ;; Activity (direct to Area Tasks)
+(global-set-key (kbd "C-c y") (lambda () (interactive) (org-capture nil "y")))
+;; Capture Jobs
 
 (provide 'gtd-config)
 ;;; gtd-config.el ends here

@@ -109,7 +109,10 @@
   (interactive)
   (find-file shortcut-file))
 
-
+(defun open-job-application-file ()
+  "Open daily file and jump to today's entry."
+  (interactive)
+  (find-file my/job-applications-file))
 (defun open-journal-file ()
   "Open daily file and jump to today's entry."
   (interactive)
@@ -138,7 +141,7 @@
 (global-set-key (kbd "C-c o h") 'logbook-open-file)
 (global-set-key (kbd "C-c o p") 'open-project-file)
 (global-set-key (kbd "C-c o s") 'open-shortcut-file)
-
+(global-set-key (kbd "C-c o y") 'open-job-application-file)
 
 (global-set-key (kbd "C-c b n") #'notes-rebuild-index) ; "Notes - Rebuild"
 (global-set-key (kbd "C-c o n") #'open-notes-file) ; "Notes - Open"
