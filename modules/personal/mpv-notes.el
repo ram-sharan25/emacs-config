@@ -50,3 +50,6 @@ Example: Enter 'dsa_dir' to download to the DSA lectures folder."
 
 (setq org-link-abbrev-alist
       (list (cons "dsa_lec" (concat my/dsa-lectures "%s"))))
+
+(setq org-link-abbrev-alist
+      (list (cons "coa_lec" (concat my/coa-lectures "%s"))))

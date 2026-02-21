@@ -151,10 +151,18 @@ next tasks in line ")
 
 (defconst my/classes-dir (expand-file-name "Classes/" my/root-dir))
 
-(defconst my/third-sem-dir (expand-file-name "Third Sems (2025 Fall)/" my/classes-dir))
+(defconst my/third-sem-dir (expand-file-name "Third Sems (2025 Fall)/"
+                                             my/classes-dir))
+(defconst my/fourth-sem-dir (expand-file-name "Fourth Sem(Spring 2026)/" my/classes-dir))
 
+(defconst my/coa-lectures (expand-file-name "Advanced Architecture/Lectures/" my/fourth-sem-dir))
 
 (defconst my/dsa-lectures (expand-file-name "Data Structures and Algorithms/Class Lectures/" my/third-sem-dir))
+
+(defconst my/zotero-storage "~/Zotero/storage/")
+
+
+
 
 (provide 'paths)
 ;;; paths.el ends here
