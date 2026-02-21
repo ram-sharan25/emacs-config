@@ -91,23 +91,30 @@
 
              ;; 2. Construct Tag List (Sanitized)
              (project-tag (when prop-project
-                            (replace-regexp-in-string "[^a-zA-Z0-9-_]" "_" 
+                            (replace-regexp-in-string "[^a-zA-Z0-9-_]" "_"
                                                       (replace-regexp-in-string " " "_" prop-project))))
-             (final-tags (append org-tags 
+             (final-tags (append org-tags
                                  (when project-tag (list project-tag))))
 
              (final-desc nil)
-             (final-project-id nil))
+             (final-project-id nil)
+             ;; Check if this is an Activity capture
+             (is-activity (org-entry-get (point) "ACTIVITY_TYPE")))
 
         ;; --- REGULAR CLOCK-IN LOGIC ---
-        (let* ((raw-input (read-string (format "Task (default: %s): " heading)))
+        (let* (;; Skip task name prompt for activities, use heading directly
+               (raw-input (if is-activity
+                              ""
+                            (read-string (format "Task (default: %s): " heading))))
                ;; Use AREA for Toggl Project selection
                (project-choice (if prop-area
                                    prop-area
                                  (completing-read "Select Toggl Project (Area): " toggl-projects))))
 
           (setq final-desc (if (string-equal raw-input "") heading raw-input))
-          (setq final-project-id (cdr (assoc project-choice toggl-projects))))
+          (setq final-project-id (cdr (assoc project-choice toggl-projects)))
+          ;; Store for activity auto-refile
+          (setq my/last-toggl-project-choice project-choice))
 
         ;; --- START TIMER ---
         (if final-project-id

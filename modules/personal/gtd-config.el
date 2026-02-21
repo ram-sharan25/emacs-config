@@ -1,4 +1,3 @@
-```
 ;;; gtd-config.el --- GTD Workflow Configuration -*- lexical-binding: t; -*-
 
 
@@ -45,6 +44,85 @@
 ;; =============================================================================
 ;; Helper Functions for Capture
 ;; =============================================================================
+
+(defvar my/selected-area-file nil
+  "Temporary storage for the selected area file during capture.")
+
+(defun my/select-area-file ()
+  "Prompt user to select an Area and return its file path."
+  (let* ((area-files (directory-files my/areas-dir nil "\\.org$"))
+         (area-names (mapcar (lambda (f) (file-name-sans-extension f)) area-files))
+         (selected-area (completing-read "Select Area: " area-names nil t))
+         (area-file (expand-file-name (concat selected-area ".org") my/areas-dir)))
+    (setq my/selected-area-file area-file)
+    area-file))
+
+(defun my/goto-area-tasks ()
+  "Navigate to the Tasks heading under Dashboard in the current Area file."
+  (interactive)
+  (goto-char (point-min))
+  ;; Search for Tasks heading at level 2 or 3 (** Tasks or *** Tasks)
+  (if (re-search-forward "^\\*\\*\\*? Tasks" nil t)
+      (progn
+        (org-end-of-subtree t)
+        (unless (bolp) (insert "\n")))
+    ;; Fallback: if no Tasks heading, go to Dashboard or create structure
+    (if (re-search-forward "^\\* Dashboard" nil t)
+        (progn
+          (org-end-of-subtree t)
+          (unless (bolp) (insert "\n"))
+          (insert "** Tasks\n"))
+      ;; Last fallback: end of file
+      (goto-char (point-max))
+      (unless (bolp) (insert "\n")))))
+
+;; Variable to store the selected project for activity refile
+(defvar my/last-toggl-project-choice nil
+  "Stores the last Toggl project selected, used for activity auto-refile.")
+
+;; Advice to capture the project choice from Toggl hook (non-invasive)
+(defun my/capture-toggl-project-choice (orig-fun &rest args)
+  "Advice to capture the Toggl project choice before calling the original function."
+  (let ((result (apply orig-fun args)))
+    result))
+
+(defun my/activity-auto-refile ()
+  "Auto-refile ACTIVITY_TYPE entries to the Area's Tasks section.
+Uses the project selected in Toggl (stored in my/last-toggl-project-choice).
+After refile, saves and opens today's agenda."
+  (when (and (derived-mode-p 'org-mode)
+             (org-entry-get (point) "ACTIVITY_TYPE")
+             my/last-toggl-project-choice)
+    (let ((area-file (expand-file-name (concat my/last-toggl-project-choice ".org") my/areas-dir))
+          (source-buffer (current-buffer)))
+      (when (file-exists-p area-file)
+        ;; Cut the current entry
+        (org-cut-subtree)
+        ;; Refile to Area file without switching visible buffer
+        (with-current-buffer (find-file-noselect area-file)
+          (goto-char (point-min))
+          ;; Find Tasks heading and determine its level
+          (if (re-search-forward "^\\(\\*\\*\\*?\\) Tasks" nil t)
+              (let ((tasks-level (length (match-string 1))))
+                (org-end-of-subtree t)
+                (unless (bolp) (insert "\n"))
+                ;; Paste one level deeper than Tasks heading
+                (org-paste-subtree (1+ tasks-level)))
+            ;; Fallback: end of file, level 3
+            (goto-char (point-max))
+            (unless (bolp) (insert "\n"))
+            (org-paste-subtree 3))
+          (save-buffer))
+        ;; Save and close the source (logbook) buffer
+        (with-current-buffer source-buffer
+          (save-buffer)
+          (kill-buffer))
+        (message "Activity refiled to %s" my/last-toggl-project-choice)
+        ;; Open today's agenda
+        (org-agenda nil "a")))))
+
+;; Add after Toggl hook (use high depth to ensure it runs AFTER toggl hook)
+(add-hook 'org-clock-in-hook #'my/activity-auto-refile 90)
 
 (defun my/get-capture-link-compact ()
   "Return the captured link formatted as [[link][#]].
