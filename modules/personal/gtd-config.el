@@ -194,7 +194,7 @@ Falls back to empty string if no link is captured."
 
         ("y" "Job Application" entry
  (file+headline my/job-applications-file "Applications")
- "* %^{Job Title} @ %^{Company}
+ "* TODO %^{Job Title} @ %^{Company}
 :PROPERTIES:
 :Job_Title: %\\1
 :Company_Name: %\\2
@@ -217,7 +217,8 @@ Falls back to empty string if no link is captured."
                                      my/someday-file
                                      my/rituals-file
                                      my/gcal-file
-                                     my/gtasks-dir)
+                                     my/gtasks-dir
+                                     my/job-applications-file)
                                (my/get-area-files)))
 
 (setq org-todo-keywords
@@ -358,8 +359,8 @@ Falls back to empty string if no link is captured."
                  (org-agenda-files (list my/waiting-file))))
           (todo "TODO|HOLD|WAITING"
                 ((org-agenda-overriding-header "Projects & Areas (Backlog)")
-                 (org-agenda-files (append (list my/gtd-projects-file)
-                                           (my/get-area-files)))
+                 (org-agenda-files (append (list my/gtd-projects-file my/job-applications-file)
+                                           (my/get-area-files) ))
                  (org-super-agenda-groups '((:auto-category t)))
                  (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled))))
           (todo "TODO"
