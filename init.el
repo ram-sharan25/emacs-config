@@ -128,3 +128,17 @@
 ;; IMPORTANT: Register the link type with Org
 (org-link-set-parameters "imap-message"
                          :follow #'org-imap-message-follow)
+
+;; Start Emacs server so emacsclient can connect (for Claude Code skills).
+(require 'server)
+(unless (server-running-p)
+  (server-start))
+
+;; Auto-load Claude Code agent skills.
+(dolist (skill '("describe" "highlight" "open" "select" "dired"))
+  (let ((path (expand-file-name
+               (concat ".agent/skills/" skill)
+               user-emacs-directory)))
+    (add-to-list 'load-path path)
+    (require (intern (concat "agent-skill-" skill)) nil t)))
+
