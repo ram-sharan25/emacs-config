@@ -31,8 +31,9 @@
 
 (add-hook 'prog-mode-hook #'rsr/prog-mode-hook)
 
-;; Enable org-indent-mode by default for all org files
-(add-hook 'org-mode-hook 'org-indent-mode)
+;; Hide extra leading stars (lighter than org-indent-mode — no overlay management).
+;; Content stays at column 0; only the last star per heading is visible.
+(setq org-hide-leading-stars t)
 (setq-default toggle-truncate-lines t)
 
 (add-hook 'prog-mode-hook #'hs-minor-mode)
@@ -71,3 +72,16 @@ with indentation based on the current or previous line."
 (global-set-key (kbd "C-c C-s") 'hs-show-block)
 (global-set-key (kbd "C-c C-c") 'hs-hide-all)
 (global-set-key (kbd "C-c C-a") 'hs-show-all)
+
+;; Auto-indent on RET — built-in, fires only on newline/trigger chars.
+;; Zero idle or timer overhead. electric-indent-mode is already the
+;; Emacs default but we enable it explicitly for clarity.
+(electric-indent-mode 1)
+
+;; Org-mode manages its own RET behavior; electric-indent conflicts with it.
+;; Use org-return-indent instead: same as org-return but also indents the new line.
+;; Fires only on keypress — zero idle or timer overhead.
+(add-hook 'org-mode-hook
+          (lambda ()
+            (electric-indent-local-mode -1)
+            (local-set-key (kbd "RET") #'org-return-indent)))
