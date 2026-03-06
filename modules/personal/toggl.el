@@ -1,19 +1,13 @@
 ;;; toggl.el --- Toggl configuration -*- lexical-binding: t; -*-
 
-;; 1. Define Local Path
 (add-to-list 'load-path "~/.emacs.d/modules/git-modules/org-toggle/")
 
 (use-package org-toggl
   :ensure nil
   :after org
-
   :init
-  ;; --- CREDENTIALS ---
   (setq toggl-auth-token my/toggl-auth-token)
   (setq toggl-workspace-id 8843824)
-
-  ;; --- INHERITANCE ---
-  ;; Ensures :PROJECT: property is read from parent headings
   (setq org-use-property-inheritance '("PROJECT"))
 
   :config
@@ -21,19 +15,16 @@
   (require 'json)
   (require 'url)
 
-  ;; --- 1. PROJECT DATA MANAGEMENT ---
-
   (defvar toggl-projects nil
     "A list of (ProjectName . ProjectID) used for completion.")
 
   (defun rsr/update-toggl-projects ()
-    "Fetch ACTIVE projects from Toggl and update `toggl-projects`."
+    "Fetch active projects from Toggl and update `toggl-projects`."
     (interactive)
     (let* ((auth (base64-encode-string (concat toggl-auth-token ":api_token") t))
            (url "https://api.track.toggl.com/api/v9/me?with_related_data=true")
            (url-request-extra-headers `(("Authorization" . ,(concat "Basic " auth))
                                         ("Content-Type" . "application/json"))))
-
       (message "Fetching active Toggl projects...")
       (with-current-buffer (url-retrieve-synchronously url)
         (goto-char (point-min))
@@ -41,8 +32,6 @@
         (let* ((full-data (json-read))
                (projects-vector (alist-get 'projects full-data)))
           (kill-buffer (current-buffer))
-
-          ;; Filter out archived projects (delq nil removes empty slots)
           (setq toggl-projects
                 (delq nil
                       (mapcar (lambda (item)
@@ -52,10 +41,9 @@
                               (append projects-vector nil))))
           (message "Synced %d active projects." (length toggl-projects))))))
 
-  ;; Fetch projects after 5s of idle — avoids blocking startup.
+  ;; Fetch projects after 5s of idle — avoids blocking startup
   (run-with-idle-timer 5 nil #'rsr/update-toggl-projects)
 
-  ;; --- 2. OVERRIDE: Support Tags in Time Entry ---
   (defun toggl-start-time-entry (description &optional pid tags show-message)
     "Start Toggl time entry with optional PID and TAGS."
     (interactive "MDescription: \ni\np")
@@ -65,7 +53,7 @@
      (json-encode `(("description" . ,description)
                     ("duration" . -1)
                     ("project_id" . ,pid)
-                    ("tags" . ,(or tags [])) ; Send tags array
+                    ("tags" . ,(or tags []))
                     ("created_with" . "mbork's Emacs toggl client")
                     ("start" . ,(format-time-string "%FT%TZ" nil t))
                     ("workspace_id" . ,toggl-workspace-id)))
@@ -79,56 +67,35 @@
         (when show-message (message "Starting time entry failed because %s" error-thrown))))))
 
   (defun rsr/toggl-clock-in-hook ()
-    "Starts Toggl. Maps AREA -> Project. Sends PROJECT + Tags as Toggl Tags."
+    "Start Toggl timer on org-clock-in.
+Maps AREA property to Toggl project, PROJECT + org tags to Toggl tags."
     (when (derived-mode-p 'org-mode)
-      (let* ((heading (org-get-heading t t t t))
-             ;; 1. Get Metadata
-             (prop-area (org-entry-get (point) "AREA" t))     ; Maps to Toggl Project
-             (prop-project (org-entry-get (point) "PROJECT" t)) ; Maps to Toggl Tag
-             (org-tags (org-get-tags))                        ; Org Tags -> Toggl Tags
-
-             ;; 2. Construct Tag List (Sanitized)
-             (project-tag (when prop-project
-                            (replace-regexp-in-string "[^a-zA-Z0-9-_]" "_"
-                                                      (replace-regexp-in-string " " "_" prop-project))))
-             (final-tags (append org-tags
-                                 (when project-tag (list project-tag))))
-
-             (final-desc nil)
-             (final-project-id nil)
-             ;; Check if this is an Activity capture
-             (is-activity (org-entry-get (point) "ACTIVITY_TYPE")))
-
-        ;; --- REGULAR CLOCK-IN LOGIC ---
-        (let* (;; Skip task name prompt for activities, use heading directly
-               (raw-input (if is-activity
-                              ""
-                            (read-string (format "Task (default: %s): " heading))))
-               ;; Use AREA for Toggl Project selection
-               (project-choice (if prop-area
-                                   prop-area
-                                 (completing-read "Select Toggl Project (Area): " toggl-projects))))
-
-          (setq final-desc (if (string-equal raw-input "") heading raw-input))
-          (setq final-project-id (cdr (assoc project-choice toggl-projects)))
-          ;; Store for activity auto-refile
+      (let* ((heading      (org-get-heading t t t t))
+             (prop-area    (org-entry-get (point) "AREA" t))
+             (prop-project (org-entry-get (point) "PROJECT" t))
+             (org-tags     (org-get-tags))
+             (project-tag  (when prop-project
+                             (replace-regexp-in-string "[^a-zA-Z0-9-_]" "_"
+                                                       (replace-regexp-in-string " " "_" prop-project))))
+             (final-tags   (append org-tags (when project-tag (list project-tag))))
+             (is-activity  (org-entry-get (point) "ACTIVITY_TYPE")))
+        (let* ((raw-input       (if is-activity
+                                    ""
+                                  (read-string (format "Task (default: %s): " heading))))
+               (project-choice  (if prop-area
+                                    prop-area
+                                  (completing-read "Select Toggl Project (Area): " toggl-projects))))
+          (setq final-desc        (if (string-equal raw-input "") heading raw-input))
+          (setq final-project-id  (cdr (assoc project-choice toggl-projects)))
           (setq my/last-toggl-project-choice project-choice))
-
-        ;; --- START TIMER ---
         (if final-project-id
             (toggl-start-time-entry final-desc final-project-id final-tags t)
           (message "Warning: Starting Toggl without a project.")
           (toggl-start-time-entry final-desc nil final-tags t)))))
 
-  ;; --- 3. HOOK ASSIGNMENTS ---
   :hook
-  (org-clock-in . rsr/toggl-clock-in-hook)
-  (org-clock-out . org-toggl-clock-out)
-  )
+  (org-clock-in  . rsr/toggl-clock-in-hook)
+  (org-clock-out . org-toggl-clock-out))
 
-;; --- GLOBAL KEYBINDINGS ---
-(global-set-key (kbd "C-c c i") #'org-clock-in)
-(global-set-key (kbd "C-c c o") #'org-clock-out)
-(global-set-key (kbd "C-c c g") #'org-clock-goto)
-;; Optional: Refresh projects manually if you add a new one on the web
-;; (global-set-key (kbd "C-c t r") #'rsr/update-toggl-projects)
+(provide 'toggl)
+;;; toggl.el ends here
