@@ -44,13 +44,23 @@ For mermaid, uses :file header pointing to data dir."
   (interactive)
   (let ((language (read-string "Language: " nil nil "python")))
     (unless (string-empty-p language)
-      (insert (if (string= language "mermaid")
-                  (format "#+BEGIN_SRC mermaid :file %s.png\n"
-                          (read-string "Diagram name (without extension): "))
-                (format "#+BEGIN_SRC %s :results output :exports both\n" language)))
-      (let ((p (point)))
-        (insert "\n#+END_SRC\n\n#+RESULTS:\n")
-        (goto-char p)))))
+      (cond
+       ((member language '("quote" "example" "verse"))
+        (insert (format "#+begin_%s\n" language))
+        (let ((p (point)))
+          (insert (format "\n#+end_%s\n" language))
+          (goto-char p)))
+       ((string= language "mermaid")
+        (insert (format "#+BEGIN_SRC mermaid :file %s.png\n"
+                        (read-string "Diagram name (without extension): ")))
+        (let ((p (point)))
+          (insert "\n#+END_SRC\n\n#+RESULTS:\n")
+          (goto-char p)))
+       (t
+        (insert (format "#+BEGIN_SRC %s :results output :exports both\n" language))
+        (let ((p (point)))
+          (insert "\n#+END_SRC\n\n#+RESULTS:\n")
+          (goto-char p)))))))
 
 (defun my-open-leetcode-folder ()
   "Open the LeetCode notes directory in dired."
