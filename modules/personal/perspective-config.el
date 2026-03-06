@@ -20,8 +20,12 @@
 (defun rsr/open-project-in-new-frame ()
   "Open a projectile project in a new frame with its own perspective."
   (interactive)
-  (select-frame (make-frame))
-  (run-with-idle-timer 0.1 nil #'call-interactively #'projectile-persp-switch-project))
+  (condition-case err
+      (progn
+        (select-frame (make-frame))
+        ;; longer delay — lets treemacs/perspective hooks settle in new frame
+        (run-with-idle-timer 0.5 nil #'call-interactively #'projectile-persp-switch-project))
+    (error (message "rsr/open-project-in-new-frame: %s" (error-message-string err)))))
 
 ;;; Keybindings
 (global-set-key (kbd "C-c C-p F") #'rsr/open-project-in-new-frame)

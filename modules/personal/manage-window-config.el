@@ -23,7 +23,7 @@
 (use-package vertico
   :ensure t
   :custom
-  (vertico-count 20)
+  (vertico-count 12)   ;; reasonable height
   (vertico-cycle t)
   :init
   (vertico-mode))
@@ -42,6 +42,10 @@
   :ensure t
   :init
   (marginalia-mode))
+
+;;; Emacs 29 compatibility — consult 3.x references this Emacs 30 variable
+(unless (boundp 'minibuffer-visible-completions)
+  (defvar minibuffer-visible-completions nil))
 
 ;;; --- Consult (enhanced commands) ---
 

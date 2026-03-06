@@ -11,12 +11,17 @@
   (corfu-cycle t)             ;; cycle through candidates
   (corfu-quit-no-match t)     ;; auto-dismiss if no match
   :init
-  (global-corfu-mode))
+  (global-corfu-mode)
+  :config
+  ;; disable in non-editing modes — prevents org-element-at-point warnings
+  (add-hook 'org-agenda-mode-hook (lambda () (corfu-mode -1)))
+  (add-hook 'vterm-mode-hook      (lambda () (corfu-mode -1))))
 
 ;; cape — extra completion sources (files, dabbrev, keywords)
 (use-package cape
   :ensure t
   :init
+  (setq cape-dabbrev-check-other-buffers nil) ;; scan current buffer only — prevents freeze
   (add-to-list 'completion-at-point-functions #'cape-file)
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-keyword))
