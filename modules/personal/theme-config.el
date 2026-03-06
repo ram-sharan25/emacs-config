@@ -7,7 +7,7 @@
 ;; Comprehensive Visual Cleanup (Zenburn Optimized)
 (custom-set-faces
  ;; Make scaffolding (drawer lines, meta lines) small and dim
- '(org-drawer ((t (:foreground "#b42cbeff" :height 0.8))))
+ '(org-drawer ((t (:foreground "#b42cbe" :height 0.8))))
  '(org-meta-line ((t (:inherit font-lock-comment-face :height 0.8))))
  '(org-special-keyword ((t (:inherit font-lock-keyword-face :height 0.8))))
  '(org-property-value ((t (:height 0.8))))

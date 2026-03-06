@@ -1,39 +1,25 @@
-(use-package company
+;;; company-config.el --- In-buffer code completion via corfu -*- lexical-binding: t; -*-
+
+;;; Code:
+
+(use-package corfu
   :ensure t
-  :after lsp-mode
-  :hook (lsp-mode . company-mode)
   :custom
-  (company-idle-delay 0.3)
-  (company-minimum-prefix-length 2)
-  (company-tooltip-limit 15)             ;; More suggestions for verbose languages
-  (company-show-quick-access t)          ;; Quick selection numbers
-  (company-require-match 'never)
-  (company-dabbrev-downcase nil)        ;; Case-sensitive completion
-  (company-global-modes '(not vterm-mode)) ;; Disable in specific modes
+  (corfu-auto t)              ;; show popup automatically
+  (corfu-auto-delay 0.2)      ;; seconds before popup appears
+  (corfu-auto-prefix 2)       ;; min chars before triggering
+  (corfu-cycle t)             ;; cycle through candidates
+  (corfu-quit-no-match t)     ;; auto-dismiss if no match
+  :init
+  (global-corfu-mode))
 
-  :config
-  ;; Smart backends prioritization
-  (setq company-backends
-	'((company-capf company-yasnippet) ;; Completion-at-point  ;; Snippet expansion
-	  (company-dabbrev-code)  ;; Code-aware dabbrev
-	  (company-keywords)   ;; Language keywords
-	  (company-files))))  ;; File path completion
-
-
-(use-package company-box
+;; cape — extra completion sources (files, dabbrev, keywords)
+(use-package cape
   :ensure t
-  :hook (company-mode . company-box-mode)
-  :config
-  (setq company-box-icons-alist 'company-box-icons-nerd-icons))
-(use-package company-statistics
-  :ensure t
-  :config (company-statistics-mode))
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-keyword))
 
-
-;; Keybinding Optimizations
-
-(define-key company-active-map (kbd "TAB") #'company-complete-selection)
-(define-key company-active-map (kbd "<tab>") #'company-complete-selection)
-(define-key company-active-map (kbd "C-w") #'company-complete-common)
-(define-key company-active-map (kbd "C-j") #'company-select-next)
-(define-key company-active-map (kbd "C-k") #'company-select-previous)
+(provide 'company-config)
+;;; company-config.el ends here
