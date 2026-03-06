@@ -8,19 +8,21 @@
 (use-package doom-modeline
   :ensure t
   :init
-  (setq doom-modeline-format
-        '((bar vcs-branch buffer-info remote-host matches selection parens)
-          (misc-info persp-name major-mode process time)))
+  ;; custom layout: git branch before filename on left
+  (doom-modeline-def-modeline 'rsr/modeline
+    '(bar vcs buffer-info remote-host matches selection-info)
+    '(misc-info persp-name major-mode process time))
+  (add-hook 'doom-modeline-mode-hook
+            (lambda () (doom-modeline-set-modeline 'rsr/modeline t)))
 
   (setq doom-modeline-buffer-encoding nil)         ;; hide UTF-8/LF
-  (setq doom-modeline-display-buffer-size nil)     ;; hide buffer size
-  (setq doom-modeline-display-buffer-position nil) ;; hide L:N
   (setq doom-modeline-percent-position nil)        ;; hide All/Top/Bot
-  (setq doom-modeline-position-line-format nil)    ;; hide L31
-  (setq doom-modeline-position-column-line-format nil) ;; hide col:line
   (setq doom-modeline-minor-modes nil)             ;; hide minor mode indicators
   (setq doom-modeline-vcs-max-length 20)           ;; truncate long branch names
   (setq doom-modeline-buffer-file-name-style 'truncate-upto-project) ;; project/file.el
+
+  ;; suppress org-element warnings in org-agenda (Emacs 30 compatibility)
+  (add-to-list 'warning-suppress-types '(org-element))
 
   (setq display-time-default-load-average nil)  ;; hide load average
   (setq display-time-format "%a %m/%d %I:%M %p")
