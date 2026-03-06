@@ -1,12 +1,16 @@
+;;; editor-config.el --- General editing settings -*- lexical-binding: t; -*-
+
+;;; Code:
+
+;;; --- Smartparens ---
+
 (use-package smartparens
   :ensure t
+  :hook (prog-mode . smartparens-mode)
   :bind (("C-M-f" . sp-forward-sexp)
-	 ("C-M-b" . sp-backward-sexp)))
+         ("C-M-b" . sp-backward-sexp)))
 
-(add-hook 'prog-mode-hook #'display-line-numbers-mode)
-(add-hook 'org-mode-hook #'display-line-numbers-mode)
-
-(setq org-latex-toc-command "\\tableofcontents \\clearpage")
+;;; --- Multiple Cursors ---
 
 (use-package smartrep
   :ensure t)
@@ -16,62 +20,65 @@
   :defer t
   :commands (mc/mark-previous-like-this mc/mark-next-like-this)
   :init
-  (smartrep-define-key rsr/global-prefix-map
-      "m"
+  (smartrep-define-key rsr/global-prefix-map "m"
     '(("p" . mc/mark-previous-like-this)
       ("n" . mc/mark-next-like-this)
       ("0" . mc/insert-numbers)
       ("a" . mc/insert-letters))))
 
-(defun rsr/prog-mode-hook ()
-  (add-hook 'before-save-hook #'whitespace-cleanup))
+;;; --- Line Display ---
 
-(add-hook 'prog-mode-hook #'rsr/prog-mode-hook)
+(add-hook 'prog-mode-hook #'display-line-numbers-mode)
+(add-hook 'org-mode-hook  #'display-line-numbers-mode)
+(setq-default truncate-lines t)
 
-(setq-default toggle-truncate-lines t)
+;;; --- Code Folding (hs-minor-mode) ---
 
 (add-hook 'prog-mode-hook #'hs-minor-mode)
 
-(defun my-insert-indented-todo-item ()
-  "Insert a new to-do item ('- [ ] ') on the next line
-with indentation based on the current or previous line."
-  (interactive)
-  (end-of-line)
+(with-eval-after-load 'hideshow
+  (define-key hs-minor-mode-map (kbd "C-c h t") #'hs-toggle-hiding)
+  (define-key hs-minor-mode-map (kbd "C-c h h") #'hs-hide-block)
+  (define-key hs-minor-mode-map (kbd "C-c h s") #'hs-show-block)
+  (define-key hs-minor-mode-map (kbd "C-c h a") #'hs-hide-all)
+  (define-key hs-minor-mode-map (kbd "C-c h A") #'hs-show-all))
 
-  (let* (;; Get indentation of the current line.
-	 (current-indent (current-indentation))
-	 ;; Get indentation of the previous line.
-	 (prev-indent (save-excursion (forward-line -1) (current-indentation)))
-	 ;; Determine the final indentation value based on your rules.
-	 (final-indent
-	  (cond
-	   ((> current-indent 0) current-indent) ; Rule 1: Use current line's indent.
-	   ((> prev-indent 0) prev-indent)     ; Rule 2: Use previous line's indent.
-	   (t 2))))                          ; Rule 3: Fallback to 2 spaces.
+;;; --- Whitespace Cleanup on Save ---
 
-    ;; Insert the content with the calculated indentation.
-    (insert "\n" (make-string final-indent ?\ ) "- [ ] ")))
+(defun rsr/prog-mode-hook ()
+  "Hooks for programming modes."
+  (add-hook 'before-save-hook #'whitespace-cleanup nil t))
 
-(global-set-key (kbd "C-c 0") 'my-insert-indented-todo-item)
-(global-set-key (kbd "C-c C-0") 'my-insert-indented-todo-item)
+(add-hook 'prog-mode-hook #'rsr/prog-mode-hook)
 
-;; Keybinding to toggle hide/show of the current block in hs-minor-mode
-(global-set-key (kbd "C-c C-t") 'hs-toggle-hiding)
-;; Keybinding to toggle hide/show of the current block in hs-minor-mode
-(global-set-key (kbd "C-c C-h") 'hs-hide-block)
-(global-set-key (kbd "C-c C-s") 'hs-show-block)
-(global-set-key (kbd "C-c C-c") 'hs-hide-all)
-(global-set-key (kbd "C-c C-a") 'hs-show-all)
+;;; --- Electric Indent ---
 
-;; Auto-indent on RET — built-in, fires only on newline/trigger chars.
-;; Zero idle or timer overhead. electric-indent-mode is already the
-;; Emacs default but we enable it explicitly for clarity.
 (electric-indent-mode 1)
 
-;; Org-mode manages its own RET behavior; electric-indent conflicts with it.
-;; Use org-return-indent instead: same as org-return but also indents the new line.
-;; Fires only on keypress — zero idle or timer overhead.
-(add-hook 'org-mode-hook
-          (lambda ()
-            (electric-indent-local-mode -1)
-            (local-set-key (kbd "RET") (lambda () (interactive) (org-return t)))))
+;; org manages its own RET behavior — disable electric-indent there
+(defun rsr/org-disable-electric-indent ()
+  "Disable electric indent in org-mode and use org-return with indent."
+  (electric-indent-local-mode -1)
+  (local-set-key (kbd "RET") (lambda () (interactive) (org-return t))))
+
+(add-hook 'org-mode-hook #'rsr/org-disable-electric-indent)
+
+;;; --- Custom Commands ---
+
+(defun rsr/insert-indented-todo-item ()
+  "Insert a new '- [ ] ' todo item on the next line, matching current indentation."
+  (interactive)
+  (end-of-line)
+  (let* ((current-indent (current-indentation))
+         (prev-indent (save-excursion (forward-line -1) (current-indentation)))
+         (final-indent (cond ((> current-indent 0) current-indent)
+                             ((> prev-indent 0) prev-indent)
+                             (t 2))))
+    (insert "\n" (make-string final-indent ?\ ) "- [ ] ")))
+
+;;; Keybindings
+(global-set-key (kbd "C-c 0")   #'rsr/insert-indented-todo-item)
+(global-set-key (kbd "C-c C-0") #'rsr/insert-indented-todo-item)
+
+(provide 'editor-config)
+;;; editor-config.el ends here

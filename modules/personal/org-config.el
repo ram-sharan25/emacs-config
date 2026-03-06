@@ -15,9 +15,10 @@
 
 (use-package org
   :config
-  (setq org-fontify-quote-and-verse-blocks t) ;; Enable special highlighting for quote blocks
+  (setq org-fontify-quote-and-verse-blocks t)
   (setq org-preview-latex-image-directory "/tmp/ltximg/")
   (setq org-preview-latex-default-process 'dvisvgm)
+  (setq org-latex-toc-command "\\tableofcontents \\clearpage")
   (plist-put org-format-latex-options :background "Transparent")
 
   (defun bp/adjust-latex-previews-scale ()
