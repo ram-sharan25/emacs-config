@@ -3,6 +3,35 @@
   :ensure t
   :hook (org-mode . org-pdftools-setup-link))
 
+;; don't prompt for large PDF files
+(setq large-file-warning-threshold nil)
+
+;; org-noter calls pdf-view-current-overlay as a function but it's a macro — wrap it
+(defun pdf-view-current-overlay ()
+  (image-mode-window-get 'overlay))
+
+(use-package org-noter
+  :ensure t
+  :after (org pdf-tools)
+  :config
+  (setq org-noter-always-create-frame nil
+        org-noter-auto-save-last-location t
+        org-noter-kill-frame-at-session-end nil
+        org-noter-hide-other nil
+        org-noter-notes-window-location 'vertical-split))
+
+(defun my/org-noter ()
+  "Load the NOTER_DOCUMENT PDF into a background buffer without changing windows.
+Call this from a notes heading with a NOTER_DOCUMENT property set.
+Then manually split and display the PDF buffer where you want it."
+  (interactive)
+  (let ((doc (org-entry-get nil "NOTER_DOCUMENT" t)))
+    (if doc
+        (progn
+          (find-file-noselect (expand-file-name doc))
+          (message "PDF loaded: %s — use C-x 4 b or split to view it" doc))
+      (user-error "No NOTER_DOCUMENT property found on this heading"))))
+
 (use-package pdf-tools
   :pin manual
   :defer t
@@ -138,9 +167,26 @@
 
       (pop-to-buffer target-buffer '(display-buffer-pop-up-window))))
 
+  (defun rsr/pdf-copy-text-and-link ()
+    "Highlight selection and copy text, link, and annotation note to clipboard."
+    (interactive)
+    (let* ((text (apply #'concat (pdf-view-active-region-text)))
+           (annot (pdf-annot-add-highlight-markup-annotation
+                   (pdf-view-active-region nil)))
+           (link (rsr/pdf-annot-get-org-pdftools-link (buffer-file-name) annot))
+           (note (pdf-annot-get annot 'contents))
+           (clip (concat (format "[[%s][pg. %d]]\n" link (pdf-view-current-page))
+                         (format "#+begin_quote\n%s\n#+end_quote" text)
+                         (when (and note (> (length note) 0))
+                           (format "\n\n%s" note)))))
+      (kill-new clip)
+      (message "Copied text + link to clipboard")))
+
   ;; Key bindings for PDF mode
   (bind-keys :map pdf-view-mode-map
 	     ("x" . rsr/pdf-slight-up)
 	     ("z" . rsr/pdf-slight-down)
 	     ("C-c a" . rsr/pdf-highlight-and-take-note)
-	     ("C-c e" . rsr/pdf-annot-export-as-org)))
+	     ("C-c e" . rsr/pdf-annot-export-as-org)
+             ("C-c y" . rsr/pdf-copy-text-and-link)
+             ("C-c x" . pdf-annot-delete)))
