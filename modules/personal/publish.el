@@ -1,17 +1,13 @@
 ;;; publish.el --- Publish org files to Astro collections -*- lexical-binding: t; -*-
 
-;; Author: Ram Sharan Rimal
-;; Usage: M-x rsr/publish-org-to-astro
-
 ;;; Code:
 
 (require 'ox-html)
 (require 'htmlize)
 
-;; Use htmlize with CSS classes (respects Emacs theme)
 (setq org-html-htmlize-output-type 'css)
-(setq htmlize-output-type 'css)  ; CSS classes, not inline styles
-(setq htmlize-css-name-prefix "org-")  ; Prefix for CSS classes
+(setq htmlize-output-type 'css)
+(setq htmlize-css-name-prefix "org-")
 
 (defvar rsr/portfolio-root
   (expand-file-name "~/Stillness/Development/learning-logs/portfolio")
@@ -34,46 +30,36 @@
 
     (let* ((title (or (car (plist-get (org-export-get-environment) :title))
                       (file-name-base org-file)))
-           (slug (downcase (replace-regexp-in-string
-                           "[^a-z0-9-]+" "-" title)))
+           (slug (downcase (replace-regexp-in-string "[^a-z0-9-]+" "-" title)))
            (output-dir (expand-file-name
-                       (format "src/content/%s" collection)
-                       rsr/portfolio-root))
+                        (format "src/content/%s" collection)
+                        rsr/portfolio-root))
            (output-file (expand-file-name (concat slug ".md") output-dir))
            (metadata (rsr/--extract-metadata))
            (frontmatter (rsr/--generate-frontmatter metadata collection)))
 
-      ;; Create output directory
       (make-directory output-dir t)
 
-      ;; Copy images and get path mappings
       (let ((images (rsr/--copy-images org-file slug collection)))
-
-        ;; Export to HTML
         (let* ((org-html-head-include-default-style nil)
                (org-html-head-include-scripts nil)
                (org-export-with-toc nil)
                (org-export-with-section-numbers nil)
                (html-body (org-export-as 'html nil nil t)))
 
-          ;; Update image paths in HTML
           (dolist (img images)
-            (let ((old-path (car img))
-                  (new-path (cdr img)))
-              (setq html-body
-                    (replace-regexp-in-string
-                     (regexp-quote old-path)
-                     new-path
-                     html-body))))
+            (setq html-body
+                  (replace-regexp-in-string
+                   (regexp-quote (car img))
+                   (cdr img)
+                   html-body)))
 
-          ;; Fix relative paths: ../../../public/images/ -> /images/
           (setq html-body
                 (replace-regexp-in-string
                  "\\.\\./\\.\\./\\.\\./public/images/"
                  "/images/"
                  html-body))
 
-          ;; Write frontmatter + HTML
           (with-temp-file output-file
             (insert frontmatter)
             (insert "<div class=\"org-content\">\n")
@@ -92,11 +78,9 @@
         (difficulty nil)
         (link nil))
 
-    ;; Parse date
     (when (string-match "<\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\)" date)
       (setq date (match-string 1 date)))
 
-    ;; Extract from Information section
     (save-excursion
       (goto-char (point-min))
       (when (re-search-forward "^\\* Information" nil t)
@@ -111,7 +95,7 @@
           (when (re-search-forward "\\(?:Problem Type\\|Tags\\):\\s-*\\(.+\\)$" end t)
             (setq tags (mapcar (lambda (s)
                                  (downcase (replace-regexp-in-string
-                                           "\\s-+" "-" (string-trim s))))
+                                            "\\s-+" "-" (string-trim s))))
                                (split-string (match-string 1) ",")))))))
 
     (when difficulty (push difficulty tags))
@@ -130,14 +114,11 @@ Returns alist of (old-path . new-path) for path updates."
                    rsr/portfolio-root))
         (images-copied '()))
 
-    ;; Create destination directory
     (make-directory dest-dir t)
 
-    ;; Find and copy images
     (with-current-buffer (find-file-noselect org-file)
       (save-excursion
         (goto-char (point-min))
-        ;; Match [[file:path/image.ext]]
         (while (re-search-forward "\\[\\[file:\\([^]]+\\.\\(png\\|jpg\\|jpeg\\|gif\\|svg\\)\\)\\]\\]" nil t)
           (let* ((rel-path (match-string-no-properties 1))
                  (img-name (file-name-nondirectory rel-path))
