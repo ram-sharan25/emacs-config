@@ -20,8 +20,8 @@
 (add-to-list 'org-file-apps '("\\.mp4\\'" . "mpv \"%s\""))
 
 (defun my/download-video (link-key filename url)
-  "Download video to the directory defined by LINK-KEY in `org-link-abbrev-alist`.
-Example: Enter 'dsa_dir' to download to the DSA lectures folder."
+  "Download video to the directory defined by LINK-KEY in `org-link-abbrev-alist'.
+Example: Enter `dsa_dir' to download to the DSA lectures folder."
   (interactive
    (let ((keys (mapcar #'car org-link-abbrev-alist)))
      (list (completing-read "Target Directory Key (e.g., dsa_lec): " keys)
@@ -48,8 +48,5 @@ Example: Enter 'dsa_dir' to download to the DSA lectures folder."
       (message "Downloading to: %s" target-dir)
       (async-shell-command cmd (format "*yt-dlp: %s*" filename)))))
 
-(setq org-link-abbrev-alist
-      (list (cons "dsa_lec" (concat my/dsa-lectures "%s"))))
-
-(setq org-link-abbrev-alist
-      (list (cons "coa_lec" (concat my/coa-lectures "%s"))))
+(add-to-list 'org-link-abbrev-alist (cons "dsa_lec" (concat my/dsa-lectures "%s")))
+(add-to-list 'org-link-abbrev-alist (cons "coa_lec" (concat my/coa-lectures "%s")))

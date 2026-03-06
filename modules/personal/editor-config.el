@@ -3,9 +3,6 @@
   :bind (("C-M-f" . sp-forward-sexp)
 	 ("C-M-b" . sp-backward-sexp)))
 
-(global-set-key (kbd "s-/") 'comment-dwim)
-(global-set-key (kbd "s-l") 'mark-whole-line)
-
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 (add-hook 'org-mode-hook #'display-line-numbers-mode)
 
@@ -31,9 +28,6 @@
 
 (add-hook 'prog-mode-hook #'rsr/prog-mode-hook)
 
-;; Hide extra leading stars (lighter than org-indent-mode — no overlay management).
-;; Content stays at column 0; only the last star per heading is visible.
-(setq org-hide-leading-stars t)
 (setq-default toggle-truncate-lines t)
 
 (add-hook 'prog-mode-hook #'hs-minor-mode)
@@ -47,7 +41,7 @@ with indentation based on the current or previous line."
   (let* (;; Get indentation of the current line.
 	 (current-indent (current-indentation))
 	 ;; Get indentation of the previous line.
-	 (prev-indent (save-excursion (previous-line 1) (current-indentation)))
+	 (prev-indent (save-excursion (forward-line -1) (current-indentation)))
 	 ;; Determine the final indentation value based on your rules.
 	 (final-indent
 	  (cond
@@ -60,10 +54,6 @@ with indentation based on the current or previous line."
 
 (global-set-key (kbd "C-c 0") 'my-insert-indented-todo-item)
 (global-set-key (kbd "C-c C-0") 'my-insert-indented-todo-item)
-
-;; Enable hs-minor-mode globally
-;; (add-hook 'prog-mode-hook #'hs-minor-mode)
-;; (add-hook 'text-mode-hook #'hs-minor-mode)
 
 ;; Keybinding to toggle hide/show of the current block in hs-minor-mode
 (global-set-key (kbd "C-c C-t") 'hs-toggle-hiding)
@@ -84,4 +74,4 @@ with indentation based on the current or previous line."
 (add-hook 'org-mode-hook
           (lambda ()
             (electric-indent-local-mode -1)
-            (local-set-key (kbd "RET") #'org-return-indent)))
+            (local-set-key (kbd "RET") (lambda () (interactive) (org-return t)))))

@@ -19,9 +19,9 @@
   (setq org-roam-directory my/brain-dir)
   (setq org-roam-directory-exclude-patterns '("cleanup_2026_02_27/*"))
   (setq org-roam-file-extensions '("org" "org_archive"))
-  (setq org-roam-list-files-commands nil) ; Force internal scanning (ignores .gitignore)
+  (setq org-roam-list-files-commands '(fd find))
 
-  (org-roam-db-autosync-mode t)
+  (add-hook 'after-init-hook #'org-roam-db-autosync-mode)
 
   ;; Link Abbreviation for portable data links
   ;; Usage: [[data:image.png]] -> expands to my/data-dir/image.png
@@ -56,19 +56,17 @@
 (setq org-startup-with-inline-images t)
 
 (use-package websocket
-    :after org-roam)
+  :after org-roam
+  :defer t)
 
 (use-package org-roam-ui
-    :after org-roam ;; or :after org
-;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
-;;         a hookable mode anymore, you're advised to pick something yourself
-;;         if you don't care about startup time, use
-;;  :hook (after-init . org-roam-ui-mode)
-    :config
-    (setq org-roam-ui-sync-theme t
-          org-roam-ui-follow t
-          org-roam-ui-update-on-save t
-          org-roam-ui-open-on-start t))
+  :after org-roam
+  :defer t
+  :config
+  (setq org-roam-ui-sync-theme t
+        org-roam-ui-follow t
+        org-roam-ui-update-on-save t
+        org-roam-ui-open-on-start nil)) ;; open on demand: M-x org-roam-ui-mode
 
 
 (use-package org-roam-bibtex

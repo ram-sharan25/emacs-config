@@ -8,24 +8,9 @@
 ;; Usage: [[data:image.png]] -> expands to my/data-dir/image.png
 (add-to-list 'org-link-abbrev-alist (cons "data" (concat my/data-dir "%s")))
 
-;; Usage: [[dsa_lec:video.mp4]] -> expands to my/dsa-lectures/video.mp4
-(add-to-list 'org-link-abbrev-alist (cons "dsa_lec" (concat my/dsa-lectures "%s")))
-
 (org-link-set-parameters "imap-message"
   :follow (lambda (path)
             (browse-url (concat "imap-message:" path))))
-
-
-(defun bp/org-publish--add-setupfile (&rest args)
-  (goto-char (point-min))
-  (search-forward "#+title")
-  (beginning-of-line)
-  (insert "#+setupfile: /Users/rrimal/.emacs.d/modules/git-modules/src/comfy_inline/comfy_inline.theme\n"))
-
-;; (use-package ox
-;;   :defer t
-;;   :config
-;;   (add-hook 'org-export-before-processing-functions #'bp/org-publish--add-setupfile))
 
 
 (use-package org
@@ -122,7 +107,7 @@ buffer's text scale."
         (run-with-idle-timer 0.5 nil #'my/thought-drawer-apply-overlays)))
 
 (defun my/activate-thought-highlighting ()
-  "Set up THOUGHTS drawer highlighting: overlays for background, font-lock for tags."
+  "Set up THOUGHTS drawer highlighting with overlays and font-lock for tags."
   ;; Overlays update after user pauses — no cost during active typing.
   (add-hook 'after-change-functions #'my/thought-drawer-schedule-update nil t)
   (my/thought-drawer-apply-overlays)
@@ -136,6 +121,9 @@ buffer's text scale."
 (add-hook 'org-mode-hook #'my/activate-thought-highlighting)
 (add-hook 'org-mode-hook #'org-bullets-mode)
 
+;; Visual indentation: content aligns under heading text, stars hidden
+(setq org-startup-indented t)
+
 ;; Clean Emacs Way: Use standard variables to control visibility
 (setq org-startup-folded 'content) ;; Show headlines, hide content/drawers
 (setq org-hide-drawer-startup t)   ;; Explicitly collapse all drawers
@@ -148,7 +136,8 @@ buffer's text scale."
   "Path to a sound file to play for timer notifications.
 If nil, a system beep is used."
   :type '(choice (const :tag "None" nil)
-                 (file :tag "Sound File")))
+                 (file :tag "Sound File"))
+  :group 'org)
 
 (defvar my/custom-timer-notification-object nil
   "Stores the timer object for the pre-notification warning.")

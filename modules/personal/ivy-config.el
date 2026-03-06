@@ -28,7 +28,6 @@
 		 ("C-x M-f" . counsel-recentf)
 		 ("M-x" . counsel-M-x)
 		 ("C-c u" . counsel-unicode-char)
-		 ("C-c s" . counsel-rg)
 		 ("M-s" . counsel-imenu))
   :config
   ;;(setf (alist-get 'counsel-M-x ivy-initial-inputs-alist) " ")

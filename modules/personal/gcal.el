@@ -21,93 +21,20 @@
   :custom
   (org-gcal-client-id my/google-client-id)
   (org-gcal-client-secret my/google-client-secret)
-  (org-gcal-down-days 365)
-  (org-gcal-up-days 365)
+  (org-gcal-down-days 90)
+  (org-gcal-up-days 30)
   (org-gcal-fetch-file-alist
    `(("primary" . ,my/gcal-file))))
 
-(use-package org-gtasks
-  :ensure nil
-  :load-path "~/.emacs.d/modules/git-modules/org-gtasks/"
-  :after my-secrets
-  :bind (("C-c f" . my/org-gtask-process)
-         ("C-c g" . my/org-gtask-assign-metadata)
-         ("C-c o f" . my/open-google-tasks-file))
-  :config
-  (org-gtasks-register-account :name "Perso"
-             :directory my/gtasks-dir
-             :login "rimal.ram25@gmail.com"
-             :client-id my/google-client-id
-             :client-secret my/google-client-secret))
+;; Install dependencies for org-gtasks
+(use-package deferred
+  :ensure t)
 
-(defvar my/is-syncing-now nil
-  "Internal flag to prevent recursive syncing loops.")
-
-(defun my/sync-google-calendar ()
-  "Sync Google Calendar."
-  (interactive)
-  (when (featurep 'org-gcal)
-    (message "🔄 Google Calendar: Syncing...")
-    (condition-case err
-        (org-gcal-sync)
-      (error (message "❌ Google Calendar Sync Failed: %s" err)))))
-
-(defun my/sync-google-tasks ()
-  "Sync Google Tasks."
-  (interactive)
-  (when (featurep 'org-gtasks)
-    (let ((account (org-gtasks-find-account-by-name "Perso")))
-      (when account
-        ;; A. PUSH
-        (message "🔄 Google Tasks: Pushing...")
-        (condition-case err
-            (org-gtasks-push account "ALL") ;; Use "buffer" to be safer/faster than "ALL"
-          (error (message "❌ Google Tasks Push Failed: %s" err)))
-
-        ;; B. SAVE (Safe because we have the 'my/is-syncing-now' lock in the caller or we should ensure it here if called independently)
-        ;; If called independently, we might want to ensure we don't conflict, but for now we'll assume the user knows or the lock in the main sync handles it.
-        ;; Actually, let's just save.
-        (save-excursion
-          (org-save-all-org-buffers))
-        (sit-for 1)
-
-        ;; C. PULL
-        (message "🔄 Google Tasks: Pulling...")
-        (condition-case err
-            (org-gtasks-pull account "ALL")
-          (error (message "❌ Google Tasks Pull Failed: %s" err)))))))
-
-(defun my/sync-google-services ()
-  "Fetch data from Google Calendar and Google Tasks safely."
-  (interactive)
-
-  ;; SAFETY CHECK: Only run if we aren't ALREADY syncing
-  (unless my/is-syncing-now
-    (let ((my/is-syncing-now t)) ;; Lock the function
-
-      (message "🔄 Google Sync: Starting...")
-
-      ;; --- 1. Sync Calendar ---
-      (my/sync-google-calendar)
-
-      ;; --- 2. Sync Tasks ---
-      (my/sync-google-tasks)
-
-      (message "✅ Google Sync: Completed."))))
-
-(defcustom my/google-sync-interval 1800
-  "Interval in seconds for Google Sync."
-  :type 'integer
-  :group 'gcal)
-
-;; --- RECOMMENDED: Run on a Timer (e.g., every 20 mins) ---
-;; This is much safer than a save hook.
-;; (run-at-time "30 min" my/google-sync-interval  'my/sync-google-services)
-
-
+(use-package request-deferred
+  :ensure t)
 
 (defun my/org-gtask-assign-metadata ()
-  "Prompt for Area/Project, set properties, and add resource links to the current task."
+  "Prompt for Area/Project, set properties, and add resource links."
   (interactive)
   (let* ((area-name (my/select-area-default-misc))
          (project-cons (my/org-select-project-allow-empty area-name))
@@ -122,14 +49,14 @@
     (save-excursion
       (let ((end-pos (org-entry-end-position)))
         (goto-char end-pos)
-        ;; Check if "Resources" heading already exists in the subtree
         (unless (save-excursion
                   (org-back-to-heading t)
                   (re-search-forward "^\\*+ Resources" end-pos t))
           (insert "\n** Resources\n")
           (when project-id
             (insert (format "- Project: [[id:%s][%s]]\n" project-id project-name)))
-          (insert (format "- Area: [[id:%s][%s]]\n" (my/get-area-id-by-name area-name) area-name)))))
+          (insert (format "- Area: [[id:%s][%s]]\n"
+                          (my/get-area-id-by-name area-name) area-name)))))
 
     (message "Assigned Area: %s, Project: %s" area-name project-name)))
 
@@ -175,12 +102,92 @@ Generates new ID, saves old ID, and marks original DONE."
 
     ;; 5. Mark Original DONE
     (org-todo "DONE")
-    (message "Task processed and moved to %s." (file-name-nondirectory my/tasks-file))))
+    (message "Task processed and moved to %s."
+             (file-name-nondirectory my/tasks-file))))
 
 (defun my/open-google-tasks-file ()
   "Open Google Tasks file."
   (interactive)
-  (find-file my/gtasks-file)) ; Use standardized variable)
+  (find-file my/gtasks-file))
+
+(use-package org-gtasks
+  :ensure nil
+  :load-path "~/.emacs.d/modules/git-modules/org-gtasks/"
+  :after (deferred request-deferred)
+  :bind (("C-c f" . my/org-gtask-process)
+         ("C-c g" . my/org-gtask-assign-metadata)
+         ("C-c o f" . my/open-google-tasks-file))
+  :config
+  (org-gtasks-register-account :name "Perso"
+             :directory my/gtasks-dir
+             :login "rimal.ram25@gmail.com"
+             :client-id my/google-client-id
+             :client-secret my/google-client-secret))
+
+(defvar my/is-syncing-now nil
+  "Internal flag to prevent recursive syncing loops.")
+
+(defun my/sync-google-calendar ()
+  "Sync Google Calendar."
+  (interactive)
+  (when (featurep 'org-gcal)
+    (message "🔄 Google Calendar: Syncing...")
+    (condition-case err
+        (org-gcal-sync)
+      (error (message "❌ Google Calendar Sync Failed: %s" err)))))
+
+(defun my/sync-google-tasks ()
+  "Sync Google Tasks."
+  (interactive)
+  (when (featurep 'org-gtasks)
+    (let ((account (org-gtasks-find-account-by-name "Perso")))
+      (when account
+        ;; A. PUSH
+        (message "🔄 Google Tasks: Pushing...")
+        (condition-case err
+            (org-gtasks-push account "ALL") ;; Use "buffer" to be safer/faster than "ALL"
+          (error (message "❌ Google Tasks Push Failed: %s" err)))
+
+        ;; B. SAVE (Safe because we have the 'my/is-syncing-now' lock in the caller or we should ensure it here if called independently)
+        ;; If called independently, we might want to ensure we don't conflict, but for now we'll assume the user knows or the lock in the main sync handles it.
+        ;; Actually, let's just save.
+        (save-excursion
+          (org-save-all-org-buffers))
+
+        ;; C. PULL
+        (message "🔄 Google Tasks: Pulling...")
+        (condition-case err
+            (org-gtasks-pull account "ALL")
+          (error (message "❌ Google Tasks Pull Failed: %s" err)))))))
+
+(defun my/sync-google-services ()
+  "Fetch data from Google Calendar and Google Tasks safely."
+  (interactive)
+
+  ;; SAFETY CHECK: Only run if we aren't ALREADY syncing
+  (unless my/is-syncing-now
+    (let ((my/is-syncing-now t)) ;; Lock the function
+
+      (message "🔄 Google Sync: Starting...")
+
+      ;; --- 1. Sync Calendar ---
+      (my/sync-google-calendar)
+
+      ;; --- 2. Sync Tasks ---
+      (my/sync-google-tasks)
+
+      (message "✅ Google Sync: Completed."))))
+
+(defcustom my/google-sync-interval 1800
+  "Interval in seconds for Google Sync."
+  :type 'integer
+  :group 'gcal)
+
+;; --- RECOMMENDED: Run on a Timer (e.g., every 20 mins) ---
+;; This is much safer than a save hook.
+;; (run-at-time "30 min" my/google-sync-interval  'my/sync-google-services)
+
+
 
 (setq plstore-cache-passphrase-for-symmetric-encryption t)
 

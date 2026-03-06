@@ -1,10 +1,9 @@
 (use-package company
   :ensure t
-  :demand t
-  :after lsp-mode ; Ensure company loads after lsp-mode
-  :hook (lsp-mode . company-mode) ; Automatically enable company-mode when LSP is active
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
   :custom
-  (company-idle-delay 0.1)               ;; Faster response for experienced users
+  (company-idle-delay 0.3)
   (company-minimum-prefix-length 2)
   (company-tooltip-limit 15)             ;; More suggestions for verbose languages
   (company-show-quick-access t)          ;; Quick selection numbers
@@ -13,8 +12,6 @@
   (company-global-modes '(not vterm-mode)) ;; Disable in specific modes
 
   :config
-  (global-company-mode 1)
-
   ;; Smart backends prioritization
   (setq company-backends
 	'((company-capf company-yasnippet) ;; Completion-at-point  ;; Snippet expansion
@@ -23,19 +20,11 @@
 	  (company-files))))  ;; File path completion
 
 
-;; Enhanced UI & Features
-;; Ensure all-the-icons is available for company-box
-(use-package all-the-icons
-  :ensure t)
-
-;; Enhanced UI & Features for Company
-;; With use-package:
 (use-package company-box
-  :hook (company-mode . company-box-mode))
-
-;; Or:
-(require 'company-box)
-(add-hook 'company-mode-hook 'company-box-mode)
+  :ensure t
+  :hook (company-mode . company-box-mode)
+  :config
+  (setq company-box-icons-alist 'company-box-icons-nerd-icons))
 (use-package company-statistics
   :ensure t
   :config (company-statistics-mode))

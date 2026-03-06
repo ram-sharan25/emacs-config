@@ -52,10 +52,8 @@
                               (append projects-vector nil))))
           (message "Synced %d active projects." (length toggl-projects))))))
 
-  (with-eval-after-load 'org-toggl
-  (message "Toggl: Running project cache update...")
-  ;; Call the function we defined to fetch and populate `toggl-projects`.
-  (rsr/update-toggl-projects))
+  ;; Fetch projects after 5s of idle — avoids blocking startup.
+  (run-with-idle-timer 5 nil #'rsr/update-toggl-projects)
 
   ;; --- 2. OVERRIDE: Support Tags in Time Entry ---
   (defun toggl-start-time-entry (description &optional pid tags show-message)
