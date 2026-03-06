@@ -17,6 +17,7 @@
          ("M-m r t" . org-roam-tag-add)))
   :config
   (setq org-roam-directory my/brain-dir)
+  (setq org-roam-directory-exclude-patterns '("cleanup_2026_02_27/*"))
   (setq org-roam-file-extensions '("org" "org_archive"))
   (setq org-roam-list-files-commands nil) ; Force internal scanning (ignores .gitignore)
 
