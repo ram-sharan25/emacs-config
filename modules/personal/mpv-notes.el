@@ -1,6 +1,6 @@
 (use-package smartrep
   :ensure t
-  :demand t)
+  :after org-mpv-notes)
 
 (require 'paths)
 
@@ -11,13 +11,14 @@
   :config
   (require 'org-download)
   (setq org-mpv-notes-save-image-function #'org-download-image)
-  (define-key org-mpv-notes-mode-map (kbd "M-n") (smartrep-map org-mpv-notes-key-bindings)))
+  (define-key org-mpv-notes-mode-map (kbd "C-c v") (smartrep-map org-mpv-notes-key-bindings)))
 
 (use-package mpv
   :ensure t)
 
-;; configure .mp4 files to open with 'mpv' automatically
-(add-to-list 'org-file-apps '("\\.mp4\\'" . "mpv \"%s\""))
+;; open video files via org-mpv-notes so IPC connection is established
+(dolist (ext '("\\.mp4\\'" "\\.mkv\\'" "\\.webm\\'"))
+  (add-to-list 'org-file-apps `(,ext . (lambda (file _link) (org-mpv-notes-open file)))))
 
 (defun my/download-video (link-key filename url)
   "Download video to the directory defined by LINK-KEY in `org-link-abbrev-alist'.
@@ -29,22 +30,14 @@ Example: Enter `dsa_dir' to download to the DSA lectures folder."
            (read-string "Enter URL: "))))
 
   (let* ((expansion (cdr (assoc link-key org-link-abbrev-alist)))
-         ;; The expansion looks like "~/path/to/lectures/%s".
-         ;; We replace "%s" with empty string to get the base directory.
          (clean-path (replace-regexp-in-string "%s" "" expansion))
          (target-dir (file-name-as-directory (expand-file-name clean-path))))
-
-    ;; Create directory if it doesn't exist (safety check)
     (unless (file-exists-p target-dir)
       (make-directory target-dir t))
 
-    ;; Construct and run the command
-    (let ((default-directory target-dir)
-          (cmd (format "yt-dlp -o '%s/%%(title)s.%%(ext)s' -o '%s/%s.%%(ext)s' '%s' --cookies-from-browser chrome"
-                       target-dir
-                       target-dir
-                       filename
-                       url)))
+    (let ((cmd (format "yt-dlp -o %s --cookies-from-browser chrome %s"
+                       (shell-quote-argument (format "%s%s.%%(ext)s" target-dir filename))
+                       (shell-quote-argument url))))
       (message "Downloading to: %s" target-dir)
       (async-shell-command cmd (format "*yt-dlp: %s*" filename)))))
 
