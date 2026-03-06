@@ -45,8 +45,7 @@ buffer's text scale."
             :scale (* 2 (/ (frame-char-height) 12) (expt text-scale-mode-step text-scale-mode-amount))))))
 
   (add-hook 'text-scale-mode-hook #'bp/adjust-latex-previews-scale)
-  (defadvice org-latex-preview (after bp/org-latex-preview--adjust-scale activate)
-    (bp/adjust-latex-previews-scale)))
+  (advice-add 'org-latex-preview :after #'bp/adjust-latex-previews-scale))
 
 ;; -------------------------------------------------------------------------
 ;; Custom Highlighting for :THOUGHTS: Drawers

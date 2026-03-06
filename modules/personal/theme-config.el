@@ -19,6 +19,13 @@
  '(org-quote            ((t (:inherit org-block :slant italic
                              :foreground "#DEF7E0" :background "#4A5057"))))
 
+ ;; modeline — distinct colors for git branch vs filename
+ '(doom-modeline-buffer-file         ((t (:foreground "#f0dfaf" :weight bold)))) ;; yellow — filename
+ '(doom-modeline-buffer-path         ((t (:foreground "#bfbfbf"))))               ;; dim — path prefix
+ '(doom-modeline-vcs-info            ((t (:foreground "#7f9f7f" :weight bold)))) ;; green — clean branch
+ '(doom-modeline-vcs-warning         ((t (:foreground "#dfaf8f" :weight bold)))) ;; orange — modified
+ '(doom-modeline-vcs-error           ((t (:foreground "#cc9393" :weight bold)))) ;; red — error
+
  ;; magit diff — clearer green/red against zenburn background
  '(magit-diff-added             ((t (:background "#2d4f2d" :foreground "#9fc99f"))))
  '(magit-diff-removed           ((t (:background "#4f2d2d" :foreground "#cc9393"))))
