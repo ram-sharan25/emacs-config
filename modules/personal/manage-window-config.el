@@ -1,36 +1,64 @@
-;; manage windows in emacs
+;;; manage-window-config.el --- Window management and completion -*- lexical-binding: t; -*-
+
+;;; Code:
+
+;;; --- Window Splits ---
 
 (defun rsr/split-vertical ()
+  "Split window right and open scratch buffer in new window."
   (interactive)
   (split-window-right)
   (other-window 1)
   (scratch-buffer))
 
-(global-set-key (kbd "C-x 3") 'rsr/split-vertical)
-
 (defun rsr/split-horizontal ()
+  "Split window below and open scratch buffer in new window."
   (interactive)
   (split-window-below)
   (other-window 1)
   (scratch-buffer))
 
-(global-set-key (kbd "C-x 2") 'rsr/split-horizontal)
+;;; --- Vertico ---
 
-
-;; Enable Vertico.
 (use-package vertico
+  :ensure t
   :custom
-  ;; (vertico-scroll-margin 0) ;; Different scroll margin
-  (vertico-count 20) ;; Show more candidates
-  ;; (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
-   (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+  (vertico-count 20)
+  (vertico-cycle t)
   :init
   (vertico-mode))
 
+;;; --- Orderless (fuzzy matching) ---
+
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
+;;; --- Marginalia (annotations in minibuffer) ---
 
 (use-package marginalia
   :ensure t
-  :custom
-  (marginalia-max-relative-age 0) ;; Example: customize a specific variable here
   :init
   (marginalia-mode))
+
+;;; --- Consult (enhanced commands) ---
+
+(use-package consult
+  :ensure t
+  :bind (("C-x b"   . consult-buffer)
+         ("C-x M-f" . consult-recent-file)
+         ("C-s"     . consult-line)
+         ("M-s"     . consult-imenu)
+         ("M-y"     . consult-yank-pop)))
+
+;;; savehist — M-x remembers command history (replaces smex)
+(savehist-mode 1)
+
+;;; Keybindings
+(global-set-key (kbd "C-x 3") #'rsr/split-vertical)
+(global-set-key (kbd "C-x 2") #'rsr/split-horizontal)
+
+(provide 'manage-window-config)
+;;; manage-window-config.el ends here
