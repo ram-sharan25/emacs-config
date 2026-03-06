@@ -137,12 +137,6 @@ next tasks in line ")
 (defconst my/discarded-file (expand-file-name "discarded.org" my/gtd-dir)
   "Discarded file for GTD workflow ")
 ;;; ============================================================================
-;;; BACKUP/SYNC CONFIGURATION
-;;; ============================================================================
-
-(defconst my/rclone-sync-dir my/brain-dir
-  "Directory to sync via Rclone (entire Brain directory).")
-
 (defconst my/archive-dir (expand-file-name "Archives/" my/brain-dir)
   "Directory for archived tasks and projects.")
 
