@@ -45,4 +45,4 @@ history
 # Documentation folder
 docs/
 CLAUDE.md
-1
+*.elc
