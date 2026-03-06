@@ -111,9 +111,6 @@
 (setq-default indent-tabs-mode nil)
 
 
-(setq-default auto-fill-function 'do-auto-fill)
-(setq-default fill-column 80)
-
 (defvar org-mid-link-email-program
   (cl-case system-type
     (darwin "/Applications/Thunderbird.app/Contents/MacOS/thunderbird")
