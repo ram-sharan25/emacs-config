@@ -79,4 +79,14 @@
   ;; Add 'pandoc' as a valid export dispatch option
   (add-to-list 'org-export-backends 'pandoc))
 
+;; Open PDF exports in a split window using pdf-tools
+(defun my/open-pdf-in-split (file)
+  "Open FILE in a split window to the right."
+  (delete-other-windows)
+  (split-window-right)
+  (other-window 1)
+  (find-file file))
+
+(add-to-list 'org-file-apps '("\\.pdf\\'" . (lambda (file _link) (my/open-pdf-in-split file))))
+
 (provide 'export-config)
