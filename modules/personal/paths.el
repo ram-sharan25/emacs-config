@@ -36,6 +36,14 @@
 (defconst my/gtd-dir (expand-file-name "gtd/" my/brain-dir)
   "Dashboard directory for gtd workflow).")
 
+(defconst my/phone-inbox-dir (expand-file-name "phone_inbox" my/brain-dir)
+  "Phone inbox directory for captures")
+
+(defconst my/dictation-dir (expand-file-name "dictations/" my/phone-inbox-dir)
+  "Dications directory from phones")
+
+(defconst my/phone-inbox (expand-file-name "inbox/inbox.org" my/phone-inbox-dir)
+  "Tasks directory from phones")
 
 (defconst my/private-dir (expand-file-name "Private/" my/brain-dir)
   "Private notes directory (Git-ignored, sensitive content).")
