@@ -28,12 +28,14 @@
           (org-gcal-sync))
       (error (message "Google Calendar sync failed: %s" err)))))
 
-(defun my/gcal--push (title timestamp)
-  "Add an event with TITLE and TIMESTAMP to gcal.org and push it."
+(defun my/gcal--push (title timestamp &optional description)
+  "Add an event with TITLE, TIMESTAMP, and optional DESCRIPTION to gcal.org and push it."
   (with-current-buffer (find-file-noselect my/gcal-file)
     (goto-char (point-max))
     (insert (format "\n* %s\n:PROPERTIES:\n:org-gcal-calendar-id: primary\n:END:\n%s\n"
                     title timestamp))
+    (when (and description (not (string-empty-p description)))
+      (insert description "\n"))
     (save-buffer)
     (org-back-to-heading t)
     (org-gcal-post-at-point))
@@ -42,17 +44,19 @@
 (defun my/gcal-push-event ()
   "Prompt for event details and push to Google Calendar."
   (interactive)
-  (let* ((title      (read-string "Title: "))
-         (date       (org-read-date nil t))
-         (start-time (read-string "Start (HH:MM): "))
-         (end-time   (read-string "End   (HH:MM): "))
-         (timestamp  (format-time-string
-                      (concat "<%Y-%m-%d %a " start-time "-" end-time ">")
-                      date)))
-    (my/gcal--push title timestamp)))
+  (let* ((title       (read-string "Title: "))
+         (date        (org-read-date nil t))
+         (start-time  (read-string "Start (HH:MM): "))
+         (end-time    (read-string "End   (HH:MM): "))
+         (description (read-string "Description (optional): "))
+         (timestamp   (format-time-string
+                       (concat "<%Y-%m-%d %a " start-time "-" end-time ">")
+                       date)))
+    (my/gcal--push title timestamp description)))
 
 (defun my/gcal-push-task-at-point ()
   "Push the current org task to Google Calendar using its SCHEDULED time.
+Uses the task heading as title and body text as description.
 The task must have a SCHEDULED timestamp with a time range (HH:MM-HH:MM)."
   (interactive)
   (unless (derived-mode-p 'org-mode)
@@ -63,8 +67,20 @@ The task must have a SCHEDULED timestamp with a time range (HH:MM-HH:MM)."
       (user-error "No SCHEDULED timestamp on this heading"))
     (unless (string-match "[0-9]\\{2\\}:[0-9]\\{2\\}-[0-9]\\{2\\}:[0-9]\\{2\\}" scheduled)
       (user-error "SCHEDULED timestamp has no time range (need HH:MM-HH:MM)"))
-    (let ((timestamp (replace-regexp-in-string "<\\|>" "" scheduled)))
-      (my/gcal--push title (concat "<" timestamp ">")))))
+    (let* ((timestamp   (concat "<" (replace-regexp-in-string "<\\|>" "" scheduled) ">"))
+           (description (save-excursion
+                          (org-back-to-heading t)
+                          (let ((beg (progn (forward-line 1)
+                                            (when (looking-at org-property-drawer-re)
+                                              (goto-char (match-end 0))
+                                              (forward-line 1))
+                                            (point)))
+                                (end (org-entry-end-position)))
+                            (string-trim (buffer-substring-no-properties beg end))))))
+      (my/gcal--push title timestamp description))))
+
+;; Auto-sync calendar every 30 minutes when Emacs is idle
+(run-with-idle-timer 1800 t #'my/sync-google-calendar)
 
 (provide 'gcal)
 ;;; gcal.el ends here
