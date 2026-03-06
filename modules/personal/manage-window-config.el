@@ -57,6 +57,18 @@
          ("M-s"     . consult-imenu)
          ("M-y"     . consult-yank-pop)))
 
+;;; --- Embark (context-sensitive actions) ---
+
+(use-package embark
+  :ensure t
+  :bind (("C-." . embark-act)
+         ("C-;" . embark-dwim)))
+
+(use-package embark-consult
+  :ensure t
+  :after (embark consult)
+  :hook (embark-collect-mode . consult-preview-at-point-mode))
+
 ;;; savehist — M-x remembers command history (replaces smex)
 (savehist-mode 1)
 
