@@ -41,3 +41,8 @@ design-document.md
 history
 *.authinfo
 .DS_Store
+
+# Documentation folder
+docs/
+CLAUDE.md
+1
