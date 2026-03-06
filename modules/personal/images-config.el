@@ -1,6 +1,9 @@
-;; config for images in emacs
+;;; images-config.el --- Image display settings -*- lexical-binding: t; -*-
 
+;;; Code:
 
-;; org-startup-with-inline-images (set in roam-config.el) already handles this.
-;; Removed redundant hook that ignored per-file #+STARTUP keywords.
+;; respect #+ATTR_ORG: :width for inline image sizing
 (setq org-image-actual-width nil)
+
+(provide 'images-config)
+;;; images-config.el ends here
