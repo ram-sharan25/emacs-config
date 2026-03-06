@@ -2,32 +2,17 @@
 
 ;;; Code:
 
-;; --- Search ---
-;; M-g opens rgrep for cross-file search with prompt for pattern + directory
-(global-set-key (kbd "M-g") #'rgrep)
+;;; Search
+;; M-g → rgrep: cross-file search with prompt for pattern + directory
 
-;; --- Date / Time Insertion ---
-;; C-c i        → insert full date+time: "Thu Mar 06 14:30:00 MST 2026"
-;; C-u C-c i    → insert time only:     "14:30:00"
-(defun insert-current-date-time (&optional time-only)
-  "Insert the current date and time. With prefix arg, insert time only."
-  (interactive "P")
-  (if time-only
-      (insert (format-time-string "%H:%M:%S" (current-time)))
-    (insert (format-time-string "%a %b %d %H:%M:%S %Z %Y" (current-time)))))
-
-(global-set-key (kbd "C-c i") #'insert-current-date-time)
-
-;; --- Distraction-free Writing ---
-;; C-M-z toggles darkroom-tentative-mode: centers text, hides UI chrome
+;;; Distraction-free Writing
+;; C-M-z → darkroom-tentative-mode: centers text, hides UI chrome
 (use-package darkroom
   :ensure t
   :defer t)
 
-(global-set-key (kbd "C-M-z") #'darkroom-tentative-mode)
-
-;; --- Line Selection ---
-;; s-l selects the whole line and copies it to the kill ring
+;;; Line Selection
+;; s-l → select whole line and copy to kill ring
 (defun rsr/select-whole-line ()
   "Select the entire current line and copy it to the kill ring."
   (interactive)
@@ -37,9 +22,7 @@
   (forward-char 1)
   (kill-ring-save (region-beginning) (region-end)))
 
-(global-set-key (kbd "s-l") #'rsr/select-whole-line)
-
-;; --- Comment / Uncomment ---
+;;; Comment / Uncomment
 ;; works on active region or current line if no region is selected
 (defun rsr/comment-or-uncomment ()
   "Comment or uncomment the current line or active region."
@@ -48,14 +31,8 @@
       (comment-or-uncomment-region (region-beginning) (region-end))
     (comment-or-uncomment-region (line-beginning-position) (line-end-position))))
 
-(global-set-key (kbd "s-/") #'rsr/comment-or-uncomment)
-(global-set-key (kbd "C-/") #'rsr/comment-or-uncomment)
-
-;; --- Kill Whole Line ---
-(global-set-key (kbd "s-k") #'kill-whole-line)
-
-;; --- Terminal ---
-;; s-RET opens a new Kitty terminal window
+;;; Terminal
+;; s-RET → open a new Kitty terminal window
 (defun rsr/open-kitty ()
   "Open a new Kitty terminal window asynchronously."
   (interactive)
@@ -67,29 +44,35 @@
    (t
     (message "Unsupported OS for this function."))))
 
-(global-set-key (kbd "s-<return>") #'rsr/open-kitty)
-
-;; --- Org Link Storing ---
-(global-set-key (kbd "C-c l") #'org-store-link)
-
-;; --- Calculator ---
+;;; Calculator
 (use-package calculator
   :defer t)
 
-(bind-keys :map rsr/global-prefix-map
-           ("t c" . calc)
-           ("t d" . dictionary-search))
-
-;; --- Command Hints ---
+;;; Command Hints
 ;; which-key shows available key completions after a prefix key pause
 (use-package which-key
   :ensure t
   :config
   (which-key-mode +1))
 
-;; --- Visual ---
+;;; Visual
 (global-visual-line-mode t)   ;; wrap long lines visually
 (show-paren-mode 1)           ;; highlight matching parentheses
+
+;;; Keybindings
+
+(global-set-key (kbd "M-g")        #'rgrep)
+(global-set-key (kbd "C-M-z")      #'darkroom-tentative-mode)
+(global-set-key (kbd "s-l")        #'rsr/select-whole-line)
+(global-set-key (kbd "s-/")        #'rsr/comment-or-uncomment)
+(global-set-key (kbd "C-/")        #'rsr/comment-or-uncomment)
+(global-set-key (kbd "s-k")        #'kill-whole-line)
+(global-set-key (kbd "s-<return>") #'rsr/open-kitty)
+(global-set-key (kbd "C-c l")      #'org-store-link)
+
+(bind-keys :map rsr/global-prefix-map
+           ("t c" . calc)
+           ("t d" . dictionary-search))
 
 (provide 'tools)
 ;;; tools.el ends here
