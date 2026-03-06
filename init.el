@@ -1,6 +1,15 @@
 (require 'package)
 (package-initialize)  ;; Ensure packages are initialized
 
+;; Ensure compat is in load-path early — required by org-timeblock and other packages
+(when-let ((compat-dir (car (last (sort
+                                   (seq-filter
+                                    (lambda (d) (not (string-suffix-p ".signed" d)))
+                                    (file-expand-wildcards
+                                     (expand-file-name "elpa/compat-*" user-emacs-directory)))
+                                   #'string<)))))
+  (add-to-list 'load-path compat-dir))
+
 ;; Add MELPA repository
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
