@@ -26,6 +26,15 @@
  '(doom-modeline-vcs-warning         ((t (:foreground "#dfaf8f" :weight bold)))) ;; orange — modified
  '(doom-modeline-vcs-error           ((t (:foreground "#cc9393" :weight bold)))) ;; red — error
 
+ ;; org-agenda — scheduled, deadline, and date colors
+ '(org-agenda-date-today      ((t (:foreground "#f0dfaf" :weight bold :underline t)))) ;; today header — yellow
+ '(org-agenda-structure       ((t (:foreground "#f0dfaf" :weight bold))))               ;; group headers — yellow
+ '(org-agenda-date            ((t (:foreground "#8cd0d3"))))                            ;; other dates — teal
+ '(org-scheduled-today        ((t (:foreground "#7cb8bb"))))                            ;; 1x/2x repeat — cyan
+ '(org-scheduled-previously   ((t (:foreground "#cc9393"))))                            ;; overdue scheduled — red
+ '(org-upcoming-deadline      ((t (:foreground "#dfaf8f" :weight bold))))               ;; In 3d. — orange
+ '(org-warning                ((t (:foreground "#cc9393" :weight bold))))               ;; 2d ago / past deadline — red
+
  ;; magit diff — clearer green/red against zenburn background
  '(magit-diff-added             ((t (:background "#2d4f2d" :foreground "#9fc99f"))))
  '(magit-diff-removed           ((t (:background "#4f2d2d" :foreground "#cc9393"))))

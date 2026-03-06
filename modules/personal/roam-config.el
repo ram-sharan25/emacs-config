@@ -1,5 +1,5 @@
 (require 'paths)
-(require 'plan)
+(require 'gtd-config)
 (use-package org-roam
   :ensure t
   :bind (:map global-map

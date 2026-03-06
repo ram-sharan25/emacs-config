@@ -41,10 +41,6 @@
 
     path))
 
-;; =============================================================================
-;; Helper Functions for Capture
-;; =============================================================================
-
 (defvar my/selected-area-file nil
   "Temporary storage for the selected area file during capture.")
 
@@ -57,34 +53,57 @@
     (setq my/selected-area-file area-file)
     area-file))
 
-(defun my/goto-area-tasks ()
-  "Navigate to the Tasks heading under Dashboard in the current Area file."
-  (interactive)
-  (goto-char (point-min))
-  ;; Search for Tasks heading at level 2 or 3 (** Tasks or *** Tasks)
-  (if (re-search-forward "^\\*\\*\\*? Tasks" nil t)
-      (progn
-        (org-end-of-subtree t)
-        (unless (bolp) (insert "\n")))
-    ;; Fallback: if no Tasks heading, go to Dashboard or create structure
-    (if (re-search-forward "^\\* Dashboard" nil t)
-        (progn
-          (org-end-of-subtree t)
-          (unless (bolp) (insert "\n"))
-          (insert "** Tasks\n"))
-      ;; Last fallback: end of file
-      (goto-char (point-max))
-      (unless (bolp) (insert "\n")))))
+(defun my/get-area-names ()
+  "Return a list of Area names (filenames without extension) from `my/areas-dir`."
+  (let ((files (directory-files my/areas-dir nil "\\.org$")))
+    (mapcar #'file-name-sans-extension files)))
+
+(defun my/get-area-id-by-name (area-name)
+  "Return the ID of the Area file corresponding to AREA-NAME.
+Creates the ID if it doesn't exist."
+  (let ((file (expand-file-name (concat area-name ".org") my/areas-dir)))
+    (when (file-exists-p file)
+      (with-current-buffer (find-file-noselect file)
+        (org-id-get-create)))))
+
+(defun my/org-get-project-headings (&optional area-filter)
+  "Return an alist of (Project Name . ID) from `my/projects-file` with ACTIVE=TRUE.
+If AREA-FILTER is provided, only include projects with a matching :AREA: property."
+  (with-current-buffer (find-file-noselect my/projects-file)
+    (let ((projects '()))
+      (org-map-entries
+       (lambda ()
+         (let* ((heading (org-get-heading t t))
+                (id (org-id-get-create))
+                (area (org-entry-get nil "AREA")))
+           (when (or (null area-filter)
+                     (string= area area-filter))
+             (push (cons heading id) projects))))
+       "LEVEL=1+ACTIVE=\"TRUE\"" 'file)
+      (nreverse projects))))
+
+(defun my/select-area-default-misc ()
+  "Prompt for Area, defaulting to 'Misc' and showing it first."
+  (let* ((areas (my/get-area-names))
+         (options (cons "Misc" (remove "Misc" areas)))
+         (selected (completing-read "Area: " options nil t nil nil "Misc")))
+    (if (string-empty-p selected) "Misc" selected)))
+
+(defun my/org-select-project-allow-empty (&optional area-filter)
+  "Prompt user to select a project, optionally filtered by AREA-FILTER.
+Returns a cons cell (Name . ID). Includes 'Dump' as the first option."
+  (let* ((project-alist (my/org-get-project-headings area-filter))
+         (options (cons '("Dump" . nil) project-alist))
+         (project-names (mapcar #'car options))
+         (selected-name (completing-read "Select Project: "
+                                         project-names nil t nil nil "Dump")))
+    (if (string-empty-p selected-name)
+        '("Dump" . nil)
+      (assoc selected-name options))))
 
 ;; Variable to store the selected project for activity refile
 (defvar my/last-toggl-project-choice nil
   "Stores the last Toggl project selected, used for activity auto-refile.")
-
-;; Advice to capture the project choice from Toggl hook (non-invasive)
-(defun my/capture-toggl-project-choice (orig-fun &rest args)
-  "Advice to capture the Toggl project choice before calling the original function."
-  (let ((result (apply orig-fun args)))
-    result))
 
 (defun my/activity-auto-refile ()
   "Auto-refile ACTIVITY_TYPE entries to the Area's Tasks section.
@@ -151,9 +170,7 @@ Falls back to empty string if no link is captured."
     ;; Move to end of the heading line (whether found or created)
     (end-of-line)))
 
-;; =============================================================================
-;; Capture Templates (Consolidated)
-;; =============================================================================
+;;; Capture Templates
 
 (setq org-capture-templates
       `(("i" "Inbox" entry
@@ -219,7 +236,6 @@ Falls back to empty string if no link is captured."
                                      my/someday-file
                                      my/rituals-file
                                      my/gcal-file
-                                     my/gtasks-dir
                                      my/job-applications-file
                                      my/phone-inbox)
                                (my/get-area-files)))
@@ -228,30 +244,13 @@ Falls back to empty string if no link is captured."
       '((sequence "TODO(t)" "IN-PROGRESS(p)" "HOLD(h)" "WAITING(w)" "|" "DONE(d)"
       "CANCELED(c)"  "DELAYED(f)" )))
 
-(setq org-tag-alist
-      '(;; Locations (Where) - No grouping to allow multiple
-        ("@home" . ?h)
-        ("@office" . ?o)
-        ("@library" . ?l)
-        ("@errand" . ?e)
+(setq org-tag-alist nil)
 
-        (:startgroup) ;; Work Mode (How)
-        ("@deep" . ?d)     ; High focus, demanding tasks
-        ("@shallow" . ?s)  ; Low focus, admin, batched tasks
-        (:endgroup)
+(setq org-log-done 'time)        ;; record CLOSED: timestamp when marking DONE
+(setq org-log-into-drawer t)     ;; store log entries in :LOGBOOK: drawer
 
-        ;; Activities (What)
-        ("dev" . ?c)       ; Coding/Programming
-        ("research" . ?r)
-        ("study" . ?t)     ; Learning/Studying
-        ("writing" . ?w)
-        ("admin" . ?a)
+;;; Agenda
 
-        ;; Status
-        ("WAITING" . ?W)
-        ("SOMEDAY" . ?S)))
-
-;;; GTD Agenda Dashboard
 (use-package org-super-agenda
   :ensure t
   :config
@@ -261,17 +260,10 @@ Falls back to empty string if no link is captured."
   "Format as [Project]:Category, pad to fixed width, and hide 'nil' or '???'."
   (let* ((cat (org-get-category))
          (width 40))
-
-    ;; 1. FIRST, check if it's a Time Grid line ("???") or empty
     (if (or (null cat)
             (string= (format "%s" cat) "nil")
-            (string= (format "%s" cat) "???")) ;; <--- This catches the 8:00 lines
-
-        ;; If it is Time Grid, just print whitespace and STOP.
+            (string= (format "%s" cat) "???"))
         (make-string width ?\s)
-
-      ;; 2. ONLY NOW is it safe to look for the project property
-      ;; We wrap it in ignore-errors just in case
       (let* ((project (ignore-errors (org-entry-get nil "PROJECT")))
              (output-str
               (if project
@@ -279,27 +271,20 @@ Falls back to empty string if no link is captured."
                                       'face '(:foreground "orange" :weight bold))
                           ":" cat)
                 (format "%s:" cat))))
-
-        ;; Pad result to fixed width
         (format (format "%%-%ds" width) output-str)))))
 
-;; Re-apply the setting
 (setq org-agenda-prefix-format
       '((agenda . " %i %(my/org-agenda-project-suffix) %?-12t% s")
         (todo   . " %i %(my/org-agenda-project-suffix) ")
         (tags   . " %i %(my/org-agenda-project-suffix) ")
         (search . " %i %(my/org-agenda-project-suffix) ")))
 
-;;; Custom Commands (Merged)
+;; hide "Scheduled:" for one-time items, keep "2x" repeat count for recurring
+(setq org-agenda-scheduled-leaders '("" "%dx "))
+;; keep deadline info: "Deadline" on due date, "In 3d" for upcoming, "2d ago" for overdue
+(setq org-agenda-deadline-leaders '("Deadline: " "In %3d d. " "%2d d. ago "))
 
-(setq my/gtd-locations
-  '(("@home" . "Home")
-    ("@office" . "Office")
-    ("@library" . "Library")))
-
-(setq my/gtd-modes
-  '(("d" "Deep Work" "@deep" "🎯")
-    ("s" "Shallow Work" "@shallow" "⚡")))
+;;; Custom Agenda Commands
 
 (defun my/gtd-standard-header ()
   "Return the standard agenda blocks: Day View + In Progress."
@@ -307,63 +292,30 @@ Falls back to empty string if no link is captured."
             ((org-agenda-span 'day)
              (org-deadline-warning-days 7)
              (org-super-agenda-groups
-              '((:name "Today's Schedule"
-                       :time-grid t)
-                (:name "Scheduled"
-                       :todo "TODO")
-                (:name "Deadlines"
-                  :deadline t)
-                (:name "Overdue"
-                       :deadline past
-                       :scheduled past)
+              '((:name "⭐ Daily Highlight" :property "HIGHLIGHT")
+                (:name "Today's Schedule"  :time-grid t)
+                (:name "Scheduled"         :todo "TODO")
+                (:name "Deadlines"         :deadline t)
+                (:name "Overdue"           :deadline past :scheduled past)
                 (:discard (:anything t))))))
     (todo "HOLD|IN-PROGRESS|WAITING"
           ((org-agenda-overriding-header "In Progress")
-           (org-agenda-files (append (list my/gtd-projects-file
-                                           my/next-file)
+           (org-agenda-files (append (list my/gtd-projects-file my/next-file)
                                      (my/get-area-files)))))))
 
-(defun my/generate-gtd-agenda-commands ()
-  "Generate agenda commands for each location and mode."
-  (let ((commands '()))
-    (dolist (mode my/gtd-modes)
-      (let ((mode-key (nth 0 mode))
-            (mode-name (nth 1 mode))
-            (mode-tag (nth 2 mode))
-            (mode-icon (nth 3 mode)))
-        ;; Add the main menu item for the mode (e.g., "d" -> "Deep Work Contexts")
-        (push (cons mode-key (concat mode-name " Contexts")) commands)
-
-        (dolist (loc my/gtd-locations)
-          (let* ((loc-tag (car loc))
-                 (loc-name (cdr loc))
-                 (key (concat mode-key (substring loc-tag 1 2))) ;; e.g., "dh"
-                 (desc (format "%s @ %s" mode-name loc-name))
-                 (header (format "%s %s @ %s" mode-icon mode-name loc-name))
-                 ;; Strict Tagging: MUST have Location AND Mode tag
-                 (tags-query (format "+%s+%s/TODO" loc-tag mode-tag)))
-
-            (push (list key desc
-                        (append (my/gtd-standard-header)
-                                `((tags-todo ,tags-query
-                                             ((org-agenda-overriding-header ,header))))))
-                  commands)))))
-    (nreverse commands)))
-
 (setq org-agenda-custom-commands
-      `(("o" "View All (GTD Dashboard)"
+      `(("o" "GTD Dashboard"
          (,@(my/gtd-standard-header)
-
           (todo "TODO"
                 ((org-agenda-overriding-header "To Refile")
                  (org-agenda-files (list my/inbox-file my/phone-inbox))))
-           (todo "TODO|WAITING|HOLD"
+          (todo "TODO|WAITING|HOLD"
                 ((org-agenda-overriding-header "Waiting")
                  (org-agenda-files (list my/waiting-file))))
           (todo "TODO|HOLD|WAITING"
                 ((org-agenda-overriding-header "Projects & Areas (Backlog)")
                  (org-agenda-files (append (list my/gtd-projects-file my/job-applications-file)
-                                           (my/get-area-files) ))
+                                           (my/get-area-files)))
                  (org-super-agenda-groups '((:auto-category t)))
                  (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled))))
           (todo "TODO"
@@ -372,35 +324,77 @@ Falls back to empty string if no link is captured."
                  (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled)))))
          nil)
 
-        ("a" "Only Agenda"
+        ("a" "Day Agenda"
          (,@(my/gtd-standard-header))
          nil)
 
-        ,@(my/generate-gtd-agenda-commands)
+        ("w" "Weekly Review"
+         (;; what got done — exclude rituals
+          (agenda ""
+                  ((org-agenda-span 'week)
+                   (org-agenda-start-on-weekday 1)
+                   (org-agenda-overriding-header "Completed This Week")
+                   (org-agenda-files (seq-remove (lambda (f) (equal f my/rituals-file))
+                                                 org-agenda-files))
+                   (org-agenda-show-log 'closed)
+                   (org-agenda-log-mode-items '(closed))))
+          ;; scheduled but not done — exclude rituals
+          (agenda ""
+                  ((org-agenda-span 'week)
+                   (org-agenda-start-on-weekday 1)
+                   (org-agenda-overriding-header "Not Completed — reschedule or drop")
+                   (org-agenda-files (seq-remove (lambda (f) (equal f my/rituals-file))
+                                                 org-agenda-files))
+                   (org-agenda-entry-types '(:scheduled :deadline))
+                   (org-agenda-skip-function
+                    '(org-agenda-skip-entry-if 'todo '("DONE" "CANCELED")))))
+          ;; everything still open — exclude rituals
+          (todo "TODO|HOLD|WAITING"
+                ((org-agenda-overriding-header "Open Tasks — schedule for next week")
+                 (org-agenda-files (seq-remove (lambda (f) (equal f my/rituals-file))
+                                               org-agenda-files))
+                 (org-super-agenda-groups '((:auto-category t)))))
+          ;; someday/maybe — promote or drop?
+          (todo "TODO"
+                ((org-agenda-overriding-header "Someday/Maybe — promote or drop?")
+                 (org-agenda-files (list my/someday-file)))))
+         nil)
 
-        ("m" . "Work Modes (Global)")
-        ("md" "Deep Work Mode (All Contexts)"
-         ,(append (my/gtd-standard-header)
-                  '((tags-todo "+@deep/TODO"
-                               ((org-agenda-overriding-header " Deep Work Tasks"))))))
-        ("ms" "Shallow Work Mode (All Contexts)"
-         ,(append (my/gtd-standard-header)
-                  '((tags-todo "+@shallow/TODO"
-                               ((org-agenda-overriding-header " Shallow Work Tasks"))))))
+        ("h" "Habits & Rituals"
+         (;; today's rituals
+          (agenda ""
+                  ((org-agenda-span 'day)
+                   (org-agenda-overriding-header "Today's Rituals")
+                   (org-agenda-files (list my/rituals-file))
+                   (org-super-agenda-groups
+                    '((:name "Due Today" :scheduled today :deadline today)
+                      (:name "Overdue"   :scheduled past  :deadline past)
+                      (:discard (:anything t))))))
+          ;; week view — streak/consistency check
+          (agenda ""
+                  ((org-agenda-span 'week)
+                   (org-agenda-start-on-weekday 1)
+                   (org-agenda-overriding-header "This Week — Consistency")
+                   (org-agenda-files (list my/rituals-file))
+                   (org-agenda-show-log 'closed)
+                   (org-agenda-log-mode-items '(closed state)))))
+         nil)
 
-        ("p" "Projects Dashboard" alltodo ""
-         ((org-agenda-overriding-header "Active Project Tasks")
-          (org-super-agenda-groups
-           '((:auto-category t)))
-          (org-agenda-prefix-format
-           '((todo . "  %-12:c %?-12t% s")))))))
+        ("p" "Projects"
+         ((todo "TODO|IN-PROGRESS|HOLD|WAITING"
+                ((org-agenda-overriding-header "Projects")
+                 (org-agenda-files (list my/gtd-projects-file))
+                 (org-super-agenda-groups '((:auto-category t)))
+                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled)))))
+         nil)))
 
 (setq org-agenda-span 'day)
-(global-set-key (kbd "C-c a") 'org-agenda)
 (setq org-agenda-hide-tags-regexp ".")
+(setq org-agenda-sticky t)                ;; keep agenda buffer alive after closing
+(setq org-agenda-window-setup 'current-window) ;; open agenda in current window
 
-;; Agenda Files (Updated to include GTD files and Areas)
 
+;;; Refile Targets
 
 (setq org-refile-targets
       `((,my/gtd-projects-file :regexp . "Tasks\\|Notes")
@@ -416,7 +410,6 @@ Falls back to empty string if no link is captured."
 (setq org-outline-path-complete-in-steps nil)
 (setq org-refile-allow-creating-parent-nodes 'confirm)
 
-;; Save the corresponding buffers
 (defun gtd-save-org-buffers ()
   "Save `org-agenda-files' buffers without user confirmation.
 See also `org-save-all-org-buffers'"
@@ -427,14 +420,17 @@ See also `org-save-all-org-buffers'"
                            t)))
   (message "Saving org-agenda-files buffers... done"))
 
-;; Add it after refile
 (advice-add 'org-refile :after
             (lambda (&rest _)
               (gtd-save-org-buffers)))
 
-(provide 'gtd-config)
+;; save all org buffers before agenda opens — prevents #file.org# lockfile issues
+(advice-add 'org-agenda :before
+            (lambda (&rest _)
+              (org-save-all-org-buffers)))
 
-;;; Inbox Processing Workflow
+;;; Inbox Processing
+
 (defun my/org-agenda-set-effort ()
   "Set the effort property for the current agenda item."
   (interactive)
@@ -458,22 +454,70 @@ See also `org-save-all-org-buffers'"
         (org-agenda-change-all-lines newhead hdmarker)))))
 
 (defun my/org-agenda-process-inbox-item ()
-  "Process a single item in the org-agenda."
+  "Process a single inbox item: set effort, schedule, then refile."
   (interactive)
-  (call-interactively 'org-agenda-set-tags)
   (call-interactively 'my/org-agenda-set-effort)
+  (call-interactively 'org-agenda-schedule)
   (org-agenda-refile nil nil t))
+
+;;; Deep Work
+
+(defun my/schedule-deep-work-block ()
+  "Schedule a timed deep work block for the task at point in the agenda.
+Prompts for a time range and schedules today with that window."
+  (interactive)
+  (let ((time (read-string "Deep work block (HH:MM-HH:MM): " "09:00-11:00")))
+    (org-agenda-schedule nil (concat (format-time-string "%Y-%m-%d") " " time))
+    (message "Deep work block scheduled: %s" time)))
+
+
+;;; Daily Highlight
+
+(defun my/org-agenda-toggle-highlight ()
+  "Toggle HIGHLIGHT property on the current agenda item.
+Highlighted tasks appear at the top of the agenda as the daily focus."
+  (interactive)
+  (let* ((marker (or (org-get-at-bol 'org-hd-marker) (org-agenda-error)))
+         (buffer (marker-buffer marker))
+         (pos    (marker-position marker)))
+    (with-current-buffer buffer
+      (goto-char pos)
+      (if (string= (org-entry-get nil "HIGHLIGHT") "t")
+          (org-delete-property "HIGHLIGHT")
+        (org-entry-put nil "HIGHLIGHT" "t")))
+    (org-agenda-redo)))
+
+;;; Effort Budget
+
+(defun my/org-day-effort-budget ()
+  "Show total effort of all tasks visible in the current agenda buffer."
+  (interactive)
+  (let ((total 0))
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let* ((marker (org-get-at-bol 'org-hd-marker))
+               (effort (when marker (org-entry-get marker "Effort"))))
+          (when effort
+            (let* ((parts (split-string effort ":"))
+                   (h (string-to-number (or (car parts) "0")))
+                   (m (string-to-number (or (cadr parts) "0"))))
+              (setq total (+ total (* h 60) m)))))
+        (forward-line 1)))
+    (if (> total 0)
+        (message "Effort budget: %dh %dm scheduled"
+                 (/ total 60) (% total 60))
+      (message "No effort estimates found in current view"))))
 
 
 (use-package org-timeblock
-  :load-path  "~/.emacs.d/modules/git-modules/org-timeblock/"
+  :load-path "~/.emacs.d/modules/git-modules/org-timeblock/"
   :config
-  (setq org-timeblock-span 1)              ;; Show 1 Day
-  (setq org-timeblock-day-start-hour 6)    ;; Start at 7 AM (Hide 0-6 AM)
+  (setq org-timeblock-span 1)
+  (setq org-timeblock-day-start-hour 6)
   (setq org-timeblock-day-end-hour 23)
-  (setq org-timeblock-scale 0.8)          ;; Zoom out (Fit day on screen)
+  (setq org-timeblock-scale 0.8)
   (setq org-timeblock-inbox-file my/tasks-file)
-  ;; 2. GRID SETTINGS
   (setq org-timeblock-show-future-repeats t)
   (setq org-timeblock-time-grid-step 60))
 
@@ -491,56 +535,62 @@ See also `org-save-all-org-buffers'"
   ;; Switch to the "List View" of the current timeblock
   (org-timeblock-list))
 
-(defun my-org-clock-on-state-change ()
-  "Clock in/out when TODO state changes to/from 'IN PROGRESS'.
-This function checks `org-state' and `org-last-state'.
-Skips execution if `my/mobile-sync-in-progress' is non-nil to prevent
-duplicate clock entries when syncing from mobile app."
-  ;; CRITICAL: Skip if mobile sync is in progress
+(defun my/org-clock-on-state-change ()
+  "Clock in/out when TODO state changes to/from IN-PROGRESS.
+Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
   (unless (bound-and-true-p my/mobile-sync-in-progress)
-    ;; 1. Clock IN when moving TO "IN PROGRESS"
     (when (string= org-state "IN-PROGRESS")
-      ;; We removed (unless (org-clock-is-active)) so it ALWAYS clocks in
       (org-clock-in))
-
-    ;; 2. Clock OUT when moving FROM "IN PROGRESS" to anything else
     (when (and (string= org-last-state "IN-PROGRESS")
                (not (string= org-state "IN-PROGRESS")))
       (when (org-clock-is-active)
         (org-clock-out)))))
 
-(add-hook 'org-after-todo-state-change-hook 'my-org-clock-on-state-change)
+(add-hook 'org-after-todo-state-change-hook 'my/org-clock-on-state-change)
 (setq org-archive-location (concat my/archive-dir "%s_archive.org::"))
-;;;this to remove the dialog bod of the timer in elisp
-(setq org-confirm-elisp-link-function nil)
-(global-set-key (kbd "C-c d") 'rsr/org-timeblock-split-view)
-
-(define-key org-agenda-mode-map "j" 'my/org-agenda-process-inbox-item)
+(setq org-confirm-elisp-link-function nil) ;; don't confirm elisp links
 
 (defun my/org-agenda-add-effort-suffix (original-fn &rest args)
   "Advice to append Effort property to the agenda line."
-  (let* ((effort (org-entry-get (org-get-at-bol 'org-hd-marker) "Effort"))
+  (let* ((marker (org-get-at-bol 'org-hd-marker))
+         (effort (when (and marker (marker-buffer marker))
+                   (org-entry-get marker "Effort")))
          (result (apply original-fn args)))
-    (if effort
+    (if (and effort (stringp result))
         (concat result (propertize (format " (%s)" effort)
                                    'face '(:foreground "cyan" :slant italic)))
       result)))
 
 (advice-add 'org-agenda-format-item :around #'my/org-agenda-add-effort-suffix)
 
-;; =============================================================================
-;; Keybindings for Capture
-;; =============================================================================
-(global-set-key (kbd "C-c i") (lambda () (interactive) (org-capture nil "i")))  ;; Inbox
-(global-set-key (kbd "C-c q") (lambda () (interactive) (org-capture nil "q")))  ;; New Project
-(global-set-key (kbd "C-c n") (lambda () (interactive) (org-capture nil "u")))  ;; Note
-(global-set-key (kbd "C-c j") (lambda () (interactive) (org-capture nil "j")))  ;; Journal
-(global-set-key (kbd "C-c h") (lambda () (interactive) (org-capture nil "h")))  ;; Log Time
-(global-set-key (kbd "C-c r") (lambda () (interactive) (org-capture nil "t")))
-(global-set-key (kbd "C-c w") (lambda () (interactive) (org-protocol-capture nil "w"))) ;; Web Capture (manual trigger)
-(global-set-key (kbd "C-c t") (lambda () (interactive) (org-capture nil "a")))  ;; Activity (direct to Area Tasks)
-(global-set-key (kbd "C-c y") (lambda () (interactive) (org-capture nil "y")))
-;; Capture Jobs
+;;; Keybindings
+
+(defun my/capture-inbox ()        "Capture to inbox."          (interactive) (org-capture nil "i"))
+(defun my/capture-project ()      "Capture new project."       (interactive) (org-capture nil "q"))
+(defun my/capture-note ()         "Capture fleeting note."     (interactive) (org-capture nil "u"))
+(defun my/capture-journal ()      "Capture journal entry."     (interactive) (org-capture nil "j"))
+(defun my/capture-log-time ()     "Capture log time entry."    (interactive) (org-capture nil "h"))
+(defun my/capture-resource ()     "Capture resource."          (interactive) (org-capture nil "t"))
+(defun my/capture-web ()          "Capture web link."          (interactive) (org-capture nil "w"))
+(defun my/capture-activity ()     "Capture activity."          (interactive) (org-capture nil "a"))
+(defun my/capture-job ()          "Capture job application."   (interactive) (org-capture nil "y"))
+
+(global-set-key (kbd "C-c a")   'org-agenda)
+(global-set-key (kbd "C-c d")   'rsr/org-timeblock-split-view)
+(global-set-key (kbd "C-c c g") 'org-clock-goto)
+(global-set-key (kbd "C-c c i") 'my/capture-inbox)
+(global-set-key (kbd "C-c c q") 'my/capture-project)
+(global-set-key (kbd "C-c c n") 'my/capture-note)
+(global-set-key (kbd "C-c c j") 'my/capture-journal)
+(global-set-key (kbd "C-c c h") 'my/capture-log-time)
+(global-set-key (kbd "C-c c r") 'my/capture-resource)
+(global-set-key (kbd "C-c c w") 'my/capture-web)
+(global-set-key (kbd "C-c c t") 'my/capture-activity)
+(global-set-key (kbd "C-c c y") 'my/capture-job)
+(define-key org-agenda-mode-map "j" 'my/org-agenda-process-inbox-item)
+(define-key org-agenda-mode-map "H" 'my/org-agenda-toggle-highlight)
+(define-key org-agenda-mode-map "E" 'my/org-day-effort-budget)
+(define-key org-agenda-mode-map "D" 'my/schedule-deep-work-block)
 
 (provide 'gtd-config)
 ;;; gtd-config.el ends here
