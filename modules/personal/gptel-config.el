@@ -28,7 +28,8 @@
               ("a t" . rsr/gptel-toggle-model)
               ("a T" . rsr/gptel-switch-to-chat)
               ("a C" . rsr/gptel-switch-to-coding)
-              ("a G" . rsr/gptel-switch-to-gemini))
+              ("a G" . rsr/gptel-switch-to-gemini)
+              ("a K" . rsr/gptel-switch-to-claude))
   :config
   (require 'gptel-context)
 
@@ -61,6 +62,13 @@
     (gptel-make-gemini "Gemini" :stream t :key my/gemini-key)
     "Gemini backend.")
 
+  (defvar rsr/gptel-claude-model 'claude-sonnet-4-6
+    "Model to use for Claude.")
+
+  (defvar rsr/gptel-claude-backend
+    (gptel-make-anthropic "Claude" :stream t :key my/anthropic-key)
+    "Anthropic Claude backend.")
+
   ;;; Model switch functions
 
   (defun rsr/gptel-switch-to-chat ()
@@ -83,6 +91,13 @@
     (setq gptel-backend rsr/gptel-gemini-backend
           gptel-model 'gemini-flash-latest)
     (message "Switched to Gemini"))
+
+  (defun rsr/gptel-switch-to-claude ()
+    "Switch to Anthropic Claude backend."
+    (interactive)
+    (setq gptel-backend rsr/gptel-claude-backend
+          gptel-model rsr/gptel-claude-model)
+    (message "Switched to Claude: %s" rsr/gptel-claude-model))
 
   (defun rsr/gptel-toggle-model ()
     "Toggle between chat and coding models."
@@ -171,6 +186,7 @@
                         ((eq gptel-backend rsr/gptel-coding-backend) "CODE")
                         ((eq gptel-backend rsr/gptel-chat-backend) "CHAT")
                         ((eq gptel-backend rsr/gptel-gemini-backend) "GEM")
+                        ((eq gptel-backend rsr/gptel-claude-backend) "CLAUDE")
                         (t "?")))
                'face '(:foreground "cyan" :weight bold))))
     "Mode-line indicator showing active gptel model.")
