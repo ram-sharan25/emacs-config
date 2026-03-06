@@ -39,11 +39,15 @@
     (forward-line 1)))
 
 (defun my-org-insert-src-block-with-extras ()
-  "Insert an org src block with :results output and leave point inside it."
+  "Insert an org src block and leave point inside it.
+For mermaid, uses :file header pointing to data dir."
   (interactive)
   (let ((language (read-string "Language: " nil nil "python")))
     (unless (string-empty-p language)
-      (insert (format "#+BEGIN_SRC %s :results output :exports both\n" language))
+      (insert (if (string= language "mermaid")
+                  (format "#+BEGIN_SRC mermaid :file %s.png\n"
+                          (read-string "Diagram name (without extension): "))
+                (format "#+BEGIN_SRC %s :results output :exports both\n" language)))
       (let ((p (point)))
         (insert "\n#+END_SRC\n\n#+RESULTS:\n")
         (goto-char p)))))
