@@ -239,8 +239,12 @@ By default, delete the current one."
     (when pid (toggl-start-time-entry heading pid t))))
 
 (defun org-toggl-clock-out ()
-  "Stop the running Toggle time entry."
-  (toggl-stop-time-entry t))
+  "Stop the running Toggle time entry.
+Skips execution if `my/mobile-sync-in-progress' is non-nil to prevent
+duplicate Toggl entries when syncing from mobile app."
+  ;; CRITICAL: Skip if mobile sync is in progress
+  (unless (bound-and-true-p my/mobile-sync-in-progress)
+    (toggl-stop-time-entry t)))
 
 (defun org-toggl-clock-cancel ()
   "Delete the running Toggle time entry."
