@@ -1,5 +1,6 @@
 ;; config for images in emacs
 
 
-(add-hook 'org-mode-hook 'org-display-inline-images)
+;; org-startup-with-inline-images (set in roam-config.el) already handles this.
+;; Removed redundant hook that ignored per-file #+STARTUP keywords.
 (setq org-image-actual-width nil)
