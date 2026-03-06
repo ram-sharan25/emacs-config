@@ -18,7 +18,15 @@
  '(org-block-end-line ((t (:inherit org-meta-line :background "#2B2B2B" :extend t))))
  
  ;; Make Quotes specifically Pale Mint on Slate (Cool contrast to Zenburn)
- '(org-quote ((t (:inherit org-block :slant italic :foreground "#DEF7E0" :background "#4A5057")))))
+ '(org-quote ((t (:inherit org-block :slant italic :foreground "#DEF7E0" :background "#4A5057"))))
+
+ ;; Magit diff — clearer added/removed colors against zenburn background
+ '(magit-diff-added             ((t (:background "#2d4f2d" :foreground "#9fc99f"))))
+ '(magit-diff-removed           ((t (:background "#4f2d2d" :foreground "#cc9393"))))
+ '(magit-diff-added-highlight   ((t (:background "#3a6b3a" :foreground "#c3e8c3"))))
+ '(magit-diff-removed-highlight ((t (:background "#6b3a3a" :foreground "#e8c3c3"))))
+ '(magit-diff-hunk-heading           ((t (:background "#3f3f3f" :foreground "#afafaf"))))
+ '(magit-diff-hunk-heading-highlight ((t (:background "#4f4f4f" :foreground "#dfdfdf")))))
 ;; ;;(load-theme ../../themes/mac-os-theme.el t)
 
 
