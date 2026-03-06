@@ -1,52 +1,57 @@
+;;; treemacs-config.el --- File tree sidebar -*- lexical-binding: t; -*-
+
+;;; Code:
+
 (use-package treemacs
-  :after (treemacs perspective)
   :ensure t
   :defer t
-  :init
-  (with-eval-after-load 'winum
-    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+  :after perspective
   :config
-  ;; --- Key Settings ---
-  (setq treemacs-position 'right
-	treemacs-width 35
-	treemacs-litter-directories '("/node_modules" "/.venv" "/.cask")
-	treemacs-show-hidden-files t
-	treemacs-is-never-other-window t
-	treemacs-file-event-delay 500) ; Lowered delay for faster updates
+  (setq treemacs-position              'right
+        treemacs-width                 35
+        treemacs-show-hidden-files     t
+        treemacs-is-never-other-window t
+        treemacs-file-event-delay      500
+        treemacs-litter-directories    '("/node_modules" "/.venv" "/.cask"))
 
-  ;; --- Enable Essential Modes ---
   (treemacs-follow-mode t)
   (treemacs-filewatch-mode t)
   (treemacs-project-follow-mode t)
   (treemacs-fringe-indicator-mode 'always)
 
-  ;; --- Git Integration ---
+  ;; Git integration — deferred for performance
   (pcase (executable-find "git")
-    (`nil (message "Treemacs: Git not found, disabling git integration."))
+    (`nil (message "Treemacs: git not found, disabling git integration."))
     (_ (treemacs-git-mode 'deferred)))
-  :bind
-  ;; Correct syntax for global keybindings
-  (("M-0"       . treemacs-select-window)
-   ("C-x t t"   . treemacs)
-   ("C-x t 1"   . treemacs-delete-other-windows)
-   ("C-x t d"   . treemacs-select-directory)))
 
-;; --- Treemacs Integrations ---
+  :bind
+  (("M-0"     . treemacs-select-window)
+   ("C-x t t" . treemacs)
+   ("C-x t 1" . treemacs-delete-other-windows)
+   ("C-x t d" . treemacs-select-directory)))
 
 (use-package treemacs-projectile
-  :after (treemacs projectile)
-  :ensure t)
+  :ensure t
+  :after (treemacs projectile))
 
 (use-package treemacs-icons-dired
+  :ensure t
   :after treemacs
-  :hook (dired-mode . treemacs-icons-dired-enable-once)
-  :ensure t)
+  :hook (dired-mode . treemacs-icons-dired-enable-once))
 
 (use-package treemacs-magit
-  :after (treemacs magit)
-  :ensure t)
+  :ensure t
+  :after (treemacs magit))
+
+(use-package treemacs-nerd-icons
+  :ensure t
+  :after treemacs
+  :config (treemacs-load-theme "nerd-icons"))
 
 (use-package treemacs-perspective
-  :after (treemacs perspective)
   :ensure t
+  :after (treemacs perspective)
   :config (treemacs-set-scope-type 'Perspectives))
+
+(provide 'treemacs-config)
+;;; treemacs-config.el ends here
