@@ -11,6 +11,7 @@
 
 (use-package persp-projectile
   :ensure t
+  :demand t
   :after (perspective projectile)
   :bind (:map projectile-mode-map
          ("C-c p p" . projectile-persp-switch-project)))
