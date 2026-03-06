@@ -59,8 +59,40 @@
 (global-visual-line-mode t)   ;; wrap long lines visually
 (show-paren-mode 1)           ;; highlight matching parentheses
 
+;;; Keybinding Search
+;; C-c o s → search keybindings.md with live consult-line
+(defun rsr/search-keybindings ()
+  "Search all keybindings by keyword in the minibuffer.
+
+Parses keybindings.md and prefixes each table row with its section heading
+so you can search by topic (e.g. \"roam\", \"capture\") or by key.
+No file buffer is opened or switched to."
+  (interactive)
+  (let* ((file (expand-file-name "docs/reference/keybindings.md" user-emacs-directory))
+         (lines (with-temp-buffer
+                  (insert-file-contents file)
+                  (split-string (buffer-string) "\n")))
+         (section "")
+         candidates)
+    ;; Build candidates: track headings, annotate each data row with section
+    (dolist (line lines)
+      (cond
+       ;; Section heading (## or ###): strip markdown and emoji for clean label
+       ((string-match "^##+ +\\(.+\\)" line)
+        (setq section (replace-regexp-in-string
+                       "[[:nonascii:]] *" "" (match-string 1 line))))
+       ;; Data row: not a separator (|---|)
+       ((string-match-p "^|[^-]" line)
+        (push (format "[%s] %s" (string-trim section) line) candidates))))
+    (let* ((rows (nreverse candidates))
+           (result (let ((completion-styles '(substring))
+                         (completion-ignore-case t))
+                     (completing-read "Keybinding: " rows nil t))))
+      (message "%s" result))))
+
 ;;; Keybindings
 
+(global-set-key (kbd "s-F")        #'consult-ripgrep)  ;; Cmd+Shift+F — project-wide search
 (global-set-key (kbd "M-g")        #'rgrep)
 (global-set-key (kbd "C-M-z")      #'darkroom-tentative-mode)
 (global-set-key (kbd "s-l")        #'rsr/select-whole-line)
