@@ -89,8 +89,10 @@
 (defun my/activity-auto-refile ()
   "Auto-refile ACTIVITY_TYPE entries to the Area's Tasks section.
 Uses the project selected in Toggl (stored in my/last-toggl-project-choice).
-After refile, saves and opens today's agenda."
-  (when (and (derived-mode-p 'org-mode)
+After refile, saves and opens today's agenda.
+Skips execution if `my/mobile-sync-in-progress' is non-nil."
+  (when (and (not (bound-and-true-p my/mobile-sync-in-progress))
+             (derived-mode-p 'org-mode)
              (org-entry-get (point) "ACTIVITY_TYPE")
              my/last-toggl-project-choice)
     (let ((area-file (expand-file-name (concat my/last-toggl-project-choice ".org") my/areas-dir))
@@ -218,7 +220,8 @@ Falls back to empty string if no link is captured."
                                      my/rituals-file
                                      my/gcal-file
                                      my/gtasks-dir
-                                     my/job-applications-file)
+                                     my/job-applications-file
+                                     my/phone-inbox)
                                (my/get-area-files)))
 
 (setq org-todo-keywords
@@ -353,7 +356,7 @@ Falls back to empty string if no link is captured."
 
           (todo "TODO"
                 ((org-agenda-overriding-header "To Refile")
-                 (org-agenda-files (list my/inbox-file))))
+                 (org-agenda-files (list my/inbox-file my/phone-inbox))))
            (todo "TODO|WAITING|HOLD"
                 ((org-agenda-overriding-header "Waiting")
                  (org-agenda-files (list my/waiting-file))))
@@ -490,18 +493,21 @@ See also `org-save-all-org-buffers'"
 
 (defun my-org-clock-on-state-change ()
   "Clock in/out when TODO state changes to/from 'IN PROGRESS'.
-  This function checks `org-state' and `org-last-state'."
+This function checks `org-state' and `org-last-state'.
+Skips execution if `my/mobile-sync-in-progress' is non-nil to prevent
+duplicate clock entries when syncing from mobile app."
+  ;; CRITICAL: Skip if mobile sync is in progress
+  (unless (bound-and-true-p my/mobile-sync-in-progress)
+    ;; 1. Clock IN when moving TO "IN PROGRESS"
+    (when (string= org-state "IN-PROGRESS")
+      ;; We removed (unless (org-clock-is-active)) so it ALWAYS clocks in
+      (org-clock-in))
 
-  ;; 1. Clock IN when moving TO "IN PROGRESS"
-  (when (string= org-state "IN-PROGRESS")
-    ;; We removed (unless (org-clock-is-active)) so it ALWAYS clocks in
-    (org-clock-in))
-
-  ;; 2. Clock OUT when moving FROM "IN PROGRESS" to anything else
-  (when (and (string= org-last-state "IN-PROGRESS")
-             (not (string= org-state "IN-PROGRESS")))
-    (when (org-clock-is-active)
-      (org-clock-out))))
+    ;; 2. Clock OUT when moving FROM "IN PROGRESS" to anything else
+    (when (and (string= org-last-state "IN-PROGRESS")
+               (not (string= org-state "IN-PROGRESS")))
+      (when (org-clock-is-active)
+        (org-clock-out)))))
 
 (add-hook 'org-after-todo-state-change-hook 'my-org-clock-on-state-change)
 (setq org-archive-location (concat my/archive-dir "%s_archive.org::"))
