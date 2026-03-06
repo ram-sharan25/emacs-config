@@ -66,9 +66,11 @@ buffer's text scale."
 ;; Custom Highlighting for :THOUGHTS: Drawers
 ;; -------------------------------------------------------------------------
 
+;; Background-only face for the overlay — no foreground, so font-lock tag
+;; colors (below) can show through via face attribute merging.
 (defface my/thought-face
-  '((t (:foreground "#DCDCCC" :background "#4a5750" :extend t)))
-  "Face for THOUGHTS drawer background.")
+  '((t (:background "#4a5750" :extend t)))
+  "Background face for THOUGHTS drawer (applied via overlay).")
 
 (defface my/thought-tag-q-face
   '((t (:foreground "#DFAF8F" :weight bold :background "#4a5750" :extend t))) ;; Zenburn Orange (Curiosity)
@@ -82,43 +84,51 @@ buffer's text scale."
   '((t (:foreground "#F4F4D0" :weight bold :background "#4a5750" :extend t))) ;; Zenburn Yellowish Cream (Fact)
   "Face for ANALYSIS tags.")
 
-(defun my/thought-drawer-extend-region ()
-  "Extend region to include the full drawer for background highlighting."
-  (save-excursion
-    (let ((changed nil))
-      (goto-char font-lock-beg)
-      (when (re-search-backward "^[ \t]*:THOUGHTS:" nil t)
-        (setq font-lock-beg (match-beginning 0))
-        (setq changed t))
-      (goto-char font-lock-end)
-      (when (re-search-forward "^[ \t]*:END:" nil t)
-        (setq font-lock-end (match-end 0))
-        (setq changed t))
-      changed)))
+;; Overlay-based highlighting: zero cost during active typing.
+;; Overlays are applied after a 0.5s idle pause via after-change-functions.
+(defvar-local my/thought-drawer-overlays nil
+  "Overlays marking :THOUGHTS: drawer backgrounds in this buffer.")
 
-(defun my/match-thought-drawer (limit)
-  "Search for :THOUGHTS: drawer content."
-  (let ((res nil))
-    (while (and (not res) (re-search-forward "^[ \t]*:THOUGHTS:" limit t))
-      (let ((start (line-beginning-position 2))
-            (end (save-excursion
-                   (if (re-search-forward "^[ \t]*:END:" nil t)
-                       (match-beginning 0)
-                     (point-max)))))
-        (when (< start end)
-          (put-text-property start end 'font-lock-multiline t)
-          (set-match-data (list start end))
-          (goto-char end)
-          (setq res t))))
-    res))
+(defvar-local my/thought-drawer-timer nil
+  "Idle timer for deferred THOUGHTS drawer overlay updates.")
+
+(defun my/thought-drawer-clear-overlays ()
+  (mapc #'delete-overlay my/thought-drawer-overlays)
+  (setq my/thought-drawer-overlays nil))
+
+(defun my/thought-drawer-apply-overlays ()
+  "Scan buffer and place background overlays on :THOUGHTS: drawer content."
+  (when (derived-mode-p 'org-mode)
+    (my/thought-drawer-clear-overlays)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "^[ \t]*:THOUGHTS:" nil t)
+        (let ((start (line-beginning-position 2))
+              (end (save-excursion
+                     (if (re-search-forward "^[ \t]*:END:" nil t)
+                         (match-beginning 0)
+                       (point-max)))))
+          (when (< start end)
+            (let ((ov (make-overlay start end)))
+              (overlay-put ov 'face 'my/thought-face)
+              (overlay-put ov 'my/thought-drawer t)
+              (push ov my/thought-drawer-overlays))))))))
+
+(defun my/thought-drawer-schedule-update (&rest _)
+  "Schedule a deferred overlay update, cancelling any pending one."
+  (when my/thought-drawer-timer
+    (cancel-timer my/thought-drawer-timer))
+  (setq my/thought-drawer-timer
+        (run-with-idle-timer 0.5 nil #'my/thought-drawer-apply-overlays)))
 
 (defun my/activate-thought-highlighting ()
-  "Add custom font-lock keywords for THOUGHTS drawers."
-  (add-hook 'font-lock-extend-region-functions #'my/thought-drawer-extend-region nil t)
-
+  "Set up THOUGHTS drawer highlighting: overlays for background, font-lock for tags."
+  ;; Overlays update after user pauses — no cost during active typing.
+  (add-hook 'after-change-functions #'my/thought-drawer-schedule-update nil t)
+  (my/thought-drawer-apply-overlays)
+  ;; Single-line tag patterns: no extend-region machinery needed.
   (font-lock-add-keywords nil
-    '((my/match-thought-drawer 0 'my/thought-face t)
-      ("\\<\\(QUESTION\\|Q\\):.*$" (0 'my/thought-tag-q-face t))
+    '(("\\<\\(QUESTION\\|Q\\):.*$" (0 'my/thought-tag-q-face t))
       ("\\<\\(HYPOTHESIS\\|H\\):.*$" (0 'my/thought-tag-h-face t))
       ("\\<\\(ANALYSIS\\|ANSWER\\|A\\):.*$" (0 'my/thought-tag-a-face t)))
     'append))
@@ -187,9 +197,11 @@ Reads :TIMER_MINUTES: and :NOTIFY_BEFORE_MINUTES: from the current heading."
                              notify-mins)))))))
 
 (defun my/org-timer-on-clock-in ()
-  "Automatically start custom timer if :TIMER_MINUTES: property exists."
-  (when (org-entry-get (point) "TIMER_MINUTES")
-    (my/org-start-custom-timer)))
+  "Automatically start custom timer if :TIMER_MINUTES: property exists.
+Skips execution if `my/mobile-sync-in-progress' is non-nil."
+  (unless (bound-and-true-p my/mobile-sync-in-progress)
+    (when (org-entry-get (point) "TIMER_MINUTES")
+      (my/org-start-custom-timer))))
 
 (defun my/org-cancel-timer-on-clock-out ()
   "Cancel the custom timer and notification when clocking out."
