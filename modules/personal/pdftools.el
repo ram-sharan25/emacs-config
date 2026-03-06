@@ -10,6 +10,10 @@
 (defun pdf-view-current-overlay ()
   (image-mode-window-get 'overlay))
 
+(use-package nov
+  :ensure t
+  :defer t)
+
 (use-package org-noter
   :ensure t
   :after (org pdf-tools)
