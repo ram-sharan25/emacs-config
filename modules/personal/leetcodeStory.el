@@ -33,7 +33,10 @@
     (insert "   - Time: O(...)\n")
     (insert "   - Space: O(...)\n\n")
     (insert "*** Key Takeaway\n\n")
-    (write-file full-path)))
+    (write-file full-path)
+    (goto-char (point-min))
+    (search-forward "* Problem Description")
+    (forward-line 1)))
 
 (defun my-org-insert-src-block-with-extras ()
   "Insert an org src block with :results output and leave point inside it."
