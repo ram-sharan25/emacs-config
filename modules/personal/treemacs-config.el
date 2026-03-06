@@ -14,9 +14,9 @@
         treemacs-file-event-delay      500
         treemacs-litter-directories    '("/node_modules" "/.venv" "/.cask"))
 
-  (treemacs-follow-mode t)
-  (treemacs-filewatch-mode t)
-  (treemacs-project-follow-mode t)
+  (treemacs-follow-mode t)              ;; highlight current file in tree
+  (treemacs-filewatch-mode t)           ;; live filesystem updates
+  (treemacs-project-follow-mode nil)    ;; disabled — causes sentinel errors on non-project buffers
   (treemacs-fringe-indicator-mode 'always)
 
   ;; Git integration — deferred for performance
