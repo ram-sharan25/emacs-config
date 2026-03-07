@@ -44,6 +44,7 @@
    (t
     (message "Unsupported OS for this function."))))
 
+
 ;;; Calculator
 (use-package calculator
   :defer t)
