@@ -1,7 +1,9 @@
-(require 'package)
-(package-initialize)  ;; Ensure packages are initialized
+;;; Package Setup
 
-;; Ensure compat is in load-path early — required by org-timeblock and other packages
+(require 'package)
+(package-initialize)
+
+;; compat must be in load-path early — required by org-timeblock and other packages
 (when-let ((compat-dir (car (last (sort
                                    (seq-filter
                                     (lambda (d) (not (string-suffix-p ".signed" d)))
@@ -10,141 +12,92 @@
                                    #'string<)))))
   (add-to-list 'load-path compat-dir))
 
-;; Add MELPA repository
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
-;; Install `use-package` if not installed
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
 
 (require 'use-package)
-
-;; Always ensure packages are installed
 (setq use-package-always-ensure t)
 
-(setf custom-file (expand-file-name ".custom" user-emacs-directory))
+;;; Paths
 
+(setf custom-file (expand-file-name ".custom" user-emacs-directory))
 (push "/Users/rrimal/.local/bin" exec-path)
 (setenv "PATH" (concat "/Users/rrimal/.local/bin/:" (getenv "PATH")))
-
-;; Add personal directory to load path
 (add-to-list 'load-path (expand-file-name "modules/personal" user-emacs-directory))
-;; Use the Super key (now the middle key) as Meta
+
+;;; Global Prefix
+
 (setq x-super-modifier 'meta)
 (define-prefix-command 'rsr/global-prefix-map)
-(define-key global-map (kbd "M-m") 'rsr/global-prefix-map) ;
+(define-key global-map (kbd "M-m") 'rsr/global-prefix-map)
 
-;; Function to load all .el files from a directory
+;;; Module Loader
+
 (defun load-directory (directory)
   "Load all .el files in DIRECTORY."
-  (let ((files (directory-files directory t "\\.el$")))
-    (dolist (file files)
-      (message "Loading %s" file)
-      (load (file-name-sans-extension file)))))
+  (dolist (file (directory-files directory t "\\.el$"))
+    (load (file-name-sans-extension file))))
 
-;; Install & configure swiper
-(use-package swiper
-  :bind ("C-s" . swiper))
-
-(setq org-src-fontify-natively t)  ;; Enable syntax highlighting for source code blocks
-(global-font-lock-mode 1)
-(set-face-attribute 'default nil :height 160)
-
-
-;; Load custom modules AFTER setting up `use-package`
 (load-directory (expand-file-name "modules/personal" user-emacs-directory))
 
-(setq dired-use-ls-dired nil)
-
-(require 'org)
-(setq org-babel-python-command "python3") ; Or "python"
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((python . t)
-   (shell . t)))
-(setq org-confirm-babel-evaluate nil)
-(setq python-shell-completion-native-enable nil)
-
-
-;; Set maximum line length for wrapping
-(setq-default fill-column 80)
-
-;; Enable auto-fill-mode in all buffers
-(add-hook 'after-change-major-mode-hook #'turn-on-auto-fill)
-
-;; Ensure M-q (fill-paragraph) is always available
-(global-set-key (kbd "M-q") #'fill-paragraph)
-
-;; run jedi in virtual environment
- (setq jedi:server-command
-      '("/Users/rrimal/.emacs.d/.venv-jedi/bin/python"
-  "/Users/rrimal/.emacs.d/elpa/jedi-core-*/jediepcserver.py"))
-
+;;; Shell PATH
 
 (use-package exec-path-from-shell
   :config
-  ;; This ensures your Emacs instance has the same PATH as your shell.
   (when (memq window-system '(mac ns x))
-    ;; The following two lines are the fix for the slow startup.
-    ;; 1. Define which environment variables to copy from the shell.
     (setq exec-path-from-shell-variables '("PATH" "MANPATH"))
-
-    ;; 2. Enable caching. Emacs will only re-run the shell command
-    ;;    if your shell config files (like .zshrc) have changed.
     (exec-path-from-shell-initialize)))
 
+;;; Appearance
 
-(setq org-hide-emphasis-markers t)
+(global-font-lock-mode 1)
+(set-face-attribute 'default nil :height 160)
+
+;;; Icons
 
 (use-package all-the-icons
-  :commands
-  all-the-icons-insert all-the-icons-insert-faicon all-the-icons-insert-fileicon
-  all-the-icons-insert-material all-the-icons-insert-octicon all-the-icons-insert-wicon
-  all-the-icons-icon-for-dir all-the-icons-icon-for-file all-the-icons-icon-for-mode
-  all-the-icons-icon-for-url all-the-icons-icon-family all-the-icons-icon-family-for-buffer
-  all-the-icons-icon-family-for-file all-the-icons-icon-family-for-mode
-  all-the-icons-icon-for-buffer all-the-icons-faicon all-the-icons-octicon
-  all-the-icons-fileicon all-the-icons-material all-the-icons-wicon
-  all-the-icons-default-adjust all-the-icons-color-icons all-the-icons-scale-factor
-  all-the-icons-icon-alist all-the-icons-dir-icon-alist all-the-icons-weather-icon-alist
-  all-the-icons-icon-for-dir-with-chevron)
-
+  :defer t)
 
 (use-package all-the-icons-ibuffer
   :commands all-the-icons-ibuffer-mode
-  :hook
-  (after-init-hook . all-the-icons-ibuffer-mode))
+  :hook (after-init-hook . all-the-icons-ibuffer-mode))
 
-;; Use spaces instead of tabs for indentation
+;;; Editing Defaults
+
 (setq-default indent-tabs-mode nil)
+(setq-default fill-column 80)
+(add-hook 'after-change-major-mode-hook #'turn-on-auto-fill)
+(global-set-key (kbd "M-q") #'fill-paragraph)
+(setq dired-use-ls-dired nil)
 
+;;; Org Defaults
 
-(defvar org-mid-link-email-program
-  (cl-case system-type
-    (darwin "/Applications/Thunderbird.app/Contents/MacOS/thunderbird")
-    (t "thunderbird")))
+(setq org-src-fontify-natively t
+      org-hide-emphasis-markers t
+      org-confirm-babel-evaluate nil
+      python-shell-completion-native-enable nil)
 
-(defun org-imap-message-follow (path &optional _arg)
-  "Open the email at PATH in Thunderbird."
-  (let ((url (concat "imap-message:" path)))
-    (message "Opening Thunderbird with: %s" url)  ;; Debug message
-    (start-process "thunderbird" nil org-mid-link-email-program url)))
+(require 'org)
+(setq org-babel-python-command "python3")
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)
+   (shell  . t)))
 
-;; IMPORTANT: Register the link type with Org
-(org-link-set-parameters "imap-message"
-                         :follow #'org-imap-message-follow)
+;;; Server
 
-;; Start Emacs server so emacsclient can connect (for Claude Code skills).
 (require 'server)
 (unless (server-running-p)
   (server-start))
 
-;; Auto-load Claude Code agent skills.
+;;; Agent Skills (Claude Code)
+
 (dolist (skill '("describe" "highlight" "open" "select" "dired"))
   (let ((path (expand-file-name
                (concat ".agent/skills/" skill)
                user-emacs-directory)))
     (add-to-list 'load-path path)
     (require (intern (concat "agent-skill-" skill)) nil t)))
-
