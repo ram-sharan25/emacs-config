@@ -1,18 +1,4 @@
-;;; mobile-agenda-sync.el --- Mobile Agenda Synchronization (Minimal) -*- lexical-binding: t; -*-
-
-;;; Commentary:
-;; This module implements a minimal bi-directional sync between Emacs org-agenda
-;; and mobile devices.
-;;
-;; AUTOMATIC EXPORT:
-;; - Exports automatically whenever you open agenda (C-c a a)
-;; - Can also manually export with M-m s e from anywhere
-;; - Creates agenda.org with today's scheduled/deadline items
-;;
-;; MANUAL SYNC BACK:
-;; - Press M-m s s to sync TODO state changes from mobile back to Emacs
-;;
-;; File format: Flat list with ORIGIN_ID property for linking back
+;;; mobile-agenda-sync.el --- Mobile Agenda Synchronization -*- lexical-binding: t; -*-
 
 ;;; Code:
 
@@ -23,9 +9,9 @@
 (require 'json)
 (require 'paths nil t)  ; Optional - provides my/phone-inbox-dir
 
-;;; ============================================================================
+;;;
 ;;; Configuration Variables
-;;; ============================================================================
+;;;
 
 (defvar my/phone-inbox-dir
   (expand-file-name "~/Stillness/Brain/phone_inbox/")
@@ -49,9 +35,9 @@
   :type 'directory
   :group 'org-mobile-agenda)
 
-;;; ============================================================================
+;;;
 ;;; Export Function - Auto-export on Agenda Open
-;;; ============================================================================
+;;;
 
 (defvar my/mobile-agenda-exporting nil
   "Guard variable to prevent recursive export calls.")
@@ -71,12 +57,9 @@ Collects items by scanning `org-agenda-files' directly via
 touched, so `org-agenda-mode-hook' never fires and f/b navigation in
 an open agenda is completely unaffected."
   (interactive)
-  (when my/mobile-agenda-exporting
-    (message "mobile-export: already in progress, skipping...")
-    (cl-return-from my/export-mobile-agenda-minimal nil))
-
-  (setq my/mobile-agenda-exporting t)
-  (unwind-protect
+  (unless my/mobile-agenda-exporting
+    (setq my/mobile-agenda-exporting t)
+    (unwind-protect
       (let ((items '())
             (total-count 0)
             (today (calendar-current-date)))
@@ -120,11 +103,11 @@ an open agenda is completely unaffected."
 
         (message "Mobile export complete: %d items → %s" total-count my/mobile-agenda-file))
 
-    (setq my/mobile-agenda-exporting nil)))
+      (setq my/mobile-agenda-exporting nil))))
 
-;;; ============================================================================
+;;;
 ;;; Auto-export Hook
-;;; ============================================================================
+;;;
 
 (defun my/mobile-agenda-auto-export ()
   "Schedule a mobile export when the *Org Agenda* buffer is closed.
@@ -140,9 +123,9 @@ buffer — after the user has finished rescheduling and closes the agenda."
           (lambda ()
             (add-hook 'kill-buffer-hook #'my/mobile-agenda-auto-export nil t)))
 
-;;; ============================================================================
+;;;
 ;;; JSON-Based Mobile Sync - Status Changes from Mobile App
-;;; ============================================================================
+;;;
 
 (defun my/mobile-sync-parse-iso8601 (iso-string)
   "Parse ISO8601 timestamp string to Emacs time value.
@@ -327,14 +310,11 @@ Usage: M-m s s"
         (message "phone-sync: %d task(s) updated, %d failed" success failed)
         (list success failed)))))
 
-;;; ============================================================================
+;;;
 ;;; Keybindings
-;;; ============================================================================
 
-;; Global keybindings - M-m s prefix for "Sync"
-
-  (define-key rsr/global-prefix-map (kbd "s e") #'my/export-mobile-agenda-minimal)
-  (define-key rsr/global-prefix-map (kbd "s s") #'my/mobile-sync-from-json)
+(define-key rsr/global-prefix-map (kbd "s e") #'my/export-mobile-agenda-minimal)
+(define-key rsr/global-prefix-map (kbd "s s") #'my/mobile-sync-from-json)
 
 (provide 'mobile-agenda-sync)
 
