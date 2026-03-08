@@ -3,7 +3,9 @@
 (require 'epa-file)
 (epa-file-enable)
 (setq epg-pinentry-mode 'loopback)
-(load "~/.emacs.d/secrets.el.gpg")
+(condition-case err
+    (load "~/.emacs.d/secrets.el.gpg")
+  (error (message "gcal: failed to load secrets (wrong passphrase?): %s" err)))
 (require 'paths)
 
 (use-package org-gcal
@@ -11,6 +13,12 @@
   :init
   (setq plstore-encrypt-to nil
         plstore-cache-passphrase-for-symmetric-encryption t)
+  ;; Clear wrong cached passphrase and re-prompt
+  (defun rsr/clear-plstore-cache ()
+    "Clear cached plstore passphrase so you can re-enter it."
+    (interactive)
+    (setq plstore--cache (make-hash-table))
+    (message "plstore passphrase cache cleared — try your operation again"))
   :custom
   (org-gcal-client-id my/google-client-id)
   (org-gcal-client-secret my/google-client-secret)
