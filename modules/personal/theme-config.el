@@ -3,7 +3,11 @@
 ;;; Code:
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-(load-theme 'zenburn t)
+
+(use-package zerodark-theme
+  :ensure t)
+
+(load-theme 'zerodark t)
 
 (custom-set-faces
  ;; org scaffolding — small and dim
@@ -18,6 +22,10 @@
  '(org-block-end-line   ((t (:inherit org-meta-line :background "#2B2B2B" :extend t))))
  '(org-quote            ((t (:inherit org-block :slant italic
                              :foreground "#DEF7E0" :background "#4A5057"))))
+
+ ;; modeline — persp name + git branch + filename colors
+ '(doom-modeline-persp-name ((t (:foreground "#9f9f9f"))))
+ '(persp-selected-face    ((t (:foreground "#7f9f7f" :weight bold))))
 
  ;; modeline — distinct colors for git branch vs filename
  '(doom-modeline-buffer-file         ((t (:foreground "#f0dfaf" :weight bold)))) ;; yellow — filename
