@@ -63,6 +63,24 @@
 
 (add-hook 'org-mode-hook #'rsr/org-disable-electric-indent)
 
+;;; --- Pulsar (flash line on jump) ---
+
+(use-package pulsar
+  :ensure t
+  :config
+  (setq pulsar-pulse t
+        pulsar-delay 0.055
+        pulsar-face 'pulsar-magenta)
+  (pulsar-global-mode 1)
+  (dolist (fn '(xref-find-definitions
+                xref-go-back
+                xref-go-forward
+                org-agenda-goto
+                recenter-top-bottom
+                scroll-up-command
+                scroll-down-command))
+    (add-to-list 'pulsar-pulse-functions fn)))
+
 ;;; --- Custom Commands ---
 
 (defun rsr/insert-indented-todo-item ()
