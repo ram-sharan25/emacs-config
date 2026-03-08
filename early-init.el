@@ -5,6 +5,7 @@
 ;; them — which causes visible flicker and wastes startup time.
 
 (setq package-enable-at-startup nil)
+(setq load-prefer-newer t)           ;; always load source over stale .elc
 (push '(menu-bar-lines . 0) default-frame-alist)
 (push '(tool-bar-lines . 0) default-frame-alist)
 (push '(vertical-scroll-bars) default-frame-alist)
