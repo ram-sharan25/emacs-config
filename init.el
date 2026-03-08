@@ -101,3 +101,4 @@
                user-emacs-directory)))
     (add-to-list 'load-path path)
     (require (intern (concat "agent-skill-" skill)) nil t)))
+(put 'narrow-to-region 'disabled nil)

@@ -26,6 +26,12 @@
       ("0" . mc/insert-numbers)
       ("a" . mc/insert-letters))))
 
+;;; --- Enable Narrowing Commands ---
+
+(put 'narrow-to-region   'disabled nil)
+(put 'narrow-to-page     'disabled nil)
+(put 'narrow-to-defun    'disabled nil)
+
 ;;; --- Line Display ---
 
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
@@ -50,6 +56,67 @@
   (add-hook 'before-save-hook #'whitespace-cleanup nil t))
 
 (add-hook 'prog-mode-hook #'rsr/prog-mode-hook)
+
+;;; --- Autosave & Backup — redirect clutter to central dirs ---
+
+(let ((auto-saves-dir (expand-file-name "auto-saves/" user-emacs-directory))
+      (backups-dir    (expand-file-name "backups/"    user-emacs-directory)))
+  (make-directory auto-saves-dir t)
+  (make-directory backups-dir t)
+  ;; redirect #file# crash-recovery files
+  (setq auto-save-file-name-transforms `((".*" ,auto-saves-dir t)))
+  ;; redirect file~ backup files
+  (setq backup-directory-alist `((".*" . ,backups-dir))))
+
+;; also save the real file automatically (VS Code style)
+(auto-save-visited-mode 1)
+(setq auto-save-visited-interval 2) ;; seconds of idle before saving
+
+;; exclude backup/autosave dirs from all file completions
+(add-to-list 'completion-ignored-extensions ".~")
+(with-eval-after-load 'projectile
+  (add-to-list 'projectile-globally-ignored-directories
+               (expand-file-name "backups/" user-emacs-directory))
+  (add-to-list 'projectile-globally-ignored-directories
+               (expand-file-name "auto-saves/" user-emacs-directory)))
+
+;;; --- Auto Revert ---
+
+(global-auto-revert-mode 1)
+(setq auto-revert-verbose nil               ;; suppress "Reverting buffer..." messages
+      global-auto-revert-non-file-buffers t) ;; also revert dired when dir changes
+
+;;; --- Repeat Mode ---
+
+(repeat-mode 1)
+
+;;; --- Electric Pair ---
+
+;; smartparens handles prog-mode — electric-pair covers everything else (text, org, etc.)
+(electric-pair-mode 1)
+(add-hook 'prog-mode-hook (lambda () (electric-pair-local-mode -1)))
+
+;;; --- Avy — jump to any visible text in 2-3 keypresses ---
+
+(use-package avy
+  :ensure t
+  :bind (("M-j" . avy-goto-char-timer)) ;; type chars, avy highlights matches, press overlay letter
+  :config
+  (setq avy-timeout-seconds 0.3))        ;; how long to wait for more chars before showing overlays
+
+;;; --- Embark — act on any completion candidate or thing at point ---
+
+(use-package embark
+  :ensure t
+  :bind (("C-." . embark-act)            ;; act on thing at point or current candidate
+         ("C-;" . embark-dwim))          ;; do-what-i-mean (smarter default action)
+  :config
+  (setq embark-prompter 'embark-keymap-prompter))
+
+(use-package embark-consult
+  :ensure t
+  :after (embark)
+  :hook (embark-collect-mode . consult-preview-at-point-mode))
 
 ;;; --- Electric Indent ---
 

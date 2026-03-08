@@ -98,17 +98,6 @@
                                     (cadr item) (car item))))))))))))
   (message "Notes index rebuilt."))
 
-;;; --- Single Buffer View ---
-
-(defun my/open-single-buffer ()
-  "Open current org heading in indirect buffer, focused fullscreen."
-  (interactive)
-  (org-tree-to-indirect-buffer)
-  (other-window 1)
-  (delete-other-windows)
-  (end-of-buffer 1)
-  (recenter-top-bottom t))
-
 ;;; Keybindings
 (global-set-key (kbd "C-c o j") #'my/open-journal-file)
 (global-set-key (kbd "C-c o d") #'my/open-tasks-file)
@@ -117,7 +106,7 @@
 (global-set-key (kbd "C-c o s") #'rsr/search-keybindings)
 (global-set-key (kbd "C-c o y") #'my/open-job-applications-file)
 (global-set-key (kbd "C-c o n") #'my/open-notes-file)
-(global-set-key (kbd "C-c o b") #'my/open-single-buffer)
+(global-set-key (kbd "C-c o b") #'org-narrow-to-subtree)
 (global-set-key (kbd "C-c b n") #'my/notes-rebuild-index)
 (global-set-key (kbd "C-x i")   #'org-clock-in)
 (global-set-key (kbd "C-x j")   #'org-clock-out)
