@@ -46,3 +46,4 @@ history
 docs/
 CLAUDE.md
 *.elc
+/backups/
