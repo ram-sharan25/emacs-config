@@ -592,5 +592,11 @@ Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
 (define-key org-agenda-mode-map "E" 'my/org-day-effort-budget)
 (define-key org-agenda-mode-map "D" 'my/schedule-deep-work-block)
 
+;;; --- Reschedule / Deadline change logging ---
+
+(setq org-log-reschedule 'time)   ;; log old date in LOGBOOK when rescheduled
+(setq org-log-redeadline 'time)   ;; log old date in LOGBOOK when deadline changes
+(setq org-log-into-drawer t)      ;; keep LOGBOOK entries in drawer (not inline)
+
 (provide 'gtd-config)
 ;;; gtd-config.el ends here
