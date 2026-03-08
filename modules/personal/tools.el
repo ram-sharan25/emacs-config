@@ -5,12 +5,6 @@
 ;;; Search
 ;; M-g → rgrep: cross-file search with prompt for pattern + directory
 
-;;; Distraction-free Writing
-;; C-M-z → darkroom-tentative-mode: centers text, hides UI chrome
-(use-package darkroom
-  :ensure t
-  :defer t)
-
 ;;; Line Selection
 ;; s-l → select whole line and copy to kill ring
 (defun rsr/select-whole-line ()
@@ -95,7 +89,6 @@ No file buffer is opened or switched to."
 
 (global-set-key (kbd "s-F")        #'consult-ripgrep)  ;; Cmd+Shift+F — project-wide search
 (global-set-key (kbd "M-g")        #'rgrep)
-(global-set-key (kbd "C-M-z")      #'darkroom-tentative-mode)
 (global-set-key (kbd "s-l")        #'rsr/select-whole-line)
 (global-set-key (kbd "s-/")        #'rsr/comment-or-uncomment)
 (global-set-key (kbd "C-/")        #'rsr/comment-or-uncomment)
