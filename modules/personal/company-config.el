@@ -22,11 +22,12 @@
   :ensure t
   :init
   (setq cape-dabbrev-check-other-buffers nil) ;; scan current buffer only — prevents freeze
-  (add-to-list 'completion-at-point-functions #'cape-file) ;; file paths everywhere
   :config
-  ;; dabbrev only in text/notes — LSP handles completions in code buffers
+  ;; cape-file only in text/org — LSP handles path completions in prog-mode
+  ;; (was global before; caused backup file paths to be silently inserted in code)
   (dolist (hook '(text-mode-hook org-mode-hook))
     (add-hook hook (lambda ()
+                     (add-hook 'completion-at-point-functions #'cape-file    nil t)
                      (add-hook 'completion-at-point-functions #'cape-dabbrev nil t)))))
 
 (provide 'company-config)
