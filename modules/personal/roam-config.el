@@ -31,7 +31,7 @@
         '(("z" "Zettel" plain
            "%?"
            :if-new (file+head "Public/${slug}.org"
-                              "#+title: ${title}\n#+filetags: :ZETTEL:\n#+AREA: %(progn (setq my/zettel-area (my/select-area-default-misc)) my/zettel-area)\n#+PROJECT: %(let* ((proj-cons (my/org-select-project-allow-empty my/zettel-area)) (proj-name (car proj-cons)) (proj-id (cdr proj-cons))) (if proj-id (format \"[[id:%s][%s]]\" proj-id proj-name) proj-name))\n\n* Context\n- Area: [[id:%(my/get-area-id-by-name my/zettel-area)][%(identity my/zettel-area)]]\n")
+                              "#+title: ${title}\n#+filetags: :ZETTEL:\n\n* Source\n- %(my/zettel-source-link)\n")
            :unnarrowed t)))
 
   (setq org-id-link-to-org-use-id t))
@@ -55,6 +55,19 @@
            (base-name (read-string "Image name (without extension): "))
            (final-name (concat base-name "." ext)))
       (expand-file-name final-name my/data-dir))))
+
+(defun my/zettel-source-link ()
+  "Get source link for Zettel.
+If current heading has a '- src:' line, use that link so Zettels
+created from fleeting notes point to the original resource, not the
+fleeting note itself. Falls back to current position otherwise."
+  (save-excursion
+    (when (derived-mode-p 'org-mode)
+      (condition-case nil (org-back-to-heading t) (error nil))
+      (let ((end (save-excursion (org-end-of-subtree t) (point))))
+        (if (re-search-forward "^- src: \\(.+\\)$" end t)
+            (match-string 1)
+          (or (org-capture-get :annotation) ""))))))
 
 ;;; --- Org-roam-ui ---
 
@@ -105,7 +118,7 @@
                  "%?"
                  :if-new
                  (file+head ,(concat (file-name-as-directory my/resources-dir) "${citekey}.org")
-                            "#+title: ${title}\n#+filetags: :research:\n#+AUTHOR: ${author-or-editor}\n\n* Summary\n\n* Key Contributions\n\n* Notes\n\n* References\n")
+                            "#+title: ${title}\n#+filetags: :research:\n#+AUTHOR: ${author-or-editor}\n#+CREATED_FROM: %a\n\n* Summary\n\n* Key Concepts\n\n* Quotes\n#+BEGIN_QUOTE\n\n#+END_QUOTE\n")
                  :unnarrowed t)))
 
 ;;; --- LaTeX export with BibTeX citations ---
