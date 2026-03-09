@@ -70,11 +70,15 @@
 
 ;; also save the real file automatically (VS Code style)
 (auto-save-visited-mode 1)
-(setq auto-save-visited-interval 2) ;; seconds of idle before saving
+(setq auto-save-visited-interval 2)  ;; seconds of idle before saving
+(setq backup-by-copying t)           ;; safer: copy instead of rename (no rename races)
 
-;; exclude backup/autosave dirs from all file completions
-(add-to-list 'completion-ignored-extensions ".~")
+;; exclude backup files (file~, file.tsx~, etc.) from all completions
+(add-to-list 'completion-ignored-extensions "~")  ;; covers file.tsx~ file.el~ etc.
+(with-eval-after-load 'ivy
+  (add-to-list 'ivy-ignore-buffers "~$"))          ;; ivy buffer list
 (with-eval-after-load 'projectile
+  (add-to-list 'projectile-globally-ignored-file-suffixes "~")
   (add-to-list 'projectile-globally-ignored-directories
                (expand-file-name "backups/" user-emacs-directory))
   (add-to-list 'projectile-globally-ignored-directories
