@@ -12,6 +12,8 @@
 (defvar my/resource-capture-title nil "Temporary storage for resource title during capture.")
 (defvar my/resource-capture-author nil "Temporary storage for resource author during capture.")
 (defvar my/resource-capture-type nil "Temporary storage for resource type during capture.")
+(defvar my/resource-capture-sections nil "Temporary storage for type-specific sections during capture.")
+(defvar my/resource-capture-file-field nil "Temporary storage for optional local file path during capture.")
 
 (defun my/sanitize-filename (string)
   "Sanitize STRING for use in filenames by replacing invalid chars with hyphens."
@@ -21,7 +23,7 @@
   "Prompt for resource details, set global vars, and return file path.
    Structure: Brain/Resources/Type_Name_Author.org"
   (let* ((type (completing-read "Resource Type: "
-                                '("Article" "Video" "Podcast" "Paper" "Book" "Blog" "News" "Course")))
+                                '("Article" "Video" "Podcast" "Blog" "News" "Course")))
          (name (read-string "Resource Name: "))
          (author (read-string "Author: "))
          (filename (format "%s_%s_%s.org"
@@ -34,6 +36,18 @@
     (setq my/resource-capture-type type)
     (setq my/resource-capture-title name)
     (setq my/resource-capture-author author)
+    (setq my/resource-capture-sections
+          (pcase type
+            ("Video"   "* Summary\n\n* Key Concepts\n\n* Timestamps\n")
+            ("Podcast" "* Summary\n\n* Key Concepts\n\n* Timestamps\n")
+            ("Course"  "* Summary\n\n* Key Concepts\n\n* Exercises\n")
+            ("News"    "* Summary\n\n* Key Points\n")
+            (_         "* Summary\n\n* Key Concepts\n\n* Quotes\n#+BEGIN_QUOTE\n\n#+END_QUOTE\n")))
+    (setq my/resource-capture-file-field
+          (if (member type '("Video" "Podcast"))
+              (let ((file (read-string "Local file path (leave empty if none): ")))
+                (if (string-empty-p file) "" (format "#+FILE: %s\n" file)))
+            ""))
 
     ;; Ensure directory exists
     (unless (file-exists-p my/resources-dir)
@@ -145,16 +159,6 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
 ;; Add after Toggl hook (use high depth to ensure it runs AFTER toggl hook)
 (add-hook 'org-clock-in-hook #'my/activity-auto-refile 90)
 
-(defun my/get-capture-link-compact ()
-  "Return the captured link formatted as [[link][#]].
-Falls back to empty string if no link is captured."
-  (let ((link (or (alist-get 'annotation org-store-link-plist)
-                  (org-capture-get :annotation))))
-    (if (and link (string-match "\\[\\[\\(.*?\\)\\]\\[.*?\\]\\]" link))
-        (format "[[%s][#]]" (match-string 1 link))
-      (if link
-          (format "[[%s][#]]" link)
-        ""))))
 
 (defun journal--ensure-daily-heading ()
   "Create the top-level daily heading (* YYYY-MM-DD Day) for today if it doesn't exist, and position point after it."
@@ -175,17 +179,22 @@ Falls back to empty string if no link is captured."
 (setq org-capture-templates
       `(("i" "Inbox" entry
          (file my/inbox-file)
-         "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"
+         "* TODO %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n- src: %a\n"
+         :empty-lines 1)
+
+        ("s" "Study Task" entry
+         (file my/inbox-file)
+         "* TODO %^{Read|Watch|Listen}: %^{Source}   :study:\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n- src: %a\n- res: \n- [ ] Resource note: paper/book → =M-m r n= | other → =C-c c r= (paste link in -res:)\n- [ ] Consume: video → =C-c v o= + =C-c v= | article → =C-c c n= | paper → =M-m r p= + =M-i=\n- [ ] Extract Zettels → =M-m r c → z= (same session)\n- [ ] Link Zettels to * Key Concepts in resource → =M-m r i=\n%?"
          :empty-lines 1)
 
         ("q" "New Project" entry
          (file my/gtd-projects-file)
-         "* %^{Project Name} [/]\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:COOKIE_DATA: todo recursive\n:CATEGORY: %\\1\n:END:\n- Tags: %?\n\n** Description\n\n** Dashboard\n*** Tasks\n\n*** Notes\n"
+         "* %^{Project Name} [/]\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:COOKIE_DATA: todo recursive\n:CATEGORY: %\\1\n:END:\n- Tags: %?\n- src: %a\n\n** Description\n\n** Dashboard\n*** Tasks\n\n*** Notes\n"
          :empty-lines 1)
 
         ("u" "Fleeting Note" entry
          (file ,my/rough-notes-file)
-         "* %^{Title}\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n:THOUGHTS:\n- %? \n:END:\n- Source: %(my/get-capture-link-compact)\n"
+         "* %^{Title}\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n:THOUGHTS:\n- %? \n:END:\n- src: %a\n"
          :empty-lines 1)
 
         ("w" "Web Capture" entry
@@ -198,12 +207,12 @@ Falls back to empty string if no link is captured."
 
         ("j" "Journal" plain
          (file+function ,my/journal-file journal--ensure-daily-heading)
-         "** %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n:LOGBOOK:\n:END:\n- %?"
+         "** %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n:LOGBOOK:\n:END:\n- src: %a\n- %?"
          :empty-lines 1)
 
         ("t" "Resource" plain
          (file (lambda () (my/capture-resource-file)))
-         ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+TITLE: %(symbol-value 'my/resource-capture-type):%(symbol-value 'my/resource-capture-title):%(symbol-value 'my/resource-capture-author)\n#+DATE: %U\n#+FILETAGS: \n#+AUTHOR: %(symbol-value 'my/resource-capture-author)\n#+SOURCE_TYPE: %(symbol-value 'my/resource-capture-type)\n#+URL: %^{URL}\n\n* Summary\n%?\n\n* Key Concepts\n\n* Quotes\n#+BEGIN_QUOTE\n%i\n#+END_QUOTE"
+         ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+TITLE: %(symbol-value 'my/resource-capture-type):%(symbol-value 'my/resource-capture-title):%(symbol-value 'my/resource-capture-author)\n#+DATE: %U\n#+FILETAGS: \n#+AUTHOR: %(symbol-value 'my/resource-capture-author)\n#+SOURCE_TYPE: %(symbol-value 'my/resource-capture-type)\n#+URL: %^{URL}\n%(symbol-value 'my/resource-capture-file-field)#+CREATED_FROM: %a\n\n%(symbol-value 'my/resource-capture-sections)%?"
          :unnarrowed t)
 
         ("a" "Activity" entry
@@ -566,6 +575,7 @@ Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
 ;;; Keybindings
 
 (defun my/capture-inbox ()        "Capture to inbox."          (interactive) (org-capture nil "i"))
+(defun my/capture-study ()        "Capture study task."        (interactive) (org-capture nil "s"))
 (defun my/capture-project ()      "Capture new project."       (interactive) (org-capture nil "q"))
 (defun my/capture-note ()         "Capture fleeting note."     (interactive) (org-capture nil "u"))
 (defun my/capture-journal ()      "Capture journal entry."     (interactive) (org-capture nil "j"))
@@ -579,6 +589,7 @@ Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
 (global-set-key (kbd "C-c d")   'rsr/org-timeblock-split-view)
 (global-set-key (kbd "C-c c g") 'org-clock-goto)
 (global-set-key (kbd "C-c c i") 'my/capture-inbox)
+(global-set-key (kbd "C-c c s") 'my/capture-study)
 (global-set-key (kbd "C-c c q") 'my/capture-project)
 (global-set-key (kbd "C-c c n") 'my/capture-note)
 (global-set-key (kbd "C-c c j") 'my/capture-journal)
