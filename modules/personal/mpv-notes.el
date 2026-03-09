@@ -16,6 +16,22 @@
 (use-package mpv
   :ensure t)
 
+(defun my/resource-open-video ()
+  "Open the video linked in the current resource file with org-mpv-notes.
+Reads #+FILE: first, falls back to #+URL:. Position cursor under
+* Timestamps before calling to capture notes in the right place."
+  (interactive)
+  (let* ((keywords (org-collect-keywords '("FILE" "URL")))
+         (file (cadr (assoc "FILE" keywords)))
+         (url  (cadr (assoc "URL"  keywords))))
+    (cond
+     (file (org-mpv-notes-open file))
+     (url  (org-mpv-notes-open url))
+     (t    (user-error "No #+FILE: or #+URL: found in this buffer")))))
+
+(with-eval-after-load 'org-mpv-notes
+  (define-key org-mode-map (kbd "C-c v o") #'my/resource-open-video))
+
 ;; open video files via org-mpv-notes so IPC connection is established
 (dolist (ext '("\\.mp4\\'" "\\.mkv\\'" "\\.webm\\'"))
   (add-to-list 'org-file-apps `(,ext . (lambda (file _link) (org-mpv-notes-open file)))))
