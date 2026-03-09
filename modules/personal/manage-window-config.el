@@ -72,6 +72,17 @@
 ;;; savehist — M-x remembers command history (replaces smex)
 (savehist-mode 1)
 
+;;; --- Window Navigation ---
+
+;; ace-window — jump, swap, close windows with letter overlays
+(use-package ace-window
+  :ensure t
+  :bind ("C-c w w" . ace-window)
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
+        aw-scope 'frame
+        aw-dispatch-always t))
+
 ;;; Keybindings
 (global-set-key (kbd "C-x 3") #'rsr/split-vertical)
 (global-set-key (kbd "C-x 2") #'rsr/split-horizontal)
