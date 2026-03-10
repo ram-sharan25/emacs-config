@@ -1,4 +1,4 @@
-;;; company-config.el --- In-buffer code completion via corfu -*- lexical-binding: t; -*-
+;;; company-config.el --- In-buffer completion via corfu + cape -*- lexical-binding: t; -*-
 
 ;;; Code:
 
@@ -29,6 +29,12 @@
     (add-hook hook (lambda ()
                      (add-hook 'completion-at-point-functions #'cape-file    nil t)
                      (add-hook 'completion-at-point-functions #'cape-dabbrev nil t)))))
+
+;; Fix: lsp-passthrough + orderless race condition with corfu auto-complete
+;; lsp-capf gets orderless directly, bypassing the broken lsp-passthrough style
+(with-eval-after-load 'lsp-mode
+  (add-to-list 'completion-category-overrides
+               '(lsp-capf (styles orderless basic))))
 
 (provide 'company-config)
 ;;; company-config.el ends here

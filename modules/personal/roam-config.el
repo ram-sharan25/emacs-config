@@ -136,6 +136,7 @@ fleeting note itself. Falls back to current position otherwise."
 (defun rsr/edit-paper-note ()
   "Select a BibTeX entry and create or open its org-roam note."
   (interactive)
+  (require 'bibtex-completion)
   (let* ((candidates (bibtex-completion-candidates))
          (selected (completing-read "Paper note: " candidates nil t))
          (entry (cdr (assoc selected candidates)))
@@ -150,6 +151,7 @@ fleeting note itself. Falls back to current position otherwise."
 (defun rsr/open-paper ()
   "Browse BibTeX entries and open the associated PDF."
   (interactive)
+  (require 'bibtex-completion)
   (let* ((candidates (bibtex-completion-candidates))
          (selected (completing-read "Open paper: " candidates nil t))
          (entry (cdr (assoc selected candidates)))

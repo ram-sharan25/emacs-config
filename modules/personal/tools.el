@@ -93,7 +93,6 @@ No file buffer is opened or switched to."
 (global-set-key (kbd "s-/")        #'rsr/comment-or-uncomment)
 (global-set-key (kbd "C-/")        #'rsr/comment-or-uncomment)
 (global-set-key (kbd "s-k")        #'kill-whole-line)
-(global-set-key (kbd "s-<return>") #'rsr/open-kitty)
 (global-set-key (kbd "C-c l")      #'org-store-link)
 
 (bind-keys :map rsr/global-prefix-map

@@ -2,7 +2,6 @@
 
 (require 'package)
 (package-initialize)
-
 ;; compat must be in load-path early — required by org-timeblock and other packages
 (when-let ((compat-dir (car (last (sort
                                    (seq-filter
@@ -26,7 +25,8 @@
 (setf custom-file (expand-file-name ".custom" user-emacs-directory))
 (push "/Users/rrimal/.local/bin" exec-path)
 (setenv "PATH" (concat "/Users/rrimal/.local/bin/:" (getenv "PATH")))
-(add-to-list 'load-path (expand-file-name "modules/personal" user-emacs-directory))
+(add-to-list 'load-path (expand-file-name "modules/personal"    user-emacs-directory))
+(add-to-list 'load-path (expand-file-name "modules/git-modules" user-emacs-directory))
 
 ;;; Global Prefix
 
@@ -41,7 +41,8 @@
   (dolist (file (directory-files directory t "\\.el$"))
     (load (file-name-sans-extension file))))
 
-(load-directory (expand-file-name "modules/personal" user-emacs-directory))
+(load-directory (expand-file-name "modules/personal"    user-emacs-directory))
+(load-directory (expand-file-name "modules/git-modules" user-emacs-directory))
 
 ;;; Shell PATH
 

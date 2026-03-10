@@ -83,9 +83,33 @@
         aw-scope 'frame
         aw-dispatch-always t))
 
+(defun rsr/toggle-window-split ()
+  "Toggle between horizontal and vertical split for two windows."
+  (interactive)
+  (unless (= (count-windows) 2)
+    (user-error "Only works with exactly 2 windows"))
+  (let* ((this-win-buffer (window-buffer))
+         (next-win-buffer (window-buffer (next-window)))
+         (this-win-edges (window-edges (selected-window)))
+         (vertical-p (= (car this-win-edges)
+                        (car (window-edges (next-window))))))
+    (delete-other-windows)
+    (if vertical-p
+        (split-window-horizontally)
+      (split-window-vertically))
+    (set-window-buffer (selected-window) this-win-buffer)
+    (set-window-buffer (next-window) next-win-buffer)))
+
 ;;; Keybindings
 (global-set-key (kbd "C-x 3") #'rsr/split-vertical)
 (global-set-key (kbd "C-x 2") #'rsr/split-horizontal)
+(global-set-key (kbd "C-c w t") #'rsr/toggle-window-split)
+
+;; Unbind windmove shift+arrow keys — conflict with org scheduling
+(global-unset-key [S-left])
+(global-unset-key [S-right])
+(global-unset-key [S-up])
+(global-unset-key [S-down])
 
 (provide 'manage-window-config)
 ;;; manage-window-config.el ends here
