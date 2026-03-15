@@ -78,7 +78,7 @@ fleeting note itself. Falls back to current position otherwise."
 (use-package org-roam-ui
   :after org-roam
   :defer t
-  :config
+ :config
   (setq org-roam-ui-sync-theme t
         org-roam-ui-follow t
         org-roam-ui-update-on-save t

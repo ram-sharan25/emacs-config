@@ -142,43 +142,73 @@ Returns nil if parsing fails."
        nil))))
 
 (defun my/mobile-sync--log-state-change (new-status old-status timestamp)
-  "Insert a state-change logbook entry using native org machinery.
-`cl-letf' overrides `current-time' so that `org-store-log-note' stamps the
-entry with the mobile TIMESTAMP rather than now.
-When `org-add-log-setup' is called with how = \\='time, `org-add-log-note'
-calls `org-store-log-note' immediately (no interactive buffer)."
+  "Insert a state-change note outside the LOGBOOK drawer using native org machinery.
+`cl-letf' overrides `current-time' so the entry is stamped with the mobile
+TIMESTAMP rather than now.  `org-log-into-drawer' is bound to nil so the
+state note appears directly under the heading — CLOCK entries (time) remain
+inside :LOGBOOK: as usual."
   (cl-letf (((symbol-function 'current-time) (lambda () timestamp)))
-    (org-add-log-setup 'state new-status (or old-status "") 'time)
-    (org-add-log-note)))
+    (let ((org-log-into-drawer nil))
+      (org-add-log-setup 'state new-status (or old-status "") 'time)
+      (org-add-log-note))))
 
-(defun my/mobile-sync--insert-clock (start-ts end-ts)
-  "Insert a completed CLOCK entry via `org-clock-in'/`org-clock-out'.
-Both Toggl hooks are stripped for the duration using `remq' — no global
-mutation.  `org-clock-in-switch-to-state' is nil to prevent internal
-`org-todo' calls."
-  (let ((org-clock-in-hook             (remq 'rsr/toggl-clock-in-hook
-                                        (remq 'org-toggl-clock-in org-clock-in-hook)))
-        (org-clock-out-hook            (remq 'org-toggl-clock-out org-clock-out-hook))
-        (org-clock-in-switch-to-state  nil)
-        (org-clock-out-switch-to-state nil))
-    (org-clock-in nil start-ts)
-    (org-clock-out nil t end-ts)))
+(defun my/mobile-sync--open-clock (timestamp)
+  "Insert an open CLOCK entry at TIMESTAMP in the current heading's LOGBOOK drawer.
+Creates a LOGBOOK drawer if one does not exist."
+  (save-excursion
+    (org-back-to-heading t)
+    (let* ((ts-str      (format-time-string "[%Y-%m-%d %a %H:%M]" timestamp))
+           (heading-end (save-excursion (outline-next-heading) (point))))
+      (if (re-search-forward "^[ \t]*:LOGBOOK:" heading-end t)
+          (forward-line 1)
+        ;; No LOGBOOK yet — create one after :END: of properties block
+        (if (re-search-forward "^[ \t]*:END:" heading-end t)
+            (forward-line 1)
+          (forward-line 1))
+        (insert ":LOGBOOK:\n:END:\n")
+        (forward-line -1))
+      (insert "CLOCK: " ts-str "\n"))))
+
+(defun my/mobile-sync--close-open-clock (end-timestamp)
+  "Close any open CLOCK entry in the current heading at END-TIMESTAMP.
+An open clock line has a single timestamp with no end time:
+  CLOCK: [2026-03-15 Sun 10:47]
+Closes it in-place:
+  CLOCK: [2026-03-15 Sun 10:47]--[2026-03-15 Sun 11:27] =>  0:40
+Returns non-nil if an open clock was found and closed."
+  (save-excursion
+    (org-back-to-heading t)
+    (let* ((limit         (save-excursion (outline-next-heading) (point)))
+           (open-clock-re (concat "^[ \t]*CLOCK:[ \t]*"
+                                  "\\[\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}"
+                                  " [A-Za-z]\\{3\\} [0-9]\\{2\\}:[0-9]\\{2\\}\\)\\]"
+                                  "[ \t]*$")))
+      (when (re-search-forward open-clock-re limit t)
+        (let* ((start-str  (match-string 1))
+               (start-time (apply #'encode-time (parse-time-string start-str)))
+               (secs       (max 0 (round (float-time (time-subtract end-timestamp start-time)))))
+               (mins       (/ secs 60))
+               (end-str    (format-time-string "%Y-%m-%d %a %H:%M" end-timestamp)))
+          (end-of-line)
+          (insert (format "--[%s] => %d:%02d" end-str (/ mins 60) (% mins 60)))
+          t)))))
 
 (defun my/mobile-sync-update-entry-native (marker events)
   "Apply sorted EVENTS to the org entry at MARKER.
 Each event is an alist with keys: status, changed_at, file.
 
-- Guard:      `my/mobile-sync-in-progress' is t for the entire body, so
-              clock/Toggl/refile hooks that check it are silenced.
-- TODO state: `org-todo' with `org-inhibit-logging' t (no auto log) then
-              `my/mobile-sync--log-state-change' for the logbook entry.
-- CLOCK:      `org-clock-in'/out with Toggl hooks stripped via `remq'.
-- CLOSED:     `org-add-planning-info' for DONE/CANCELED."
+- Guard:  `my/mobile-sync-in-progress' is t for the entire body, so
+          clock/Toggl/refile hooks that check it are silenced.
+- State:  `org-todo' with `org-inhibit-logging' t, then
+          `my/mobile-sync--log-state-change' writes note outside LOGBOOK.
+- Clock:  Opens on any transition TO IN-PROGRESS.
+          Closes on any transition FROM IN-PROGRESS (HOLD, DONE, WAITING, etc.).
+          Also closes pre-existing open clocks (task was already IN-PROGRESS).
+- CLOSED: `org-add-planning-info' for DONE/CANCELED."
   (with-current-buffer (marker-buffer marker)
     (save-excursion
       (goto-char marker)
-      (let ((my/mobile-sync-in-progress t)
-            (pending-clock-start nil))
+      (let ((my/mobile-sync-in-progress t))
 
         (dolist (event events)
           (let* ((new-status (alist-get 'status     event))
@@ -188,29 +218,27 @@ Each event is an alist with keys: status, changed_at, file.
             (unless timestamp
               (error "Invalid timestamp: %s" ts-str))
 
-            ;; Close any open clock before state change
-            (when pending-clock-start
-              (my/mobile-sync--insert-clock pending-clock-start timestamp)
-              (setq pending-clock-start nil))
-
-            (when (string= new-status "IN-PROGRESS")
-              (setq pending-clock-start timestamp))
-
-            ;; 1. Update TODO keyword via org-todo (no auto log)
             (goto-char marker)
             (org-back-to-heading t)
-            (let ((old-status (org-get-todo-state))
+            (let ((old-status        (org-get-todo-state))
                   (org-inhibit-logging t))
-              (org-todo new-status)
-              ;; 2. State log at correct position using native org machinery
-              (my/mobile-sync--log-state-change new-status old-status timestamp)
-              ;; 3. CLOSED timestamp for terminal states
-              (when (member new-status '("DONE" "CANCELED"))
-                (org-add-planning-info 'closed timestamp)))))
 
-        (when pending-clock-start
-          (message "phone-sync: unclosed IN-PROGRESS for \"%s\" — waiting for end event"
-                   (org-get-heading t t t t))))
+              ;; Close clock on any transition away from IN-PROGRESS
+              (when (and (string= old-status "IN-PROGRESS")
+                         (not (string= new-status "IN-PROGRESS")))
+                (my/mobile-sync--close-open-clock timestamp))
+
+              ;; Apply TODO state
+              (org-todo new-status)
+              (my/mobile-sync--log-state-change new-status old-status timestamp)
+
+              ;; Open clock on any transition to IN-PROGRESS
+              (when (string= new-status "IN-PROGRESS")
+                (my/mobile-sync--open-clock timestamp))
+
+              ;; CLOSED timestamp for terminal states
+              (when (member new-status '("DONE" "CANCELED"))
+                (org-add-planning-info 'closed timestamp))))))
 
       (org-update-parent-todo-statistics)
       (save-buffer))))
