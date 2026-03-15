@@ -112,6 +112,8 @@
 (defconst my/job-applications-file (expand-file-name "applications.org" my/job-applications-dir)
   "Job applications tracking file.")
 
+(defconst my/cv-library-dir (expand-file-name "automate-resume/outputs/"   my/job-applications-dir)
+  "Job applications CV library directory.")
 ;;; Development
 
 (defconst my/leetcode-dir (expand-file-name "NeetCode/" my/development-dir)
