@@ -275,6 +275,24 @@ Records today as watched to suppress daily reminders."
 (global-set-key (kbd "C-/")        #'rsr/comment-or-uncomment)
 (global-set-key (kbd "s-k")        #'kill-whole-line)
 (global-set-key (kbd "C-c l")      #'org-store-link)
+
+;; C-c L → store link AND push formatted [[link][desc]] to kill-ring/clipboard.
+;; Lets you paste org-stored links outside Emacs (e.g. into other apps).
+(defun rsr/org-store-link-to-clipboard ()
+  "Run `org-store-link' and copy the result as [[link][desc]] to kill-ring."
+  (interactive)
+  (call-interactively #'org-store-link)
+  (when org-stored-links
+    (let* ((entry (car org-stored-links))
+           (link  (car entry))
+           (desc  (cadr entry))
+           (formatted (if (and desc (not (string-empty-p desc)))
+                          (format "[[%s][%s]]" link desc)
+                        (format "[[%s]]" link))))
+      (kill-new formatted)
+      (message "Stored + copied: %s" formatted))))
+(global-set-key (kbd "C-c L")      #'rsr/org-store-link-to-clipboard)
+
 (global-set-key (kbd "C-c i")      #'my/watch-random-video)
 
 (bind-keys :map rsr/global-prefix-map
