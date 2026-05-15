@@ -4,6 +4,7 @@
 
 (require 'paths)
 (require 'gtd-config)
+(require 'ai-workflows)
 
 ;;; --- Org-roam ---
 
