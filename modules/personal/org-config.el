@@ -10,10 +10,14 @@
 ;; [[data:image.png]] expands to my/data-dir/image.png
 (add-to-list 'org-link-abbrev-alist (cons "data" (concat my/data-dir "%s")))
 
-;; imap-message: links — open Thunderbird email links from org files
+;; imap-message: links — open in Thunderbird on macOS.
+;; macOS doesn't register imap-message:// as a system scheme, so we pass
+;; the URL directly to Thunderbird with open -a.
 (org-link-set-parameters "imap-message"
   :follow (lambda (path)
-            (browse-url (concat "imap-message:" path))))
+            (start-process "org-imap-open" nil "open"
+                           "-a" "Thunderbird"
+                           (concat "imap-message:" path))))
 
 ;;; Org Core Settings
 
