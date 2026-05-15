@@ -10,7 +10,26 @@
   :hook (org-mode . org-mpv-notes-setup-link)
   :config
   (require 'org-download)
-  (setq org-mpv-notes-save-image-function #'org-download-image))
+  (setq org-mpv-notes-save-image-function #'org-download-image)
+
+  ;; Give mpv more time to create its IPC socket (default 0.5s is too
+  ;; short for YouTube URLs that load yt-dlp).
+  (setq mpv-start-timeout 5)
+
+  ;; Pass --start=<secs> to mpv so it natively seeks to the timestamp.
+  ;; More reliable than post-start IPC seeking for streaming URLs.
+  (advice-remove 'org-mpv-notes--open #'my/mpv-notes-retry-seek)
+  (defun my/mpv-notes-start-at-timestamp (orig-fn path &optional arg)
+    "Wrap `org-mpv-notes--open' to pass --start flag for timestamped links."
+    (cl-multiple-value-bind (_parsed-path secs)
+        (org-mpv-notes--parse-link path)
+      (let ((mpv-default-options
+             (if secs
+                 (append mpv-default-options
+                         (list (format "--start=%d" (floor secs))))
+               mpv-default-options)))
+        (funcall orig-fn path arg))))
+  (advice-add 'org-mpv-notes--open :around #'my/mpv-notes-start-at-timestamp))
 
 (use-package mpv
   :ensure t)
