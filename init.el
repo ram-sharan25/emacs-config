@@ -70,6 +70,20 @@
 
 (setq-default indent-tabs-mode nil)
 (setq-default fill-column 80)
+(dolist (hook '(emacs-lisp-mode-hook
+               python-mode-hook
+               js-mode-hook
+               typescript-mode-hook
+               css-mode-hook
+               html-mode-hook
+               sh-mode-hook
+               c-mode-hook
+               c++-mode-hook
+               java-mode-hook
+               ruby-mode-hook
+               rust-mode-hook
+               go-mode-hook))
+  (add-hook hook #'display-fill-column-indicator-mode))
 (add-hook 'after-change-major-mode-hook #'turn-on-auto-fill)
 (global-set-key (kbd "M-q") #'fill-paragraph)
 (setq dired-use-ls-dired nil)
