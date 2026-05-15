@@ -186,11 +186,24 @@ Then manually split and display the PDF buffer where you want it."
       (kill-new clip)
       (message "Copied text + link to clipboard")))
 
+  (defun rsr/pdf-copy-link-only ()
+    "Highlight selection, create annotation, and copy only the org link.
+No quote, no note — just `[[pdf:...][pg. N]]' to the kill ring."
+    (interactive)
+    (let* ((pdf-annot-activate-created-annotations nil)
+           (annot (pdf-annot-add-highlight-markup-annotation
+                   (pdf-view-active-region nil)))
+           (link (rsr/pdf-annot-get-org-pdftools-link (buffer-file-name) annot))
+           (clip (format "[[%s][pg. %d]]" link (pdf-view-current-page))))
+      (kill-new clip)
+      (message "Copied link only: %s" clip)))
+
   ;; Key bindings for PDF mode
   (bind-keys :map pdf-view-mode-map
 	     ("x" . rsr/pdf-slight-up)
 	     ("z" . rsr/pdf-slight-down)
 	     ("C-c a" . rsr/pdf-highlight-and-take-note)
 	     ("C-c e" . rsr/pdf-annot-export-as-org)
-             ("C-c y" . rsr/pdf-copy-text-and-link)
+             ("C-c Y" . rsr/pdf-copy-text-and-link)
+             ("C-c y" . rsr/pdf-copy-link-only)
              ("C-c x" . pdf-annot-delete)))
