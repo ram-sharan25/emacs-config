@@ -14,15 +14,18 @@
 (load (expand-file-name "elpa/claude-code-ide/claude-code-ide-autoloads"
                         user-emacs-directory) nil t)
 
+;; Set backend before the package body loads — avoids "vterm not installed" error
+;; if claude-code-ide is triggered outside of rsr/claude-code-ide-menu
+(setq claude-code-ide-terminal-backend 'eat)
+
 (defun rsr/claude-code-ide-menu ()
   "Load claude-code-ide on demand then open the menu.
 Defers all MCP server startup and hook setup until explicitly invoked."
   (interactive)
   (require 'claude-code-ide)
   (require 'claude-code-ide-mcp)
-  ;; Configure backend and MCP tools only on first load
+  ;; Configure MCP tools only on first load
   (unless (boundp 'rsr/claude-code-ide--initialized)
-    (setq claude-code-ide-terminal-backend 'eat)
     (claude-code-ide-emacs-tools-setup)
     (defvar rsr/claude-code-ide--initialized t))
   (claude-code-ide-menu))
