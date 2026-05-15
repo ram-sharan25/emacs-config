@@ -85,6 +85,162 @@ No file buffer is opened or switched to."
                      (completing-read "Keybinding: " rows nil t))))
       (message "%s" result))))
 
+;;; Daily Inspiration Video
+;; C-c i → stream a random short video (<5 min) in mpv
+;; Topics: eastern philosophy, Jung/Adler, math history, poems, zen, running
+;; Reminded once at startup and every 45 min idle if not yet watched today.
+
+(defvar my/video-watch-log
+  (expand-file-name ".video-watched" user-emacs-directory)
+  "File storing the date the last inspiration video was watched.")
+
+(defun my/video-watched-today-p ()
+  "Return non-nil if an inspiration video was already watched today."
+  (and (file-exists-p my/video-watch-log)
+       (string= (string-trim
+                 (with-temp-buffer
+                   (insert-file-contents my/video-watch-log)
+                   (buffer-string)))
+                (format-time-string "%Y-%m-%d"))))
+
+(defun my/video-mark-watched ()
+  "Record today's date so reminders are silenced for the rest of the day."
+  (with-temp-file my/video-watch-log
+    (insert (format-time-string "%Y-%m-%d"))))
+
+(defconst my/video-ai-prompt
+  "Generate one creative YouTube search query (4-8 words) for a video under 5 minutes.
+The person loves: eastern philosophy (Krishnamurti, Osho, Ramana Maharshi, Vivekananda,
+Vimalananda), Jungian psychology, Alfred Adler, mathematics history (how theorems and
+techniques emerged and why), spoken word poetry, zen, meditation, running, personal human
+stories, science discoveries, history of ideas, how people think and why they are the way
+they are. Return ONLY the search query string — no quotes, no explanation, nothing else.
+Be specific, creative, and vary widely each time."
+  "Prompt sent to the AI to generate a YouTube search theme.")
+
+(defvar my/video-history-file
+  (expand-file-name "~/Stillness/Brain/Dashboard/video-history.org")
+  "Org file where watched inspiration videos are logged.")
+
+(defun my/video-format-duration (seconds)
+  "Format SECONDS as mm:ss string."
+  (let ((s (round (string-to-number (format "%s" seconds)))))
+    (format "%d:%02d" (/ s 60) (% s 60))))
+
+(defun my/video-log-entry (title url duration-secs watch-secs query)
+  "Append a watch entry to `my/video-history-file'.
+STATUS derived from ratio: completed >=80%, partial >=20%, skipped <20%."
+  (let* ((ratio  (if (> duration-secs 0) (/ watch-secs duration-secs) 0))
+         (status (cond ((>= ratio 0.8) "completed")
+                       ((>= ratio 0.2) "partial")
+                       (t              "skipped")))
+         (entry  (format "\n* %s -- %s\n  - URL: %s\n  - Duration: %s | Watched: %s | Status: %s\n  - Query: %s\n"
+                         (format-time-string "%Y-%m-%d") title url
+                         (my/video-format-duration duration-secs)
+                         (my/video-format-duration watch-secs)
+                         status (or query "built-in"))))
+    (with-temp-buffer
+      (when (file-exists-p my/video-history-file)
+        (insert-file-contents my/video-history-file))
+      (goto-char (point-max))
+      (insert entry)
+      (write-region (point-min) (point-max) my/video-history-file nil 'silent))
+    (message "Logged: %s (%s)" title status)))
+
+(defun my/video-launch-script (query)
+  "Run random-video.sh with optional QUERY, parse result, launch mpv from Emacs.
+Script outputs ID TAB DURATION TAB TITLE.  Watch time tracked via process sentinel.
+If QUERY is nil the script uses its built-in theme list."
+  (let* ((script (expand-file-name "scripts/random-video.sh" user-emacs-directory))
+         (cmd    (if query (list script query) (list script)))
+         (output ""))
+    (make-process
+     :name     "random-video"
+     :command  cmd
+     :filter   (lambda (_proc chunk)
+                 (setq output (concat output chunk)))
+     :sentinel (lambda (_proc _event)
+                 (let* ((line  (string-trim output))
+                        (parts (split-string line "\t" t)))
+                   (if (or (string-prefix-p "ERROR" line) (< (length parts) 3))
+                       (if query
+                           (progn (message "Query too specific, retrying...")
+                                  (my/video-launch-script nil))
+                         (message "Inspiration video error: %s" line))
+                     (let* ((id       (nth 0 parts))
+                            (duration (string-to-number (nth 1 parts)))
+                            (title    (mapconcat #'identity (cddr parts) "\t"))
+                            (url      (concat "https://www.youtube.com/watch?v=" id))
+                            (started  (float-time)))
+                       (my/video-mark-watched)
+                       (message "Now watching: %s" title)
+                       (let ((proc (start-process "mpv-video" nil
+                                                  "/opt/homebrew/bin/mpv" url
+                                                  "--geometry=900x506"
+                                                  "--really-quiet")))
+                         (set-process-sentinel
+                          proc
+                          (lambda (_p _e)
+                            (my/video-log-entry
+                             title url duration
+                             (- (float-time) started)
+                             query)))))))))))
+
+(defun my/video-show-history ()
+  "Open the video watch history file."
+  (interactive)
+  (find-file my/video-history-file))
+(defun my/watch-random-video (&optional arg)
+  "Pick a random short inspiring video via AI-generated query and stream in mpv.
+
+With no prefix: Claude Haiku (via GitHub Copilot backend) generates the
+search query based on your interests, then yt-dlp finds a video ≤5 min.
+
+With C-u prefix: choose backend interactively —
+  Claude Haiku  — most creative, default
+  Copilot       — GPT-4o via GitHub Copilot
+  Local         — no AI, use built-in theme list
+
+Records today as watched to suppress daily reminders."
+  (interactive "P")
+  (let* ((backends `(("Copilot GPT-5-mini" . (,rsr/gptel-github-backend . gpt-5-mini))
+                     ("Claude Haiku"       . (,rsr/gptel-github-backend . claude-haiku-4.5))
+                     ("Copilot GPT-4o"    . (,rsr/gptel-github-backend . gpt-4o))
+                     ("Local (no AI)"     . nil)))
+         (choice   (if arg
+                       (completing-read "AI backend: " (mapcar #'car backends) nil t)
+                     "Copilot GPT-5-mini"))
+         (backend-pair (cdr (assoc choice backends))))
+    (if (null backend-pair)
+        ;; Local fallback — no AI
+        (progn
+          (message "Finding inspiration (local)...")
+          (my/video-launch-script nil))
+      ;; AI path — let-bind backend/model, single non-streaming request
+      (message "Asking %s for inspiration..." choice)
+      (let ((gptel-backend (car backend-pair))
+            (gptel-model   (cdr backend-pair)))
+        (gptel-request my/video-ai-prompt
+          :stream   nil
+          :callback (lambda (response info)
+                      (if (stringp response)
+                          (my/video-launch-script (string-trim response))
+                        ;; AI failed — show status and fall back to built-in list
+                        (message "AI failed (%s), using built-in theme..."
+                                 (plist-get info :status))
+                        (my/video-launch-script nil))))))))
+
+(defun my/video-maybe-remind ()
+  "Nudge if no inspiration video has been watched today."
+  (unless (my/video-watched-today-p)
+    (message "[Inspiration] Haven't watched today — C-c i to get inspired.")))
+
+;; Remind 3 sec after startup (lets Emacs finish loading first)
+(run-with-timer 3 nil #'my/video-maybe-remind)
+
+;; Remind every 45 min of idle time
+(run-with-idle-timer (* 45 60) t #'my/video-maybe-remind)
+
 ;;; Keybindings
 
 (global-set-key (kbd "s-F")        #'consult-ripgrep)  ;; Cmd+Shift+F — project-wide search
@@ -94,6 +250,7 @@ No file buffer is opened or switched to."
 (global-set-key (kbd "C-/")        #'rsr/comment-or-uncomment)
 (global-set-key (kbd "s-k")        #'kill-whole-line)
 (global-set-key (kbd "C-c l")      #'org-store-link)
+(global-set-key (kbd "C-c i")      #'my/watch-random-video)
 
 (bind-keys :map rsr/global-prefix-map
            ("t c" . calc)
