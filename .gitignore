@@ -47,3 +47,9 @@ docs/
 CLAUDE.md
 *.elc
 /backups/
+
+# External package clones (vendored separately)
+modules/git-modules/copilot/
+
+# Runtime state
+.video-watched
