@@ -47,6 +47,16 @@
   (interactive)
   (find-file my/job-applications-file))
 
+(defun my/open-area-file ()
+  "Pick an Area file from `my/areas-dir' via completion and open it.
+Lists all .org files in the Areas directory, excluding hidden and
+sync-conflict files.  Display names omit the .org extension."
+  (interactive)
+  (let* ((files (directory-files my/areas-dir nil "\\`[^.#].*\\.org\\'"))
+         (names (mapcar #'file-name-sans-extension files))
+         (choice (completing-read "Area: " names nil t)))
+    (find-file (expand-file-name (concat choice ".org") my/areas-dir))))
+
 (defun my/open-notes-file ()
   "Open the rough notes file."
   (interactive)
@@ -106,6 +116,7 @@
 (global-set-key (kbd "C-c o s") #'rsr/search-keybindings)
 (global-set-key (kbd "C-c o y") #'my/open-job-applications-file)
 (global-set-key (kbd "C-c o n") #'my/open-notes-file)
+(global-set-key (kbd "C-c o a") #'my/open-area-file)
 (global-set-key (kbd "C-c o b") #'org-narrow-to-subtree)
 (global-set-key (kbd "C-c b n") #'my/notes-rebuild-index)
 (global-set-key (kbd "C-x i")   #'org-clock-in)
