@@ -23,5 +23,16 @@
   :config
   (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh))
 
+;; git-messenger — show last commit that touched the current line (on demand)
+(use-package git-messenger
+  :ensure t
+  :defer t
+  :custom
+  (git-messenger:show-detail t)     ;; include full commit message, not just summary
+  (git-messenger:use-magit-popup t) ;; press 's' in popup to open full magit show
+  :bind
+  (:map rsr/global-prefix-map
+        ("g m" . git-messenger:popup-message)))
+
 (provide 'magit_config)
 ;;; magit_config.el ends here
