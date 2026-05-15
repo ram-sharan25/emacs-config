@@ -235,6 +235,31 @@ Records today as watched to suppress daily reminders."
   (unless (my/video-watched-today-p)
     (message "[Inspiration] Haven't watched today — C-c i to get inspired.")))
 
+(require 'org-crypt)
+(setq org-tags-exclude-from-inheritance '("crypt"))
+(setq org-crypt-key "rimal.ram25@gmail.com")
+(setq org-crypt-disable-auto-save t)
+
+;; Track when auto-save-visited-mode is doing its periodic save cycle,
+;; so we can skip encryption (which would encrypt mid-edit every 2 sec).
+(defvar rsr/auto-save-visited-in-progress nil)
+
+(with-eval-after-load 'files
+  (when (fboundp 'auto-save-visited--save-some-buffers)
+    (advice-add 'auto-save-visited--save-some-buffers :around
+                (lambda (fn &rest args)
+                  (let ((rsr/auto-save-visited-in-progress t))
+                    (apply fn args))))))
+
+(defun rsr/org-crypt-maybe-encrypt ()
+  "Encrypt :crypt: headings on explicit save only, not auto-save-visited."
+  (unless rsr/auto-save-visited-in-progress
+    (org-encrypt-entries)))
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (add-hook 'before-save-hook #'rsr/org-crypt-maybe-encrypt nil t)))
+
 ;; Remind 3 sec after startup (lets Emacs finish loading first)
 (run-with-timer 3 nil #'my/video-maybe-remind)
 
