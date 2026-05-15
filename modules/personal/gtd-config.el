@@ -14,46 +14,86 @@
 (defvar my/resource-capture-type nil "Temporary storage for resource type during capture.")
 (defvar my/resource-capture-sections nil "Temporary storage for type-specific sections during capture.")
 (defvar my/resource-capture-file-field nil "Temporary storage for optional local file path during capture.")
+(defvar my/resource-capture-url nil "Temporary storage for URL during capture.")
+(defvar my/resource-capture-noter-field nil "Temporary storage for NOTER_DOCUMENT property line during capture.")
 
 (defun my/sanitize-filename (string)
   "Sanitize STRING for use in filenames by replacing invalid chars with hyphens."
   (replace-regexp-in-string "[^A-Za-z0-9]+" "-" (downcase string)))
 
+(defun my/capture-paper-resource-file ()
+  "Handle Paper type: BibTeX picker → set globals → register PDF-open hook.
+Returns the note file path (Resources/<citekey>.org)."
+  (require 'bibtex-completion)
+  (let* ((candidates (bibtex-completion-candidates))
+         (selected   (completing-read "Paper (Zotero): " candidates nil t))
+         (entry      (cdr (assoc selected candidates)))
+         (key        (bibtex-completion-get-value "=key=" entry))
+         (title      (bibtex-completion-get-value "title" entry "Untitled"))
+         (author     (bibtex-completion-get-value "author" entry "Unknown"))
+         (url        (or (bibtex-completion-get-value "url" entry) ""))
+         (pdf-path   (car (bibtex-completion-find-pdf key)))
+         (note-file  (expand-file-name (concat key ".org") my/resources-dir)))
+    (setq my/resource-capture-type        "Paper")
+    (setq my/resource-capture-title       title)
+    (setq my/resource-capture-author      author)
+    (setq my/resource-capture-url         url)
+    (setq my/resource-capture-file-field  "")
+    (setq my/resource-capture-sections
+          "* Raw Notes\n:PROPERTIES:\n:VISIBILITY: folded\n:END:\n- src: %a\n\n* Compiled Notes\n\n* Quotes\n#+BEGIN_QUOTE\n\n#+END_QUOTE\n\n* Summary\n")
+    (setq my/resource-capture-noter-field
+          (if pdf-path
+              (format ":NOTER_DOCUMENT: %s\n" pdf-path)
+            ""))
+    ;; After capture finalises, open the PDF in a right-side window.
+    (when pdf-path
+      (letrec ((hook (lambda ()
+                       (remove-hook 'org-capture-after-finalize-hook hook)
+                       (display-buffer
+                        (find-file-noselect pdf-path)
+                        '((display-buffer-in-side-window)
+                          (side . right)
+                          (window-width . 0.45))))))
+        (add-hook 'org-capture-after-finalize-hook hook)))
+    note-file))
+
 (defun my/capture-resource-file ()
   "Prompt for resource details, set global vars, and return file path.
-   Structure: Brain/Resources/Type_Name_Author.org"
+For Paper: uses BibTeX picker and opens PDF after capture.
+For others: Structure is Brain/Resources/Type_Name_Author.org"
   (let* ((type (completing-read "Resource Type: "
-                                '("Article" "Video" "Podcast" "Blog" "News" "Course")))
-         (name (read-string "Resource Name: "))
-         (author (read-string "Author: "))
-         (filename (format "%s_%s_%s.org"
-                           (my/sanitize-filename type)
-                           (my/sanitize-filename name)
-                           (my/sanitize-filename author)))
-         (path (expand-file-name filename my/resources-dir)))
-
-    ;; Set global variables for the template to use
-    (setq my/resource-capture-type type)
-    (setq my/resource-capture-title name)
-    (setq my/resource-capture-author author)
-    (setq my/resource-capture-sections
-          (pcase type
-            ("Video"   "* Summary\n\n* Key Concepts\n\n* Timestamps\n")
-            ("Podcast" "* Summary\n\n* Key Concepts\n\n* Timestamps\n")
-            ("Course"  "* Summary\n\n* Key Concepts\n\n* Exercises\n")
-            ("News"    "* Summary\n\n* Key Points\n")
-            (_         "* Summary\n\n* Key Concepts\n\n* Quotes\n#+BEGIN_QUOTE\n\n#+END_QUOTE\n")))
-    (setq my/resource-capture-file-field
-          (if (member type '("Video" "Podcast"))
-              (let ((file (read-string "Local file path (leave empty if none): ")))
-                (if (string-empty-p file) "" (format "#+FILE: %s\n" file)))
-            ""))
-
-    ;; Ensure directory exists
-    (unless (file-exists-p my/resources-dir)
-      (make-directory my/resources-dir t))
-
-    path))
+                                '("Article" "Video" "Podcast" "Blog" "News" "Course" "Paper"))))
+    (if (string= type "Paper")
+        ;; Paper: delegate entirely to the BibTeX-aware helper.
+        (my/capture-paper-resource-file)
+      ;; All other types: prompt manually.
+      (let* ((name     (read-string "Resource Name: "))
+             (author   (read-string "Author: "))
+             (filename (format "%s_%s_%s.org"
+                               (my/sanitize-filename type)
+                               (my/sanitize-filename name)
+                               (my/sanitize-filename author)))
+             (path     (expand-file-name filename my/resources-dir)))
+        (setq my/resource-capture-type        type)
+        (setq my/resource-capture-title       name)
+        (setq my/resource-capture-author      author)
+        (setq my/resource-capture-url         (read-string "URL: "))
+        (setq my/resource-capture-file-field
+              (if (member type '("Video" "Podcast"))
+                  (let ((file (read-string "Local file path (leave empty if none): ")))
+                    (if (string-empty-p file) "" (format "#+FILE: %s\n" file)))
+                ""))
+        (setq my/resource-capture-noter-field "")
+        (setq my/resource-capture-sections
+              (pcase type
+                ("Video"   "* Raw Notes\n:PROPERTIES:\n:VISIBILITY: folded\n:END:\n- src: %a\n\n* Compiled Notes\n\n* Summary\n")
+                ("Podcast" "* Raw Notes\n:PROPERTIES:\n:VISIBILITY: folded\n:END:\n- src: %a\n\n* Compiled Notes\n\n* Summary\n")
+                ("Course"  "* Raw Notes\n:PROPERTIES:\n:VISIBILITY: folded\n:END:\n- src: %a\n\n* Compiled Notes\n\n* Summary\n")
+                ("News"    "* Raw Notes\n:PROPERTIES:\n:VISIBILITY: folded\n:END:\n- src: %a\n\n* Compiled Notes\n\n* Summary\n")
+                (_         "* Raw Notes\n:PROPERTIES:\n:VISIBILITY: folded\n:END:\n- src: %a\n\n* Compiled Notes\n\n* Quotes\n#+BEGIN_QUOTE\n\n#+END_QUOTE\n\n* Summary\n")))
+        (unless (file-exists-p my/resources-dir)
+          (make-directory my/resources-dir t))
+        path))))
 
 (defvar my/selected-area-file nil
   "Temporary storage for the selected area file during capture.")
@@ -212,7 +252,7 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
 
         ("t" "Resource" plain
          (file (lambda () (my/capture-resource-file)))
-         ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+TITLE: %(symbol-value 'my/resource-capture-type):%(symbol-value 'my/resource-capture-title):%(symbol-value 'my/resource-capture-author)\n#+DATE: %U\n#+FILETAGS: \n#+AUTHOR: %(symbol-value 'my/resource-capture-author)\n#+SOURCE_TYPE: %(symbol-value 'my/resource-capture-type)\n#+URL: %^{URL}\n%(symbol-value 'my/resource-capture-file-field)#+CREATED_FROM: %a\n\n%(symbol-value 'my/resource-capture-sections)%?"
+         ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:COMPILE_STATE: raw\n%(symbol-value 'my/resource-capture-noter-field):END:\n#+TITLE: %(symbol-value 'my/resource-capture-type):%(symbol-value 'my/resource-capture-title):%(symbol-value 'my/resource-capture-author)\n#+DATE: %U\n#+FILETAGS: \n#+AUTHOR: %(symbol-value 'my/resource-capture-author)\n#+SOURCE_TYPE: %(symbol-value 'my/resource-capture-type)\n#+URL: %(symbol-value 'my/resource-capture-url)\n%(symbol-value 'my/resource-capture-file-field)#+CREATED_FROM: %a\n\n%(symbol-value 'my/resource-capture-sections)%?"
          :unnarrowed t)
 
         ("a" "Activity" entry
