@@ -89,4 +89,45 @@
 
 (add-to-list 'org-file-apps '("\\.pdf\\'" . (lambda (file _link) (my/open-pdf-in-split file))))
 
+;; -------------------------------------------------------------------------
+;; Auto mermaid → LaTeX figure via org-native attrs (global, all files)
+;;
+;; On C-c C-c of any mermaid block:
+;;   1. Rewrites [[file:X]] → [[data:X]] in results (Emacs inline display)
+;;   2. Removes #+RESULTS: line (so the image link exports directly)
+;;   3. Inserts #+CAPTION / #+NAME / #+ATTR_LATEX above the image (idempotent)
+;; -------------------------------------------------------------------------
+(defun my/mermaid-latex-attrs ()
+  "After a mermaid src block executes, add org-native figure attributes.
+Replaces all result content with attrs + data: image link."
+  (let* ((info (ignore-errors
+                 (save-excursion
+                   (org-babel-goto-src-block-head)
+                   (org-babel-get-src-block-info 'light))))
+         (lang (and info (car info)))
+         (file (and info (cdr (assq :file (nth 2 info))))))
+    (when (and (equal lang "mermaid") file)
+      (let* ((fig-name (file-name-nondirectory file))
+             (base (file-name-sans-extension fig-name))
+             (label (replace-regexp-in-string "_" "-" base))
+             (caption (capitalize (replace-regexp-in-string "_" " " base))))
+        (save-excursion
+          ;; 1. Ensure :exports results (not none) so image link exports
+          (org-babel-goto-src-block-head)
+          (when (re-search-forward ":exports +none" (line-end-position) t)
+            (replace-match ":exports results"))
+
+          ;; 2. Replace all result content with attrs + data: link
+          (org-babel-goto-src-block-head)
+          (when-let ((rp (org-babel-where-is-src-block-result)))
+            (goto-char rp)
+            (forward-line) ;; past #+RESULTS:
+            (let ((content-start (point))
+                  (content-end (org-babel-result-end)))
+              (delete-region content-start content-end)
+              (insert (format "#+CAPTION: %s\n#+NAME: fig:%s\n#+ATTR_LATEX: :width 0.8\\textwidth :height 1.0\\textheight :options keepaspectratio :float t\n[[data:%s]]\n"
+                              caption label fig-name)))))))))
+
+(add-hook 'org-babel-after-execute-hook #'my/mermaid-latex-attrs)
+
 (provide 'export-config)
