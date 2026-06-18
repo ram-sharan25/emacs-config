@@ -438,6 +438,12 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
          nil)))
 
 (setq org-agenda-span 'day)
+;; Always show the time grid: drop `require-timed' so the hour lines appear
+;; even on days with no clock-timed entries.
+(setq org-agenda-time-grid
+      '((daily today)
+        (800 1000 1200 1400 1600 1800 2000)
+        " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))
 (setq org-agenda-hide-tags-regexp ".")
 (setq org-agenda-sticky t)                ;; keep agenda buffer alive after closing
 (setq org-agenda-window-setup 'current-window) ;; open agenda in current window
