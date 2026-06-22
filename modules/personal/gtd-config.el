@@ -255,6 +255,11 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
          ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:COMPILE_STATE: raw\n%(symbol-value 'my/resource-capture-noter-field):END:\n#+TITLE: %(symbol-value 'my/resource-capture-type):%(symbol-value 'my/resource-capture-title):%(symbol-value 'my/resource-capture-author)\n#+DATE: %U\n#+FILETAGS: \n#+AUTHOR: %(symbol-value 'my/resource-capture-author)\n#+SOURCE_TYPE: %(symbol-value 'my/resource-capture-type)\n#+URL: %(symbol-value 'my/resource-capture-url)\n%(symbol-value 'my/resource-capture-file-field)#+CREATED_FROM: %a\n\n%(symbol-value 'my/resource-capture-sections)%?"
          :unnarrowed t)
 
+        ("S" "Capture Stream" plain
+         (file my/stream--capture-target)
+         "%(my/stream--scaffold my/stream--capture-title)- %?"
+         :unnarrowed t)
+
         ("a" "Activity" entry
          (file+datetree my/logbook-file)
          "* IN-PROGRESS %^{Activity}\n:PROPERTIES:\n:CREATED: %U\n:ACTIVITY_TYPE: t\n:END:\n- %?"
