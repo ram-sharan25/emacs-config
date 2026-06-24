@@ -49,11 +49,19 @@
 
 ;;; --- Consult (enhanced commands) ---
 
+(defun rsr/consult-line-symbol-at-point ()
+  "Search the buffer with `consult-line', pre-filled with the symbol at point.
+Like `C-s' (`consult-line') but seeded with the word under the cursor, so it
+searches the current word immediately.  Off a symbol, opens an empty prompt."
+  (interactive)
+  (consult-line (thing-at-point 'symbol t)))
+
 (use-package consult
   :ensure t
   :bind (("C-x b"   . consult-buffer)
          ("C-x M-f" . consult-recent-file)
          ("C-s"     . consult-line)
+         ("C-S-s"   . rsr/consult-line-symbol-at-point)
          ("M-s"     . consult-imenu)
          ("M-y"     . consult-yank-pop)))
 
