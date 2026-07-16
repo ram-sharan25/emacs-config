@@ -268,6 +268,26 @@ Records today as watched to suppress daily reminders."
 
 ;;; Keybindings
 
+;; The NS build defined these in ns-win.el; the emacs-mac port does not, since
+;; it assumes Cmd=meta. We remap Cmd to super in early-init.el, so recreate the
+;; standard macOS chords here. Cmd-C matters most: M-w is unreachable because
+;; the window manager binds Option-w.
+(global-set-key (kbd "s-s")        #'save-buffer)
+(global-set-key (kbd "s-c")        #'kill-ring-save)
+(global-set-key (kbd "s-v")        #'yank)
+(global-set-key (kbd "s-x")        #'kill-region)
+(global-set-key (kbd "s-z")        #'undo)
+(global-set-key (kbd "s-a")        #'mark-whole-buffer)
+
+;; Zoom. One function for all four: `text-scale-adjust' reads the key that
+;; invoked it to decide in/out/reset, and stays active for bare = / - repeats.
+;; Inert on Linux — `x-super-modifier' is meta there, so nothing emits s-.
+;; The portable equivalent is `C-x C-=', which works on every platform.
+(global-set-key (kbd "s-=")        #'text-scale-adjust)  ;; Cmd+=       zoom in
+(global-set-key (kbd "s-+")        #'text-scale-adjust)  ;; Cmd+Shift+= zoom in
+(global-set-key (kbd "s--")        #'text-scale-adjust)  ;; Cmd+-       zoom out
+(global-set-key (kbd "s-0")        #'text-scale-adjust)  ;; Cmd+0       reset
+
 (global-set-key (kbd "s-F")        #'consult-ripgrep)  ;; Cmd+Shift+F — project-wide search
 (global-set-key (kbd "M-g")        #'rgrep)
 (global-set-key (kbd "s-l")        #'rsr/select-whole-line)
@@ -294,6 +314,13 @@ Records today as watched to suppress daily reminders."
 (global-set-key (kbd "C-c L")      #'rsr/org-store-link-to-clipboard)
 
 (global-set-key (kbd "C-c i")      #'my/watch-random-video)
+
+;; Focus-timer: non-blocking bridge to the standalone ~/focus-timer web app
+;; (Node server + browser/mpv dial + menu-bar SwiftBar plugin). Independent of
+;; org-clock and Toggl — see ~/focus-timer/README.md.
+(when (file-exists-p "~/focus-timer/focus-timer.el")
+  (load "~/focus-timer/focus-timer.el"))
+(global-set-key (kbd "C-c f")      #'rsr/focus-start-at-point)
 
 (bind-keys :map rsr/global-prefix-map
            ("t c" . calc)

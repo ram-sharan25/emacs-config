@@ -159,12 +159,31 @@ fleeting note itself. Falls back to current position otherwise."
          (key (bibtex-completion-get-value "=key=" entry)))
     (bibtex-completion-open-pdf (list key))))
 
+(defun rsr/org-insert-citation ()
+  "Pick a BibTeX entry via completing-read and insert [cite:@key] at point.
+
+Org-mode counterpart of `rsr/latex-insert-citation' (latex-config.el):
+same `bibtex-completion' candidates over the Zotero library, but emits
+native org-cite syntax instead of \\cite{key}."
+  (interactive)
+  (require 'bibtex-completion)
+  (let* ((candidates (bibtex-completion-candidates))
+         (choice     (completing-read "Cite: " candidates nil t))
+         (entry      (cdr (assoc choice candidates)))
+         (key        (bibtex-completion-get-value "=key=" entry)))
+    (insert (format "[cite:@%s]" key))))
+
 ;;; Keybindings
 
 (global-set-key (kbd "M-m r s") #'rsr/search-brain)
 (global-set-key (kbd "M-m r p") #'rsr/open-paper)
 (global-set-key (kbd "M-m r n") #'rsr/edit-paper-note)
 (global-set-key (kbd "C-c ]")   #'org-ref-insert-link)
+
+;; In org buffers, C-c ] is the completing-read citation picker (mirrors the
+;; LaTeX C-c ] in latex-config.el); overrides the global org-ref-insert-link.
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c ]") #'rsr/org-insert-citation))
 
 (provide 'roam-config)
 ;;; roam-config.el ends here

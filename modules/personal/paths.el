@@ -42,6 +42,11 @@
 (defconst my/library-dir (expand-file-name "Library/" my/root-dir)
   "Static resources directory (Books, Music, PDFs).")
 
+(defconst my/ai-engineering-dir (expand-file-name "Resources/AI-engineering/" my/library-dir)
+  "Directory for my AI engineering resources")
+
+
+
 (defconst my/development-dir (expand-file-name "Development/" my/root-dir)
   "Development projects and code.")
 
@@ -87,6 +92,11 @@
 
 (defconst my/shortcuts-file (expand-file-name "shortcuts_in_emacs.org" my/dashboard-dir)
   "Emacs shortcuts and keybinding reference.")
+
+(defconst my/focus-file (expand-file-name "focus-blocks.org" my/dashboard-dir)
+  "Log of completed focus-timer blocks (~/focus-timer), one CLOCK entry each.
+Written by the focus-timer server, not Emacs; included in `org-agenda-files'
+so total focus hours show up via the agenda's clock report (`R').")
 
 ;;; Private Files
 

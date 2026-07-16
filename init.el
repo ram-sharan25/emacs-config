@@ -1,3 +1,5 @@
+
+
 ;;; Package Setup
 
 (require 'package)
@@ -117,3 +119,4 @@
     (add-to-list 'load-path path)
     (require (intern (concat "agent-skill-" skill)) nil t)))
 (put 'narrow-to-region 'disabled nil)
+ (setq org-latex-prefer-user-labels t)

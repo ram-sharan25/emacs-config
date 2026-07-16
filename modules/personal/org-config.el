@@ -23,6 +23,12 @@
 
 (use-package org
   :config
+  ;; Disable the org-element cache.  In org 9.7 the cache desyncs after edits
+  ;; (notably refile, which moves subtrees), then the agenda reads a stale
+  ;; position and crashes on refresh with "Args out of range" /
+  ;; "wrong-type-argument stringp nil".  Files here are small, so the parse
+  ;; cost is negligible and disabling the cache eliminates the crashes.
+  (setq org-element-use-cache nil)
   (setq org-html-head-include-default-style nil)
   (setq org-fontify-quote-and-verse-blocks t)
   (setq org-startup-indented t)          ;; align content under heading text

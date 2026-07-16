@@ -152,6 +152,44 @@
                 scroll-down-command))
     (add-to-list 'pulsar-pulse-functions fn)))
 
+;;; --- Persistent Cursor Position (save-place) ---
+
+;; Remember point in every file and restore it when the file is reopened or
+;; Emacs restarts.  Built-in; negligible cost and no startup-time impact.
+(use-package saveplace
+  :ensure nil
+  :hook (after-init . save-place-mode))
+
+;;; --- Navigation History (dogears) ---
+
+;; Automatically remembers ("dogears") the places you visit, so you can retrace
+;; your trail: a list (`dogears-list'), a quick picker (`dogears-go'), and
+;; back/forward stepping.  Loading is deferred and recording is switched on via
+;; an idle timer, so it adds nothing to startup (mirrors the config's pattern).
+(use-package dogears
+  :ensure t
+  :commands (dogears-mode)
+  :bind (("C-c <left>"  . dogears-back)
+         ("C-c <right>" . dogears-forward)
+         ("C-c <up>"    . dogears-go)
+         ("C-c <down>"  . dogears-list))
+  :init
+  (run-with-idle-timer 1 nil (lambda () (dogears-mode 1))))
+
+;;; --- Jump to Last Edit (goto-chg) ---
+
+;; Jump to where you last edited, and again to step further back through your
+;; edits (Vim's g; / g,).  Complements dogears: dogears tracks places you
+;; *visited*, goto-chg tracks places you *changed*.  Deferred via autoloads.
+;; smartrep makes it repeatable: `C-c g' then tap g/G to keep walking.
+(use-package goto-chg
+  :ensure t
+  :commands (goto-last-change goto-last-change-reverse)
+  :init
+  (smartrep-define-key global-map "C-c"
+    '(("g" . goto-last-change)
+      ("G" . goto-last-change-reverse))))
+
 ;;; --- Custom Commands ---
 
 (defun rsr/insert-indented-todo-item ()

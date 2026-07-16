@@ -46,9 +46,10 @@ If the current buffer is not part of a project, fall back to plain Treemacs."
         treemacs-file-event-delay      500
         treemacs-litter-directories    '("/node_modules" "/.venv" "/.cask"))
 
-  ;; Follow mode triggers timer errors if Treemacs' DOM isn't ready yet.
-  ;; Keep it off by default; you can enable it manually when desired.
-  (treemacs-follow-mode -1)
+  ;; Follow mode: highlight the current file in the sidebar as you switch
+  ;; buffers.  Previously disabled due to timer errors before Treemacs' DOM
+  ;; was ready; re-enabled to test whether newer Treemacs handles it cleanly.
+  (treemacs-follow-mode t)
   (treemacs-filewatch-mode t)           ;; live filesystem updates
   (treemacs-project-follow-mode nil)    ;; disabled — causes sentinel errors on non-project buffers
   (treemacs-fringe-indicator-mode 'always)

@@ -75,7 +75,9 @@ Example: Enter `dsa_dir' to download to the DSA lectures folder."
     (unless (file-exists-p target-dir)
       (make-directory target-dir t))
 
-    (let ((cmd (format "yt-dlp -o %s --cookies-from-browser chrome %s"
+    ;; --restrict-filenames sanitizes titles to safe ASCII (no colons,
+    ;; spaces, or newlines) so the saved file matches a clean org link.
+    (let ((cmd (format "yt-dlp --restrict-filenames -o %s --cookies-from-browser chrome %s"
                        (shell-quote-argument (format "%s%s.%%(ext)s" target-dir filename))
                        (shell-quote-argument url))))
       (message "Downloading to: %s" target-dir)
@@ -83,7 +85,15 @@ Example: Enter `dsa_dir' to download to the DSA lectures folder."
 
 (add-to-list 'org-link-abbrev-alist (cons "dsa_lec" (concat my/dsa-lectures "%s")))
 (add-to-list 'org-link-abbrev-alist (cons "coa_lec" (concat my/coa-lectures "%s")))
-(add-to-list 'org-link-abbrev-alist (cons "cv_library" (concat my/cv-library-dir "%s")))
+(add-to-list 'org-link-abbrev-alist (cons "cv_library" (concat my/cv-library-dir
+                                                               "%s")))
+(add-to-list
+ 'org-link-abbrev-alist
+ (cons "videos"
+       (concat
+        my/ai-engineering-dir
+        "%s")))
+
 
 (defun my/org-link-abbrev-capf ()
   "CAPF to offer file completions for any prefix in `org-link-abbrev-alist'.

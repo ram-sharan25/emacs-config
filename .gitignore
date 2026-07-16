@@ -53,3 +53,5 @@ modules/git-modules/copilot/
 
 # Runtime state
 .video-watched
+places
+eln-cache/

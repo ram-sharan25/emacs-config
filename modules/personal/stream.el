@@ -220,12 +220,20 @@ capture was aborted or was not a stream capture."
 
 (define-minor-mode my/stream-mode
   "Minor mode for topic capture streams.
-Binds question capture and keeps the open-questions index fresh on save."
+Binds question capture, keeps the open-questions index fresh on save, and
+soft-wraps long lines instead of hard-filling them."
   :lighter " Stream"
   :keymap my/stream-mode-map
   (if my/stream-mode
-      (add-hook 'before-save-hook #'my/stream--refresh-index nil t)
-    (remove-hook 'before-save-hook #'my/stream--refresh-index t)))
+      (progn
+        (add-hook 'before-save-hook #'my/stream--refresh-index nil t)
+        ;; A stream is prose capture, not code: never let `auto-fill-mode'
+        ;; bake a hard newline into the middle of a thought or question (that
+        ;; splits an item across lines and breaks folding).  Wrap visually.
+        (auto-fill-mode -1)
+        (visual-line-mode 1))
+    (remove-hook 'before-save-hook #'my/stream--refresh-index t)
+    (visual-line-mode -1)))
 
 (defun my/stream--stream-buffer-p ()
   "Return non-nil if the current buffer is a capture stream.
@@ -236,11 +244,16 @@ resource notes sharing the directory are left untouched."
     (re-search-forward "^#\\+BEGIN: open-questions" 10000 t)))
 
 (defun my/stream--maybe-enable ()
-  "Enable `my/stream-mode' for org buffers that are capture streams."
-  (when (and buffer-file-name (my/stream--stream-buffer-p))
+  "Enable `my/stream-mode' for org buffers that are capture streams.
+Hung on `after-change-major-mode-hook' (appended) so it runs *after* the
+global `turn-on-auto-fill' (init.el), letting stream mode's soft-wrap setup
+win the last word over auto-fill."
+  (when (and buffer-file-name
+             (derived-mode-p 'org-mode)
+             (my/stream--stream-buffer-p))
     (my/stream-mode 1)))
 
-(add-hook 'org-mode-hook #'my/stream--maybe-enable)
+(add-hook 'after-change-major-mode-hook #'my/stream--maybe-enable t)
 
 (provide 'stream)
 ;;; stream.el ends here

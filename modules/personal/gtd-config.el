@@ -291,7 +291,8 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
                                      my/rituals-file
                                      my/gcal-file
                                      my/job-applications-file
-                                     my/phone-inbox)
+                                     my/phone-inbox
+                                     my/focus-file)
                                (my/get-area-files)))
 
 (setq org-todo-keywords
@@ -375,7 +376,10 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
           (todo "TODO"
                 ((org-agenda-overriding-header "One-off Tasks")
                  (org-agenda-files (list my/next-file))
-                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled)))))
+                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled))))
+          (todo "TODO|HOLD|WAITING"
+                ((org-agenda-overriding-header "Someday/Maybe")
+                 (org-agenda-files (list my/someday-file)))))
          nil)
 
         ("a" "Day Agenda"
