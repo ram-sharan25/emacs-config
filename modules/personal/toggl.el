@@ -39,7 +39,15 @@
                                     (cons (alist-get 'name item) (alist-get 'id item))
                                   nil))
                               (append projects-vector nil))))
+          (rsr/export-toggl-projects-for-focus-timer)
           (message "Synced %d active projects." (length toggl-projects))))))
+
+  (defun rsr/export-toggl-projects-for-focus-timer ()
+    "Write active Toggl project names to ~/focus-timer/projects.json.
+Lets the focus-timer web app suggest the same projects Emacs completes over."
+    (when (file-directory-p "~/focus-timer")
+      (with-temp-file (expand-file-name "~/focus-timer/projects.json")
+        (insert (json-encode (mapcar #'car toggl-projects))))))
 
   ;; Fetch projects after 5s of idle — avoids blocking startup
   (run-with-idle-timer 5 nil #'rsr/update-toggl-projects)

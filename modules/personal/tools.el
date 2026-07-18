@@ -318,13 +318,17 @@ Records today as watched to suppress daily reminders."
 ;; Focus-timer: non-blocking bridge to the standalone ~/focus-timer web app
 ;; (Node server + browser/mpv dial + menu-bar SwiftBar plugin). Independent of
 ;; org-clock and Toggl — see ~/focus-timer/README.md.
+;; C-c f: menu-bar only. C-u C-c f: also opens the full-screen dial window.
+;; M-m f w: open the dial window on its own, any time, without touching the
+;; running block (e.g. started menu-bar-only, now want the window too).
 (when (file-exists-p "~/focus-timer/focus-timer.el")
   (load "~/focus-timer/focus-timer.el"))
 (global-set-key (kbd "C-c f")      #'rsr/focus-start-at-point)
 
 (bind-keys :map rsr/global-prefix-map
            ("t c" . calc)
-           ("t d" . dictionary-search))
+           ("t d" . dictionary-search)
+           ("f w" . rsr/focus-show-window))
 
 (provide 'tools)
 ;;; tools.el ends here
