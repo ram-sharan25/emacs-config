@@ -6,6 +6,12 @@
 (require 'gtd-config)
 (require 'ai-workflows)
 
+;; Prefer ID links over file+headline links in `org-store-link' (C-c l).
+;; Set at top level, not inside the org-roam :config block below — org-roam
+;; is :bind-deferred, so C-c l would ignore heading IDs until org-roam had
+;; already been lazy-loaded once in the session.
+(setq org-id-link-to-org-use-id t)
+
 ;;; --- Org-roam ---
 
 (use-package org-roam
@@ -33,9 +39,7 @@
            "%?"
            :if-new (file+head "Public/${slug}.org"
                               "#+title: ${title}\n#+filetags: :ZETTEL:\n\n* Source\n- %(my/zettel-source-link)\n")
-           :unnarrowed t)))
-
-  (setq org-id-link-to-org-use-id t))
+           :unnarrowed t))))
 
 ;;; --- Org-download ---
 
