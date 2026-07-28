@@ -321,6 +321,11 @@ Records today as watched to suppress daily reminders."
 ;; C-c f: menu-bar only. C-u C-c f: also opens the full-screen dial window.
 ;; M-m f w: open the dial window on its own, any time, without touching the
 ;; running block (e.g. started menu-bar-only, now want the window too).
+;; M-m f c: start a block AND launch a background companion (ambient site or
+;; study-with-me video, curated in ~/focus-timer/companions.json).
+;; C-u M-m f c: also open the dial window — menu + dial + video, all three.
+;; M-m f s / f r: stop / restart the video companion on its own, independent
+;; of the block (block, menu bar, dial window all untouched).
 (when (file-exists-p "~/focus-timer/focus-timer.el")
   (load "~/focus-timer/focus-timer.el"))
 (global-set-key (kbd "C-c f")      #'rsr/focus-start-at-point)
@@ -328,7 +333,10 @@ Records today as watched to suppress daily reminders."
 (bind-keys :map rsr/global-prefix-map
            ("t c" . calc)
            ("t d" . dictionary-search)
-           ("f w" . rsr/focus-show-window))
+           ("f w" . rsr/focus-show-window)
+           ("f c" . rsr/focus-start-with-companion)
+           ("f s" . rsr/focus-stop-video)
+           ("f r" . rsr/focus-restart-video))
 
 (provide 'tools)
 ;;; tools.el ends here
