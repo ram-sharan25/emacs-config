@@ -25,8 +25,8 @@
 ;;; Paths
 
 (setf custom-file (expand-file-name ".custom" user-emacs-directory))
-(push "/Users/rrimal/.local/bin" exec-path)
-(setenv "PATH" (concat "/Users/rrimal/.local/bin/:" (getenv "PATH")))
+(push "/Users/stillness/.local/bin" exec-path)
+(setenv "PATH" (concat "/Users/stillness/.local/bin/:" (getenv "PATH")))
 (add-to-list 'load-path (expand-file-name "modules/personal"    user-emacs-directory))
 (add-to-list 'load-path (expand-file-name "modules/git-modules" user-emacs-directory))
 

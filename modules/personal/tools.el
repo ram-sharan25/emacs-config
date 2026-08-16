@@ -51,7 +51,14 @@
   (which-key-mode +1))
 
 ;;; Visual
-(global-visual-line-mode t)   ;; wrap long lines visually
+;; Keep visual wrapping out of programming and special buffers.  The global
+;; mode made vertical motion traverse display lines (and re-render wrapped
+;; buffers) even where wrapping was not useful, which made arrow-key movement
+;; feel sluggish.  Text-mode covers Org and ordinary prose buffers.
+(defun rsr/enable-visual-line-for-text ()
+  "Enable visual wrapping in prose buffers without changing programming modes."
+  (visual-line-mode 1))
+(add-hook 'text-mode-hook #'rsr/enable-visual-line-for-text)
 (show-paren-mode 1)           ;; highlight matching parentheses
 
 ;;; Keybinding Search

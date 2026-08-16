@@ -22,6 +22,7 @@
 
 (use-package vertico
   :ensure t
+  :demand t
   :custom
   (vertico-count 12)   ;; reasonable height
   (vertico-cycle t)
@@ -32,6 +33,7 @@
 
 (use-package orderless
   :ensure t
+  :demand t
   :custom
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
@@ -40,6 +42,7 @@
 
 (use-package marginalia
   :ensure t
+  :demand t
   :init
   (marginalia-mode))
 

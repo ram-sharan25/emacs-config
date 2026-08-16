@@ -18,6 +18,11 @@
   (setq doom-modeline-minor-modes nil)
   (setq doom-modeline-vcs-max-length 20)
   (setq doom-modeline-buffer-file-name-style 'truncate-upto-project)
+  ;; The live analogue clock regenerates an SVG every minute.  The macOS Emacs
+  ;; port renders each SVG through WebKit and leaks a WebContent process, which
+  ;; eventually exhausts memory and stalls WindowServer.  Keep the normal
+  ;; font-based clock icon and textual time instead.
+  (setq doom-modeline-time-analogue-clock nil)
   ;; disable org-clock injecting full task into global-mode-string
   (setq org-clock-clocked-in-display nil)
   (setq display-time-default-load-average nil)

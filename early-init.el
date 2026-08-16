@@ -20,6 +20,11 @@
 (when (boundp 'mac-option-modifier)
   (setq mac-option-modifier 'meta      ;; Option-x = M-x
         mac-command-modifier 'super))  ;; Cmd = s- (save/copy/paste, s-/ s-l ...)
-(push '(menu-bar-lines . 0) default-frame-alist)
+;; Keep the Mac Port menu bar enabled.  Setting this to 0 triggers an upstream
+;; focus bug: after Mission Control or a Space switch, macOS activates the
+;; previously used app instead of making the Emacs frame key (railwaycat/
+;; homebrew-emacsmacport#124).  On macOS this is the global system menu, not an
+;; extra menu drawn inside the Emacs frame.
+(push '(menu-bar-lines . 1) default-frame-alist)
 (push '(tool-bar-lines . 0) default-frame-alist)
 (push '(vertical-scroll-bars) default-frame-alist)

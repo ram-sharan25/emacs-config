@@ -3,6 +3,7 @@
 ;;; Code:
 
 (require 'ox-html)
+(use-package htmlize :ensure t)
 (require 'htmlize)
 
 (setq org-html-htmlize-output-type 'css)

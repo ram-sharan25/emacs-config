@@ -9,7 +9,8 @@ abbrev_defs
 auto-save-list/
 backupfiles/
 bookmarks
-init.el~
+# Emacs and editor backup files
+*~
 org-persist/
 org-roam.db
 persp-confs/

@@ -2,11 +2,6 @@
 
 ;;; Code:
 
-;;; copilot.el is loaded by init.el's load-directory on modules/git-modules/
-;;; This entry covers standalone require calls outside that path.
-(add-to-list 'load-path
-             (expand-file-name "modules/git-modules/copilot" user-emacs-directory))
-
 (use-package copilot
   :defer t
   :hook (prog-mode . copilot-mode)
