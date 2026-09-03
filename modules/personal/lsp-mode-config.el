@@ -10,9 +10,18 @@
   :ensure t
   :defer t
   :init
-  (setq lsp-keymap-prefix "C-c l")
+  ;; Language-specific modules only add `lsp-deferred' hooks.  Executable
+  ;; discovery therefore happens when a matching source buffer is opened,
+  ;; after `exec-path-from-shell' has populated the shared `exec-path'.
+  (setq lsp-keymap-prefix "C-c l"
+        lsp-enable-suggest-server-download nil)
   :config
-  (setq lsp-idle-delay 0.5
+  ;; Only consider system dependencies found through `exec-path'.  In
+  ;; particular, do not fall back to lsp-mode's private npm, cargo, or
+  ;; download directories.  Future clients inherit this policy.
+  (setq lsp-deps-providers (list :system (plist-get lsp-deps-providers :system))
+        lsp-warn-no-matched-clients t
+        lsp-idle-delay 0.5
         lsp-log-io nil
         lsp-headerline-breadcrumb-enable nil
         lsp-document-sync-method 2        ;; incremental — sends diffs only, not full buffer

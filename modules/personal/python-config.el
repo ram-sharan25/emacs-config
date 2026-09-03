@@ -2,7 +2,7 @@
 
 ;;; Code:
 
-;;; Python — pylsp (~/.emacs.d/pyvenv/bin/pylsp)
+;;; Python — pylsp
 (add-hook 'python-mode-hook #'lsp-deferred)
 
 ;;; C / C++ — ccls (brew install ccls)

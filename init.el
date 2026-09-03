@@ -25,14 +25,20 @@
 ;;; Paths
 
 (setf custom-file (expand-file-name ".custom" user-emacs-directory))
-(push "/Users/stillness/.local/bin" exec-path)
-(setenv "PATH" (concat "/Users/stillness/.local/bin/:" (getenv "PATH")))
+
+(defun my/add-local-exec-paths ()
+  "Add available user and Homebrew executable directories to PATH."
+  (dolist (directory (list "/opt/homebrew/bin"))
+    (when (file-directory-p directory)
+      (add-to-list 'exec-path directory)
+      (setenv "PATH" (concat directory path-separator (getenv "PATH"))))))
+
+(my/add-local-exec-paths)
 (add-to-list 'load-path (expand-file-name "modules/personal"    user-emacs-directory))
 (add-to-list 'load-path (expand-file-name "modules/git-modules" user-emacs-directory))
 
 ;;; Global Prefix
 
-(setq x-super-modifier 'meta)
 (define-prefix-command 'rsr/global-prefix-map)
 (define-key global-map (kbd "M-m") 'rsr/global-prefix-map)
 
@@ -52,7 +58,8 @@
   :config
   (when (memq window-system '(mac ns x))
     (setq exec-path-from-shell-variables '("PATH" "MANPATH"))
-    (exec-path-from-shell-initialize)))
+    (exec-path-from-shell-initialize)
+    (my/add-local-exec-paths)))
 
 ;;; Appearance
 

@@ -1,193 +1,115 @@
-;;; markdown-config.el --- Markdown editing and rich EWW preview via pandoc -*- lexical-binding: t; -*-
+;;; markdown-config.el --- Markdown editing and live browser preview -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; Rich markdown preview inside Emacs using pandoc + EWW.
-;; Pandoc converts markdown to styled HTML, EWW renders it in a side window.
-;; Preview auto-refreshes on save.
+;; Markdown editing plus a browser preview that refreshes over WebSockets while
+;; text is edited.  The same local stylesheet is also used by markdown-mode's
+;; one-shot `markdown-preview' command.
 
 ;;; Code:
 
-(defvar rsr/markdown-preview-css
-  "
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 1.6;
-  color: #c9d1d9;
-  background-color: #0d1117;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
-h1, h2, h3, h4, h5, h6 {
-  color: #e6edf3;
-  margin-top: 24px;
-  margin-bottom: 16px;
-  font-weight: 600;
-  line-height: 1.25;
-}
-h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #30363d; }
-h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #30363d; }
-h3 { font-size: 1.25em; }
-a { color: #58a6ff; text-decoration: none; }
-a:hover { text-decoration: underline; }
-code {
-  background-color: #161b22;
-  padding: 0.2em 0.4em;
-  border-radius: 6px;
-  font-size: 85%;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-}
-pre {
-  background-color: #161b22;
-  padding: 16px;
-  border-radius: 6px;
-  overflow: auto;
-  line-height: 1.45;
-}
-pre code {
-  background: none;
-  padding: 0;
-  font-size: 100%;
-}
-blockquote {
-  padding: 0 1em;
-  color: #8b949e;
-  border-left: 0.25em solid #30363d;
-  margin: 0 0 16px 0;
-}
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-bottom: 16px;
-}
-th, td {
-  padding: 6px 13px;
-  border: 1px solid #30363d;
-}
-th { background-color: #161b22; font-weight: 600; }
-tr:nth-child(even) { background-color: #161b22; }
-hr { border: none; border-top: 1px solid #30363d; margin: 24px 0; }
-img { max-width: 100%; }
-ul, ol { padding-left: 2em; }
-li + li { margin-top: 0.25em; }
-.task-list-item { list-style-type: none; }
-.task-list-item input { margin-right: 0.5em; }
-"
-  "CSS stylesheet for markdown preview in EWW (GitHub dark theme).")
+(require 'eieio)
 
-(defvar-local rsr/markdown-preview--eww-buffer nil
-  "EWW buffer associated with this markdown buffer.")
+(defconst rsr/markdown-preview-css-file
+  (expand-file-name "themes/markdown-preview.css" user-emacs-directory)
+  "Stylesheet shared by static and live Markdown previews.")
 
-(defvar-local rsr/markdown-preview--source-buffer nil
-  "Source markdown buffer associated with this EWW preview.")
+(defconst rsr/markdown-preview-template-file
+  (expand-file-name "themes/markdown-preview.html" user-emacs-directory)
+  "Browser preview template with a restrictive content security policy.")
 
-(defvar rsr/markdown-preview--css-file nil
-  "Path to the temporary CSS file for pandoc.")
+(defconst rsr/markdown-preview-client-file
+  (expand-file-name "themes/markdown-preview-client.js" user-emacs-directory)
+  "Client script used by the browser preview.")
 
-(defun rsr/markdown-preview--ensure-css ()
-  "Write CSS to a temp file if not already done.  Return the path."
-  (unless (and rsr/markdown-preview--css-file
-               (file-exists-p rsr/markdown-preview--css-file))
-    (setq rsr/markdown-preview--css-file
-          (make-temp-file "markdown-preview-" nil ".css"))
-    (with-temp-file rsr/markdown-preview--css-file
-      (insert rsr/markdown-preview-css)))
-  rsr/markdown-preview--css-file)
+(defconst rsr/markdown-preview-filter-file
+  (expand-file-name "themes/markdown-preview-filter.lua" user-emacs-directory)
+  "Pandoc filter that removes executable or unsafe Markdown content.")
 
-(defun rsr/markdown-preview--render ()
-  "Convert current markdown buffer to HTML via pandoc and display in EWW."
-  (let* ((md-buffer (current-buffer))
-         (md-file (buffer-file-name md-buffer))
-         (css-file (rsr/markdown-preview--ensure-css))
-         (html-file (make-temp-file "markdown-preview-" nil ".html"))
-         (pandoc-args (list "pandoc"
-                            "--from=gfm"
-                            "--to=html5"
-                            "--standalone"
-                            "--highlight-style=breezedark"
-                            (concat "--css=file://" css-file)
-                            "--embed-resources"
-                            "-o" html-file)))
-    ;; Feed buffer contents to pandoc (works for unsaved buffers too)
-    (let ((content (buffer-substring-no-properties (point-min) (point-max))))
-      (with-temp-buffer
-        (insert content)
-        (apply #'call-process-region (point-min) (point-max)
-               (car pandoc-args) nil nil nil
-               (cdr pandoc-args))))
-    ;; Render in EWW
-    (let ((eww-buf (or (and (buffer-live-p rsr/markdown-preview--eww-buffer)
-                            rsr/markdown-preview--eww-buffer)
-                       (generate-new-buffer
-                        (format "*Markdown Preview: %s*"
-                                (file-name-nondirectory
-                                 (or md-file "untitled")))))))
-      (setq rsr/markdown-preview--eww-buffer eww-buf)
-      (with-current-buffer eww-buf
-        (setq rsr/markdown-preview--source-buffer md-buffer))
-      ;; Display in side window if not visible
-      (unless (get-buffer-window eww-buf)
-        (display-buffer-in-side-window
-         eww-buf '((side . right) (window-width . 0.5))))
-      ;; Render HTML in the EWW buffer
-      (with-selected-window (get-buffer-window eww-buf)
-        (eww-open-file html-file)
-        (setq rsr/markdown-preview--source-buffer md-buffer))
-      ;; Clean up temp HTML after a short delay
-      (run-with-timer 2 nil #'delete-file html-file))))
+(defun rsr/markdown-preview--inline-stylesheet ()
+  "Return the preview stylesheet wrapped in an HTML style element."
+  (unless (file-readable-p rsr/markdown-preview-css-file)
+    (error "Markdown preview stylesheet is not readable: %s"
+           rsr/markdown-preview-css-file))
+  (with-temp-buffer
+    (insert "<style>\n")
+    (insert-file-contents rsr/markdown-preview-css-file)
+    (goto-char (point-max))
+    (insert "\n</style>")
+    (buffer-string)))
 
-(defun rsr/markdown-preview--on-save ()
-  "Refresh preview on save if active."
-  (when (and (buffer-live-p rsr/markdown-preview--eww-buffer)
-             (get-buffer-window rsr/markdown-preview--eww-buffer))
-    (rsr/markdown-preview--render)))
+(defun rsr/markdown-preview--start-http-server (port)
+  "Start the restricted Markdown preview HTTP server on PORT.
 
-(defun rsr/markdown-preview--cleanup ()
-  "Clean up preview buffer and hooks when markdown buffer is killed."
-  (when (buffer-live-p rsr/markdown-preview--eww-buffer)
-    (let ((win (get-buffer-window rsr/markdown-preview--eww-buffer)))
-      (when win (delete-window win)))
-    (kill-buffer rsr/markdown-preview--eww-buffer)))
-
-(defun rsr/markdown-preview ()
-  "Toggle rich markdown preview in a side EWW window.
-
-Uses pandoc to convert the current buffer's markdown to styled
-HTML, then renders it in EWW in a side window.  The preview
-auto-refreshes on save."
-  (interactive)
-  (unless (derived-mode-p 'markdown-mode 'gfm-mode)
-    (user-error "Not a markdown buffer"))
-  (if (and (buffer-live-p rsr/markdown-preview--eww-buffer)
-           (get-buffer-window rsr/markdown-preview--eww-buffer))
-      ;; Toggle off — close preview
-      (progn
-        (let ((win (get-buffer-window rsr/markdown-preview--eww-buffer)))
-          (when win (delete-window win)))
-        (kill-buffer rsr/markdown-preview--eww-buffer)
-        (setq rsr/markdown-preview--eww-buffer nil)
-        (remove-hook 'after-save-hook #'rsr/markdown-preview--on-save t)
-        (remove-hook 'kill-buffer-hook #'rsr/markdown-preview--cleanup t)
-        (message "Markdown preview closed."))
-    ;; Toggle on — open preview
-    (rsr/markdown-preview--render)
-    (add-hook 'after-save-hook #'rsr/markdown-preview--on-save nil t)
-    (add-hook 'kill-buffer-hook #'rsr/markdown-preview--cleanup nil t)
-    (message "Markdown preview opened. Auto-refreshes on save.")))
+Only the generated preview document and its fixed client script are served;
+files beside the Markdown document are never exposed."
+  (unless markdown-preview--http-server
+    (advice-add 'make-network-process :filter-args
+                #'markdown-preview--fix-network-process-wait)
+    (unwind-protect
+        (setq markdown-preview--http-server
+              (ws-start
+               (lambda (request)
+                 (with-slots (process headers) request
+                   (let* ((request-target (cdr (assoc :GET headers)))
+                          (path (and (stringp request-target)
+                                     (substring request-target 1)))
+                          (uuid (markdown-preview--parse-uuid headers))
+                          (buffer-name (and uuid
+                                            (gethash uuid markdown-preview--preview-buffers)))
+                          (preview-buffer (and buffer-name
+                                               (get-buffer buffer-name))))
+                     (cond
+                      ((and (stringp path) (string= path "")
+                            (buffer-live-p preview-buffer))
+                       (ws-send-file
+                        process
+                        (with-current-buffer preview-buffer
+                          (expand-file-name markdown-preview-file-name
+                                            default-directory))))
+                      ((and (stringp path)
+                            (string= path ".markdown-preview-client.js"))
+                       (ws-send-file process rsr/markdown-preview-client-file
+                                     "application/javascript"))
+                      (t (ws-send-404 process))))))
+               port nil :host markdown-preview-http-host))
+      (advice-remove 'make-network-process
+                     #'markdown-preview--fix-network-process-wait))))
 
 (use-package markdown-mode
   :defer t
   :mode (("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . gfm-mode))
-  :bind (:map markdown-mode-map
-         ("C-c C-c p" . rsr/markdown-preview)
-         :map gfm-mode-map
-         ("C-c C-c p" . rsr/markdown-preview))
   :custom
-  (markdown-command "pandoc --from=gfm --to=html5 --highlight-style=breezedark")
+  (markdown-command
+   (format "pandoc --from=gfm --to=html5 --highlight-style=breezedark --lua-filter=%s"
+           (shell-quote-argument rsr/markdown-preview-filter-file)))
+  ;; Styles the one-shot `markdown-preview' command too.
+  (markdown-css-paths (list rsr/markdown-preview-css-file))
   (markdown-fontify-code-blocks-natively t)
   (markdown-enable-math t))
+
+(use-package markdown-preview-mode
+  :ensure t
+  :after markdown-mode
+  :bind (:map markdown-mode-map
+         ("C-c C-c p" . markdown-preview-mode)
+         :map gfm-mode-map
+         ("C-c C-c p" . markdown-preview-mode))
+  :custom
+  (markdown-preview-auto-open 'http)
+  (markdown-preview-delay-time 0.5)
+  :config
+  (dolist (file (list rsr/markdown-preview-template-file
+                      rsr/markdown-preview-client-file
+                      rsr/markdown-preview-filter-file))
+    (unless (file-readable-p file)
+      (error "Markdown preview resource is not readable: %s" file)))
+  ;; Inline CSS is necessary because no document-directory files are exposed.
+  (setq markdown-preview--preview-template rsr/markdown-preview-template-file
+        markdown-preview-stylesheets
+        (list (rsr/markdown-preview--inline-stylesheet)))
+  (advice-add 'markdown-preview--start-http-server :override
+              #'rsr/markdown-preview--start-http-server))
 
 (provide 'markdown-config)
 ;;; markdown-config.el ends here

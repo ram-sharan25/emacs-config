@@ -197,45 +197,12 @@ If QUERY is nil the script uses its built-in theme list."
   "Open the video watch history file."
   (interactive)
   (find-file my/video-history-file))
-(defun my/watch-random-video (&optional arg)
-  "Pick a random short inspiring video via AI-generated query and stream in mpv.
-
-With no prefix: Claude Haiku (via GitHub Copilot backend) generates the
-search query based on your interests, then yt-dlp finds a video ≤5 min.
-
-With C-u prefix: choose backend interactively —
-  Claude Haiku  — most creative, default
-  Copilot       — GPT-4o via GitHub Copilot
-  Local         — no AI, use built-in theme list
-
+(defun my/watch-random-video (&optional _arg)
+  "Pick a random short inspiring video locally and stream it in mpv.
 Records today as watched to suppress daily reminders."
   (interactive "P")
-  (let* ((backends `(("Copilot GPT-5-mini" . (,rsr/gptel-github-backend . gpt-5-mini))
-                     ("Claude Haiku"       . (,rsr/gptel-github-backend . claude-haiku-4.5))
-                     ("Copilot GPT-4o"    . (,rsr/gptel-github-backend . gpt-4o))
-                     ("Local (no AI)"     . nil)))
-         (choice   (if arg
-                       (completing-read "AI backend: " (mapcar #'car backends) nil t)
-                     "Copilot GPT-5-mini"))
-         (backend-pair (cdr (assoc choice backends))))
-    (if (null backend-pair)
-        ;; Local fallback — no AI
-        (progn
-          (message "Finding inspiration (local)...")
-          (my/video-launch-script nil))
-      ;; AI path — let-bind backend/model, single non-streaming request
-      (message "Asking %s for inspiration..." choice)
-      (let ((gptel-backend (car backend-pair))
-            (gptel-model   (cdr backend-pair)))
-        (gptel-request my/video-ai-prompt
-          :stream   nil
-          :callback (lambda (response info)
-                      (if (stringp response)
-                          (my/video-launch-script (string-trim response))
-                        ;; AI failed — show status and fall back to built-in list
-                        (message "AI failed (%s), using built-in theme..."
-                                 (plist-get info :status))
-                        (my/video-launch-script nil))))))))
+  (message "Finding inspiration (local)...")
+  (my/video-launch-script nil))
 
 (defun my/video-maybe-remind ()
   "Nudge if no inspiration video has been watched today."

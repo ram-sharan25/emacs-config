@@ -15,6 +15,7 @@ org-persist/
 org-roam.db
 persp-confs/
 projectile-bookmarks.eld
+projectile-frecency.eld
 projects
 recentf
 smex-items

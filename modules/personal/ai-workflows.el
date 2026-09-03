@@ -81,8 +81,7 @@ INSERT-MARKER tracks where to insert next. REMAINING-COUNT tracks progress."
 (defun my/resource-compile-notes ()
   "Use gptel to compile * Raw Notes into atomic headings under * Compiled Notes.
 Splits raw notes by ** sub-headings and processes each section separately.
-Uses the currently active gptel backend/model. Switch model first if needed
-\(M-m a G for Gemini, M-m a O for GitHub Copilot)."
+Uses the currently active gptel backend/model."
   (interactive)
   (unless (derived-mode-p 'org-mode)
     (user-error "Must be in an org-mode buffer"))

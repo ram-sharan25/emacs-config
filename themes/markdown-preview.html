@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src data:; connect-src ws:; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
+    <title>Markdown preview</title>
+    ${MD_STYLE}
+  </head>
+  <body>
+    <article id="markdown-body" class="markdown-body"
+             data-websocket-url="ws://${WS_HOST}:${WS_PORT}"
+             data-preview-uuid="${MD_UUID}">
+      <p>Markdown preview</p>
+    </article>
+    <script src="/.markdown-preview-client.js"></script>
+  </body>
+</html>

@@ -13,12 +13,14 @@
   :init
   (setq plstore-encrypt-to nil
         plstore-cache-passphrase-for-symmetric-encryption t)
-  ;; Clear wrong cached passphrase and re-prompt
+  ;; Clear a wrong cached passphrase and re-prompt.
   (defun rsr/clear-plstore-cache ()
-    "Clear cached plstore passphrase so you can re-enter it."
+    "Clear cached plstore and OAuth data so the passphrase is requested again."
     (interactive)
-    (setq plstore--cache (make-hash-table))
-    (message "plstore passphrase cache cleared — try your operation again"))
+    (setq plstore-passphrase-alist nil)
+    (when (boundp 'oauth2-auto--plstore-cache)
+      (clrhash oauth2-auto--plstore-cache))
+    (message "Plstore passphrase cache cleared; retry the operation"))
   :custom
   (org-gcal-client-id my/google-client-id)
   (org-gcal-client-secret my/google-client-secret)

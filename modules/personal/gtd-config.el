@@ -6,8 +6,9 @@
 (require 'org-id)
 
 (defun my/get-area-files ()
-  "Get all .org files in the Areas directory."
-  (directory-files my/areas-dir t "\\.org$"))
+  "Get all .org files in the Areas directory, if it exists."
+  (when (file-directory-p my/areas-dir)
+    (directory-files my/areas-dir t "\\.org$")))
 
 (defvar my/resource-capture-title nil "Temporary storage for resource title during capture.")
 (defvar my/resource-capture-author nil "Temporary storage for resource author during capture.")
@@ -581,7 +582,7 @@ Highlighted tasks appear at the top of the agenda as the daily focus."
   (setq org-timeblock-day-start-hour 6)
   (setq org-timeblock-day-end-hour 23)
   (setq org-timeblock-scale 0.8)
-  (setq org-timeblock-inbox-file my/tasks-file)
+  (setq org-timeblock-inbox-file my/inbox-file)
   (setq org-timeblock-show-future-repeats t)
   (setq org-timeblock-time-grid-step 60))
 

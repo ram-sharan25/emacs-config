@@ -27,9 +27,7 @@
               ;; Model switching
               ("a t" . rsr/gptel-toggle-model)
               ("a T" . rsr/gptel-switch-to-chat)
-              ("a C" . rsr/gptel-switch-to-coding)
-              ("a G" . rsr/gptel-switch-to-gemini)
-              ("a O" . rsr/gptel-switch-to-github))
+              ("a C" . rsr/gptel-switch-to-coding))
   :config
   (require 'gptel-context)
 
@@ -58,28 +56,6 @@
       :models (list rsr/gptel-coding-model))
     "Backend for coding tasks with local model.")
 
-  (defvar rsr/gptel-gemini-backend
-    (gptel-make-gemini "Gemini" :stream t :key my/gemini-key)
-    "Gemini backend.")
-
-  (defvar rsr/gptel-github-model 'gpt-5-mini
-    "Default model for GitHub Copilot API.")
-
-  (setq rsr/gptel-github-backend
-    (gptel-make-gh-copilot "GitHub-Copilot"
-      :stream t
-      :models '(;; Free tier
-                gpt-5-mini gpt-4o gpt-4.1
-                ;; GPT-5.x
-                gpt-5.1 gpt-5.1-codex gpt-5.1-codex-mini gpt-5.1-codex-max
-                gpt-5.2 gpt-5.2-codex gpt-5.3-codex gpt-5.4-mini
-                ;; Anthropic / Google / xAI
-                claude-haiku-4.5
-                gemini-2.5-pro gemini-3-flash-preview gemini-3.1-pro-preview
-                grok-code-fast-1
-                ;; Auto (server picks best model)
-                auto)))
-
   ;;; Model switch functions
 
   (defun rsr/gptel-switch-to-chat ()
@@ -95,20 +71,6 @@
     (setq gptel-backend rsr/gptel-coding-backend
           gptel-model rsr/gptel-coding-model)
     (message "Switched to coding: %s" rsr/gptel-coding-model))
-
-  (defun rsr/gptel-switch-to-gemini ()
-    "Switch to Gemini backend."
-    (interactive)
-    (setq gptel-backend rsr/gptel-gemini-backend
-          gptel-model 'gemini-flash-latest)
-    (message "Switched to Gemini"))
-
-  (defun rsr/gptel-switch-to-github ()
-    "Switch to GitHub Models API backend."
-    (interactive)
-    (setq gptel-backend rsr/gptel-github-backend
-          gptel-model rsr/gptel-github-model)
-    (message "Switched to GitHub Models: %s" rsr/gptel-github-model))
 
   (defun rsr/gptel-toggle-model ()
     "Toggle between chat and coding models."
@@ -196,8 +158,6 @@
                        (cond
                         ((eq gptel-backend rsr/gptel-coding-backend) "CODE")
                         ((eq gptel-backend rsr/gptel-chat-backend) "CHAT")
-                        ((eq gptel-backend rsr/gptel-gemini-backend) "GEM")
-                        ((eq gptel-backend rsr/gptel-github-backend) "COP")
                         (t "?")))
                'face '(:foreground "cyan" :weight bold))))
     "Mode-line indicator showing active gptel model.")
