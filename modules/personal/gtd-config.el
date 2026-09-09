@@ -215,6 +215,66 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
     ;; Move to end of the heading line (whether found or created)
     (end-of-line)))
 
+(defun my/review-capture-position ()
+  "Position point at the end of the current year's review subtree."
+  (widen)
+  (goto-char (point-min))
+  (let* ((year (format-time-string "%Y"))
+         (year-heading (format "^\\* %s$" (regexp-quote year))))
+    (if (re-search-forward year-heading nil t)
+        (progn
+          (beginning-of-line)
+          (org-end-of-subtree t t))
+      (goto-char (point-max))
+      (unless (bolp)
+        (insert "\n"))
+      (insert "\n* " year "\n")))
+  (unless (bolp)
+    (insert "\n")))
+
+(defun my/weekly-review-heading ()
+  "Return a heading describing the current Monday-to-Sunday week."
+  (let* ((now (current-time))
+         (weekday (string-to-number (format-time-string "%u" now)))
+         (start (time-subtract now (days-to-time (1- weekday))))
+         (end (time-add start (days-to-time 6))))
+    (format "Week %s — %s to %s Weekly Review"
+            (format-time-string "%V" start)
+            (format-time-string "%Y-%m-%d" start)
+            (format-time-string "%Y-%m-%d" end))))
+
+(defun my/required-review-template (review-type template-file)
+  "Return the capture section from TEMPLATE-FILE for REVIEW-TYPE.
+Signal an explicit error when the file or its template markers are missing.
+Content outside the markers remains documentation and is not copied into each
+captured review."
+  (unless (file-readable-p template-file)
+    (user-error
+     "%s review requires this Org template, but it was not found or readable: %s"
+     review-type template-file))
+  (with-temp-buffer
+    (insert-file-contents template-file)
+    (goto-char (point-min))
+    (unless (re-search-forward "^# TEMPLATE-BEGIN[ \t]*$" nil t)
+      (user-error
+       "%s review template is missing the required # TEMPLATE-BEGIN marker: %s"
+       review-type template-file))
+    (forward-line 1)
+    (let ((begin (point)))
+      (unless (re-search-forward "^# TEMPLATE-END[ \t]*$" nil t)
+        (user-error
+         "%s review template is missing the required # TEMPLATE-END marker: %s"
+         review-type template-file))
+      (buffer-substring-no-properties begin (line-beginning-position)))))
+
+(defun my/monthly-review-template ()
+  "Return the required monthly-review Org template."
+  (my/required-review-template "Monthly" my/monthly-review-template-file))
+
+(defun my/weekly-review-template ()
+  "Return the required weekly-review Org template."
+  (my/required-review-template "Weekly" my/weekly-review-template-file))
+
 ;;; Capture Templates
 
 (setq org-capture-templates
@@ -238,7 +298,7 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
          "* %^{Title}\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n:THOUGHTS:\n- %? \n:END:\n- src: %a\n"
          :empty-lines 1)
 
-        ("w" "Web Capture" entry
+        ("W" "Web Capture" entry
          (file my/inbox-file)
          "* [[%:link][%:description]]\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n%?"
          :empty-lines 1)
@@ -250,6 +310,18 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
          (file+function ,my/journal-file journal--ensure-daily-heading)
          "** %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n:LOGBOOK:\n:END:\n- src: %a\n- %?"
          :empty-lines 1)
+
+        ("m" "Monthly Review" plain
+         (file+function ,my/monthly-reviews-file my/review-capture-position)
+         (function my/monthly-review-template)
+         :empty-lines 1
+         :jump-to-captured t)
+
+        ("w" "Weekly Review" plain
+         (file+function ,my/weekly-reviews-file my/review-capture-position)
+         (function my/weekly-review-template)
+         :empty-lines 1
+         :jump-to-captured t)
 
         ("t" "Resource" plain
          (file (lambda () (my/capture-resource-file)))
@@ -635,9 +707,11 @@ Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
 (defun my/capture-project ()      "Capture new project."       (interactive) (org-capture nil "q"))
 (defun my/capture-note ()         "Capture fleeting note."     (interactive) (org-capture nil "u"))
 (defun my/capture-journal ()      "Capture journal entry."     (interactive) (org-capture nil "j"))
+(defun my/capture-monthly-review () "Capture a fresh monthly review." (interactive) (org-capture nil "m"))
+(defun my/capture-weekly-review () "Capture a fresh weekly review." (interactive) (org-capture nil "w"))
 (defun my/capture-log-time ()     "Capture log time entry."    (interactive) (org-capture nil "h"))
 (defun my/capture-resource ()     "Capture resource."          (interactive) (org-capture nil "t"))
-(defun my/capture-web ()          "Capture web link."          (interactive) (org-capture nil "w"))
+(defun my/capture-web ()          "Capture web link."          (interactive) (org-capture nil "W"))
 (defun my/capture-activity ()     "Capture activity."          (interactive) (org-capture nil "a"))
 (defun my/capture-job ()          "Capture job application."   (interactive) (org-capture nil "y"))
 
@@ -649,9 +723,11 @@ Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
 (global-set-key (kbd "C-c c q") 'my/capture-project)
 (global-set-key (kbd "C-c c n") 'my/capture-note)
 (global-set-key (kbd "C-c c j") 'my/capture-journal)
+(global-set-key (kbd "C-c c m") 'my/capture-monthly-review)
+(global-set-key (kbd "C-c c w") 'my/capture-weekly-review)
 (global-set-key (kbd "C-c c h") 'my/capture-log-time)
 (global-set-key (kbd "C-c c r") 'my/capture-resource)
-(global-set-key (kbd "C-c c w") 'my/capture-web)
+(global-set-key (kbd "C-c c W") 'my/capture-web)
 (global-set-key (kbd "C-c c t") 'my/capture-activity)
 (global-set-key (kbd "C-c c y") 'my/capture-job)
 (define-key org-agenda-mode-map "j" 'my/org-agenda-process-inbox-item)

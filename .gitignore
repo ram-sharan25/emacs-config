@@ -49,6 +49,7 @@ docs/
 CLAUDE.md
 *.elc
 /backups/
+/templates/
 
 # External package clones (vendored separately)
 modules/git-modules/copilot/

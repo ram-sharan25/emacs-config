@@ -103,6 +103,22 @@ so total focus hours show up via the agenda's clock report (`R').")
 (defconst my/journal-file (expand-file-name "Journal.org" my/private-dir)
   "Daily journal (private, Git-ignored).")
 
+(defconst my/monthly-reviews-file
+  (expand-file-name "monthly-reviews.org" my/private-dir)
+  "Dated monthly reviews (private, Git-ignored).")
+
+(defconst my/weekly-reviews-file
+  (expand-file-name "weekly-reviews.org" my/private-dir)
+  "Dated weekly reviews (private, Git-ignored).")
+
+(defconst my/monthly-review-template-file
+  (expand-file-name "templates/monthly-review.org" user-emacs-directory)
+  "Org template used to create monthly reviews.")
+
+(defconst my/weekly-review-template-file
+  (expand-file-name "templates/weekly-review.org" user-emacs-directory)
+  "Org template used to create weekly reviews.")
+
 ;;; Phone Inbox
 
 (defconst my/phone-inbox-dir (expand-file-name "phone_inbox" my/brain-dir)

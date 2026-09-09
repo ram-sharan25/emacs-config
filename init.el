@@ -49,6 +49,10 @@
   (dolist (file (directory-files directory t "\\.el$"))
     (load (file-name-sans-extension file))))
 
+;; Refresh foundational path constants before loading modules.  This explicit
+;; load also makes reloading init.el pick up newly added paths in a live session,
+;; where `(require 'paths)' would otherwise keep the older definitions.
+(load (expand-file-name "modules/personal/paths.el" user-emacs-directory))
 (load-directory (expand-file-name "modules/personal"    user-emacs-directory))
 (load-directory (expand-file-name "modules/git-modules" user-emacs-directory))
 
