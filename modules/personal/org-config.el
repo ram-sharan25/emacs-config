@@ -411,5 +411,27 @@ thought tags, and font-lock does not colour them either."
     (interactive)
     (org-time-stamp-inactive '(4)))))
 
+;;; Font
+;;
+;; Org keeps Monaco 16pt -- what this config used everywhere before the switch
+;; to Fira Code 12pt for code.  Prose and headings read better at that size,
+;; and org's scaled heading faces look heavy in a narrow coding font.
+;;
+;; `buffer-face-mode' rather than a global face, so it applies only to org
+;; buffers.  The `line-height' balancing in init.el is a no-op here: Emacs
+;; never shrinks a line below the font's own box, and Monaco 16pt is already
+;; taller than the 18px that property asks for.
+
+(defun rsr/org-font ()
+  "Use Monaco 16pt in this org buffer."
+  (setq-local buffer-face-mode-face '(:family "Monaco" :height 160))
+  (buffer-face-mode 1))
+
+;; `org-agenda-mode' is a standalone major mode, not derived from `org-mode',
+;; so it needs its own hook or the agenda renders in the code font while every
+;; .org file is Monaco.
+(add-hook 'org-mode-hook        #'rsr/org-font)
+(add-hook 'org-agenda-mode-hook #'rsr/org-font)
+
 (provide 'org-config)
 ;;; org-config.el ends here

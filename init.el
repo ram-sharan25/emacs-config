@@ -72,17 +72,30 @@
 ;;; Appearance
 
 (global-font-lock-mode 1)
-;; Menlo at 12pt matches this machine's VS Code, which leaves both
-;; editor.fontFamily and editor.fontSize at their macOS defaults
-;; (Menlo, 12px).  Emacs :height is 1/10 pt, and Electron maps one CSS
-;; pixel to one logical point on macOS, so 120 is the same visual size.
-(set-face-attribute 'default nil :family "Menlo" :height 120)
+;; :weight medium is deliberate, not the default match falling through.
+;; Installed cuts here: regular, medium, semi-bold, bold (no light).  Keyword
+;; and constant faces track this weight -- see `rsr/match-keyword-weight' in
+;; theme-config.el -- so changing it here keeps the whole buffer consistent.
+(set-face-attribute 'default nil :family "Fira Code" :height 173 :weight 'medium)
 
-;; VS Code leaves editor.lineHeight at 0, which means 1.5x the font size:
-;; 18px rows for a 12px font.  Menlo at 12pt gives Emacs a 14px row, so add
-;; the missing 4px.  A float is a multiple of the row height, so this keeps
-;; the proportion if the font size ever changes.
-(setq-default line-spacing 0.3)
+;;; Line spacing
+;;
+;; A float, not a pixel count: a float is a multiple of the line's own height,
+;; so org at Monaco 16pt and code at Fira Code 17pt each get proportional
+;; spacing rather than one fixed gap tuned to whichever buffer came first.
+;;
+;; Known cost, accepted: `line-spacing' puts its pixels *below* the glyphs and
+;; paints them with the line's face, so selections, hl-line and diff bands sit
+;; slightly under their text.  Emacs has added the space below since 21.1 and
+;; cannot centre it -- a `line-spacing-vertical-center' patch went to
+;; emacs-devel in 2019 and never landed.
+;;
+;; The `line-height' text property can add space above instead, and was tried.
+;; It is per-newline with an absolute pixel value, so a buffer at a different
+;; font size gets the wrong gap -- smaller fonts get bigger gaps, backwards --
+;; and it needs a jit-lock hook in every buffer to stay applied.  Not worth the
+;; machinery; don't reach for it again without remembering why.
+(setq-default line-spacing 0.175)
 
 ;;; Icons
 

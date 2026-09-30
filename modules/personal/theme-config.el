@@ -51,6 +51,25 @@
  '(magit-diff-hunk-heading           ((t (:background "#3f3f3f" :foreground "#afafaf"))))
  '(magit-diff-hunk-heading-highlight ((t (:background "#4f4f4f" :foreground "#dfdfdf")))))
 
+;; zerodark bolds keywords and constants; VS Code's Dark+ bolds neither, and
+;; the bold cut reads as noticeably fatter than the code around it.
+;;
+;; Match the default face's weight rather than hardcoding one: most font-lock
+;; faces leave :weight unspecified and so inherit it, and pinning these two to
+;; a fixed value makes `const' lighter or heavier than the identifiers beside
+;; it whenever the default weight changes.  Runs on `after-init-hook' because
+;; modules load before init.el sets the default face.
+;;
+;; `set-face-attribute' rather than `custom-set-faces' so only the weight
+;; changes and the theme keeps supplying the colours.
+(defun rsr/match-keyword-weight ()
+  "Give keywords and constants the same weight as the default face."
+  (let ((weight (face-attribute 'default :weight)))
+    (dolist (face '(font-lock-keyword-face font-lock-constant-face))
+      (set-face-attribute face nil :weight weight))))
+
+(add-hook 'after-init-hook #'rsr/match-keyword-weight)
+
 (use-package org-bullets
   :ensure t
   :hook (org-mode . org-bullets-mode))
