@@ -25,7 +25,14 @@
         lsp-log-io nil
         lsp-headerline-breadcrumb-enable nil
         lsp-document-sync-method 2        ;; incremental — sends diffs only, not full buffer
-        lsp-diagnostics-provider :flymake) ;; flymake handles large error counts better than flycheck
+        lsp-diagnostics-provider :flymake ;; flymake handles large error counts better than flycheck
+        ;; Semantic tokens: the server re-colours symbols using real type
+        ;; information, which tree-sitter cannot know from syntax alone -- a
+        ;; bare identifier as a type vs a variable, say.  This is the last
+        ;; layer VS Code uses on top of its grammar.  Applied after font-lock,
+        ;; so tree-sitter still does the bulk of the work.
+        lsp-semantic-tokens-enable t
+        lsp-semantic-tokens-honor-refresh-requests t)
   (define-key lsp-mode-map (kbd "C-M-,") #'xref-go-forward))
 
 ;;; lsp-ui — sideline disabled; peek enabled for references

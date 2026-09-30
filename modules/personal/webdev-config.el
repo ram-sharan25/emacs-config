@@ -13,17 +13,11 @@
   :hook (typescript-mode . lsp-deferred)
   :config (setq typescript-indent-level 2))
 
-;;; JSX + TSX (.jsx .tsx) — web-mode handles mixed HTML/JS syntax
-(use-package web-mode
-  :ensure t
-  :defer t
-  :mode (("\\.jsx\\'" . web-mode)
-         ("\\.tsx\\'" . web-mode))
-  :hook (web-mode . lsp-deferred)
-  :config
-  (setq web-mode-markup-indent-offset 2
-        web-mode-code-indent-offset 2
-        web-mode-enable-auto-quoting nil))
+;;; JSX (.jsx) — js-ts-mode; the javascript grammar parses JSX natively.
+;; web-mode was removed: it owned .jsx and .tsx, but both are now handled by
+;; tree-sitter modes (see treesit-config.el), and it parsed JSX with regexes.
+;; If a mixed-template language ever comes up (.vue, .erb, .php), web-mode is
+;; the mode to bring back for it.
 
 ;;; YAML (.yml .yaml) — yaml-language-server (npm i -g yaml-language-server)
 (use-package yaml-mode

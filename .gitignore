@@ -58,3 +58,8 @@ modules/git-modules/copilot/
 .video-watched
 places
 eln-cache/
+auto-saves/
+
+# Compiled tree-sitter grammars: platform-specific .dylib files, rebuilt with
+# M-x treesit-install-language-grammar from the sources in treesit-config.el.
+tree-sitter/

@@ -24,7 +24,11 @@
 
 ;;; Paths
 
-(setf custom-file (expand-file-name ".custom" user-emacs-directory))
+;; Custom's writes go nowhere: this config is hand-written elisp, and a
+;; custom-file that is written but never loaded is a trap -- it accumulated a
+;; stale copy of every face here and would have silently overridden the theme
+;; the day anyone added (load custom-file).
+(setf custom-file null-device)
 
 (defun my/add-local-exec-paths ()
   "Add available user and Homebrew executable directories to PATH."
@@ -68,7 +72,17 @@
 ;;; Appearance
 
 (global-font-lock-mode 1)
-(set-face-attribute 'default nil :height 160)
+;; Menlo at 12pt matches this machine's VS Code, which leaves both
+;; editor.fontFamily and editor.fontSize at their macOS defaults
+;; (Menlo, 12px).  Emacs :height is 1/10 pt, and Electron maps one CSS
+;; pixel to one logical point on macOS, so 120 is the same visual size.
+(set-face-attribute 'default nil :family "Menlo" :height 120)
+
+;; VS Code leaves editor.lineHeight at 0, which means 1.5x the font size:
+;; 18px rows for a 12px font.  Menlo at 12pt gives Emacs a 14px row, so add
+;; the missing 4px.  A float is a multiple of the row height, so this keeps
+;; the proportion if the font size ever changes.
+(setq-default line-spacing 0.3)
 
 ;;; Icons
 
