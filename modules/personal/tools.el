@@ -252,6 +252,22 @@ Records today as watched to suppress daily reminders."
 (global-set-key (kbd "s-x")        #'kill-region)
 (global-set-key (kbd "s-z")        #'undo)
 (global-set-key (kbd "s-a")        #'mark-whole-buffer)
+(global-set-key (kbd "s-w")        #'delete-window)   ;; Cmd+W closes the split,
+;; not the frame. The NS build bound this to `delete-frame'; use Cmd+Shift+W for
+;; that, so a stray Cmd+W can never take the whole frame down with it.
+(global-set-key (kbd "s-W")        #'delete-frame)
+(global-set-key (kbd "s-u")        #'revert-buffer-quick) ;; Cmd+U reloads from disk
+
+;; The rest of the ns-win.el chords worth having on the mac port.  These were
+;; free from the NS build and vanished with the switch; `ns-open-file-using-panel'
+;; and friends have no mac-port equivalent, so Cmd+O gets plain `find-file'.
+(global-set-key (kbd "s-q")        #'save-buffers-kill-emacs) ;; Cmd+Q
+(global-set-key (kbd "s-n")        #'make-frame)              ;; Cmd+N  new frame
+(global-set-key (kbd "s-m")        #'iconify-frame)           ;; Cmd+M  minimise
+(global-set-key (kbd "s-o")        #'find-file)               ;; Cmd+O
+(global-set-key (kbd "s-,")        #'customize)               ;; Cmd+,  preferences
+(global-set-key (kbd "s-`")        #'other-frame)             ;; Cmd+`  cycle frames
+(global-set-key (kbd "s-&")        #'kill-current-buffer)     ;; Cmd+&
 
 ;; Zoom. One function for all four: `text-scale-adjust' reads the key that
 ;; invoked it to decide in/out/reset, and stays active for bare = / - repeats.
