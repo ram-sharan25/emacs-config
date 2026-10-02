@@ -51,24 +51,39 @@
  '(magit-diff-hunk-heading           ((t (:background "#3f3f3f" :foreground "#afafaf"))))
  '(magit-diff-hunk-heading-highlight ((t (:background "#4f4f4f" :foreground "#dfdfdf")))))
 
-;; zerodark bolds keywords and constants; VS Code's Dark+ bolds neither, and
-;; the bold cut reads as noticeably fatter than the code around it.
+;; zerodark bolds nine font-lock faces.  Against Fira Code Medium that reads
+;; as heavy -- bold on top of an already-medium cut -- and VS Code's Dark+
+;; bolds none of them.  Normalise them to whatever weight the default face
+;; uses, so they sit level with the identifiers around them.
 ;;
-;; Match the default face's weight rather than hardcoding one: most font-lock
-;; faces leave :weight unspecified and so inherit it, and pinning these two to
-;; a fixed value makes `const' lighter or heavier than the identifiers beside
-;; it whenever the default weight changes.  Runs on `after-init-hook' because
-;; modules load before init.el sets the default face.
+;; Match the default rather than hardcoding `normal': most font-lock faces
+;; leave :weight unspecified and inherit it, so a fixed value here makes
+;; `const' lighter or heavier than its neighbours whenever the default
+;; changes.
 ;;
-;; `set-face-attribute' rather than `custom-set-faces' so only the weight
-;; changes and the theme keeps supplying the colours.
-(defun rsr/match-keyword-weight ()
-  "Give keywords and constants the same weight as the default face."
+;; `set-face-attribute' only sticks until a face spec is recalculated -- which
+;; happens when a theme is enabled and when a new frame is created, both of
+;; which re-apply zerodark's bold.  Hence the three hooks rather than a single
+;; call at startup.  `font-lock-warning-face' keeps its bold deliberately:
+;; there, the weight carries meaning.
+(defconst rsr/unbold-faces
+  '(font-lock-keyword-face font-lock-constant-face font-lock-builtin-face
+    font-lock-preprocessor-face font-lock-doc-markup-face
+    font-lock-escape-face font-lock-regexp-grouping-backslash
+    font-lock-regexp-grouping-construct)
+  "Faces a theme may embolden that should match the default weight instead.
+`font-lock-warning-face' is deliberately absent; its bold is meaningful.")
+
+(defun rsr/match-keyword-weight (&rest _)
+  "Give `rsr/unbold-faces' the same weight as the default face."
   (let ((weight (face-attribute 'default :weight)))
-    (dolist (face '(font-lock-keyword-face font-lock-constant-face))
-      (set-face-attribute face nil :weight weight))))
+    (dolist (face rsr/unbold-faces)
+      (when (facep face)
+        (set-face-attribute face nil :weight weight)))))
 
 (add-hook 'after-init-hook #'rsr/match-keyword-weight)
+(add-hook 'enable-theme-functions #'rsr/match-keyword-weight)
+(add-hook 'after-make-frame-functions #'rsr/match-keyword-weight)
 
 (use-package org-bullets
   :ensure t
