@@ -316,9 +316,14 @@ Records today as watched to suppress daily reminders."
 ;; C-u M-m f c: also open the dial window — menu + dial + video, all three.
 ;; M-m f s / f r: stop / restart the video companion on its own, independent
 ;; of the block (block, menu bar, dial window all untouched).
+;; The binding belongs inside the guard: without ~/focus-timer/ the
+;; rsr/focus-* commands are never defined, and an unconditional
+;; `global-set-key' would still claim C-c f and fail with
+;; "Wrong type argument: commandp" when pressed.  tools.el loads after
+;; format-config.el, so it would also shadow the formatter bound there.
 (when (file-exists-p "~/focus-timer/focus-timer.el")
-  (load "~/focus-timer/focus-timer.el"))
-(global-set-key (kbd "C-c f")      #'rsr/focus-start-at-point)
+  (load "~/focus-timer/focus-timer.el")
+  (global-set-key (kbd "C-c f") #'rsr/focus-start-at-point))
 
 (bind-keys :map rsr/global-prefix-map
            ("t c" . calc)

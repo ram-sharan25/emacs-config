@@ -24,6 +24,12 @@
         lsp-idle-delay 0.5
         lsp-log-io nil
         lsp-headerline-breadcrumb-enable nil
+        ;; deno is on PATH, so lsp-mode offers deno-ls as a candidate for every
+        ;; TS/JS buffer.  ts-ls outranks it (-2 vs -5) so the right server is
+        ;; always chosen, but the check runs per file and fills *lsp-log*.  No
+        ;; project here is Deno; re-enable per project with a .dir-locals.el
+        ;; entry for `lsp-disabled-clients' if one ever is.
+        lsp-disabled-clients '(deno-ls)
         lsp-document-sync-method 2        ;; incremental — sends diffs only, not full buffer
         lsp-diagnostics-provider :flymake ;; flymake handles large error counts better than flycheck
         ;; Semantic tokens: the server re-colours symbols using real type
@@ -152,7 +158,17 @@ When focused: q or C-g closes and returns focus."
   (define-key lsp-mode-map (kbd "C-c l D") #'lsp-ui-doc-show)             ;; quick hover (no focus)
   (define-key lsp-mode-map (kbd "C-c l e") #'my/show-error-frame)    ;; error child frame
   (define-key lsp-mode-map (kbd "C-c l E") #'consult-flymake)        ;; all errors + live code preview
-  (define-key lsp-mode-map (kbd "C-c l p") #'lsp-ui-peek-find-references)) ;; references peek
+  (define-key lsp-mode-map (kbd "C-c l p") #'lsp-ui-peek-find-references) ;; references peek
+  (define-key lsp-mode-map (kbd "C-c l q") #'lsp-ui-doc-hide))   ;; dismiss the doc frame
+
+;; `q' in the doc frame runs `lsp-ui-doc-unfocus-frame', which only makes the
+;; frame invisible when the popup came from mouse hover -- for a keyboard
+;; C-c l d it hands focus back and leaves the frame on screen.  Worse,
+;; `lsp-ui-doc-focus-frame' removes the post-command-hook that would otherwise
+;; auto-hide it, and unfocus never restores it, so nothing dismisses it.
+;; `lsp-ui-doc-hide' unfocuses *and* hides; bind it where q already is.
+(with-eval-after-load 'lsp-ui-doc
+  (define-key lsp-ui-doc-frame-mode-map (kbd "q") #'lsp-ui-doc-hide))
 
 (provide 'lsp-mode-config)
 ;;; lsp-mode-config.el ends here

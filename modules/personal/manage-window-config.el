@@ -36,7 +36,21 @@
   :demand t
   :custom
   (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
+  ;; `orderless' comes FIRST for files.  Vertico's README suggests only
+  ;; (basic partial-completion) here, to keep ~/ and TRAMP paths expanding
+  ;; during directory navigation -- but both are prefix-anchored, so typing
+  ;; `print' never surfaces app/components/PrintLink.tsx.
+  ;;
+  ;; Appending orderless does not fix that: `completion-all-completions' tries
+  ;; styles in order and returns the FIRST that matches anything, so
+  ;; partial-completion matching a literal print/ directory ends the search
+  ;; and orderless never runs.  It has to lead.
+  (completion-category-overrides
+   '((file (styles orderless partial-completion basic))))
+  ;; Projectile hands `completing-read' a plain list of relative paths, not a
+  ;; file-name collection, so `read-file-name-completion-ignore-case' does not
+  ;; apply to it and `print' would not match `Print'.
+  (completion-ignore-case t))
 
 ;;; --- Marginalia (annotations in minibuffer) ---
 
