@@ -63,3 +63,6 @@ auto-saves/
 # Compiled tree-sitter grammars: platform-specific .dylib files, rebuilt with
 # M-x treesit-install-language-grammar from the sources in treesit-config.el.
 tree-sitter/
+
+# agent-sessions dashboard state
+agent-sessions.db*

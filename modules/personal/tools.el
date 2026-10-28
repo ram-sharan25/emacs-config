@@ -272,7 +272,7 @@ Records today as watched to suppress daily reminders."
       (message "Stored + copied: %s" formatted))))
 (global-set-key (kbd "C-c L")      #'rsr/org-store-link-to-clipboard)
 
-(global-set-key (kbd "C-c i")      #'my/watch-random-video)
+(global-set-key (kbd "C-c o v")    #'my/watch-random-video)   ; C-c i is AI now
 
 (bind-keys :map rsr/global-prefix-map
            ("t c" . calc)

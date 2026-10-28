@@ -8,26 +8,26 @@
 
 (use-package gptel
   :ensure t
-  :bind (:map rsr/global-prefix-map
+  :bind (:map rsr/ai-map          ; C-c i, see ai-keymap.el
               ;; Core
-              ("a a" . rsr/gptel-quick-chat)
-              ("a A" . rsr/gptel-dedicated-chat)
-              ("a s" . gptel-send)
-              ("a c" . rsr/gptel-coding-session)
-              ("a q" . gptel-abort)
-              ("a m" . gptel-menu)
+              ("a" . rsr/gptel-quick-chat)
+              ("A" . rsr/gptel-dedicated-chat)
+              ("s" . gptel-send)
+              ("c" . rsr/gptel-coding-session)
+              ("q" . gptel-abort)
+              ("m" . gptel-menu)
 
               ;; Context
-              ("a f" . gptel-add-file)
-              ("a F" . rsr/gptel-add-buffer)
-              ("a +" . gptel-context-add)
-              ("a -" . gptel-context-remove-all)
-              ("a =" . rsr/gptel-show-context)
+              ("f" . gptel-add-file)
+              ("F" . rsr/gptel-add-buffer)
+              ("+" . gptel-context-add)
+              ("-" . gptel-context-remove-all)
+              ("=" . rsr/gptel-show-context)
 
               ;; Model switching
-              ("a t" . rsr/gptel-toggle-model)
-              ("a T" . rsr/gptel-switch-to-chat)
-              ("a C" . rsr/gptel-switch-to-coding))
+              ("t" . rsr/gptel-toggle-model)
+              ("T" . rsr/gptel-switch-to-chat)
+              ("C" . rsr/gptel-switch-to-coding))
   :config
   (require 'gptel-context)
 
