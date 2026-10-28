@@ -66,3 +66,7 @@ tree-sitter/
 
 # agent-sessions dashboard state
 agent-sessions.db*
+
+# Emacs lock/autosave files and evil-tutor working copies
+#*#
+.tutor/
