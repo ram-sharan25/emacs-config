@@ -113,7 +113,6 @@ sync-conflict files.  Display names omit the .org extension."
 (global-set-key (kbd "C-c o d") #'my/open-tasks-file)
 (global-set-key (kbd "C-c o h") #'my/open-logbook-file)
 (global-set-key (kbd "C-c o p") #'my/open-projects-file)
-(global-set-key (kbd "C-c o s") #'rsr/search-keybindings)
 (global-set-key (kbd "C-c o y") #'my/open-job-applications-file)
 (global-set-key (kbd "C-c o n") #'my/open-notes-file)
 (global-set-key (kbd "C-c o a") #'my/open-area-file)

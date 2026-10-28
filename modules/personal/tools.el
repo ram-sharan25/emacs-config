@@ -61,37 +61,6 @@
 (add-hook 'text-mode-hook #'rsr/enable-visual-line-for-text)
 (show-paren-mode 1)           ;; highlight matching parentheses
 
-;;; Keybinding Search
-;; C-c o s → search keybindings.md with live consult-line
-(defun rsr/search-keybindings ()
-  "Search all keybindings by keyword in the minibuffer.
-
-Parses keybindings.md and prefixes each table row with its section heading
-so you can search by topic (e.g. \"roam\", \"capture\") or by key.
-No file buffer is opened or switched to."
-  (interactive)
-  (let* ((file (expand-file-name "docs/reference/keybindings.md" user-emacs-directory))
-         (lines (with-temp-buffer
-                  (insert-file-contents file)
-                  (split-string (buffer-string) "\n")))
-         (section "")
-         candidates)
-    ;; Build candidates: track headings, annotate each data row with section
-    (dolist (line lines)
-      (cond
-       ;; Section heading (## or ###): strip markdown and emoji for clean label
-       ((string-match "^##+ +\\(.+\\)" line)
-        (setq section (replace-regexp-in-string
-                       "[[:nonascii:]] *" "" (match-string 1 line))))
-       ;; Data row: not a separator (|---|)
-       ((string-match-p "^|[^-]" line)
-        (push (format "[%s] %s" (string-trim section) line) candidates))))
-    (let* ((rows (nreverse candidates))
-           (result (let ((completion-styles '(substring))
-                         (completion-ignore-case t))
-                     (completing-read "Keybinding: " rows nil t))))
-      (message "%s" result))))
-
 ;;; Daily Inspiration Video
 ;; C-c i → stream a random short video (<5 min) in mpv
 ;; Topics: eastern philosophy, Jung/Adler, math history, poems, zen, running
@@ -305,33 +274,9 @@ Records today as watched to suppress daily reminders."
 
 (global-set-key (kbd "C-c i")      #'my/watch-random-video)
 
-;; Focus-timer: non-blocking bridge to the standalone ~/focus-timer web app
-;; (Node server + browser/mpv dial + menu-bar SwiftBar plugin). Independent of
-;; org-clock and Toggl — see ~/focus-timer/README.md.
-;; C-c f: menu-bar only. C-u C-c f: also opens the full-screen dial window.
-;; M-m f w: open the dial window on its own, any time, without touching the
-;; running block (e.g. started menu-bar-only, now want the window too).
-;; M-m f c: start a block AND launch a background companion (ambient site or
-;; study-with-me video, curated in ~/focus-timer/companions.json).
-;; C-u M-m f c: also open the dial window — menu + dial + video, all three.
-;; M-m f s / f r: stop / restart the video companion on its own, independent
-;; of the block (block, menu bar, dial window all untouched).
-;; The binding belongs inside the guard: without ~/focus-timer/ the
-;; rsr/focus-* commands are never defined, and an unconditional
-;; `global-set-key' would still claim C-c f and fail with
-;; "Wrong type argument: commandp" when pressed.  tools.el loads after
-;; format-config.el, so it would also shadow the formatter bound there.
-(when (file-exists-p "~/focus-timer/focus-timer.el")
-  (load "~/focus-timer/focus-timer.el")
-  (global-set-key (kbd "C-c f") #'rsr/focus-start-at-point))
-
 (bind-keys :map rsr/global-prefix-map
            ("t c" . calc)
-           ("t d" . dictionary-search)
-           ("f w" . rsr/focus-show-window)
-           ("f c" . rsr/focus-start-with-companion)
-           ("f s" . rsr/focus-stop-video)
-           ("f r" . rsr/focus-restart-video))
+           ("t d" . dictionary-search))
 
 (provide 'tools)
 ;;; tools.el ends here
