@@ -362,10 +362,10 @@ captured review."
                                      my/waiting-file
                                      my/someday-file
                                      my/rituals-file
-                                     my/gcal-file
                                      my/job-applications-file
                                      my/phone-inbox
                                      my/focus-file)
+                               (mapcar (lambda (c) (plist-get c :file)) my/gcal-calendars)
                                (my/get-area-files)))
 
 (setq org-todo-keywords

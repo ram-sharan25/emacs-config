@@ -76,8 +76,21 @@
 (defconst my/discarded-file (expand-file-name "discarded.org" my/gtd-dir)
   "Discarded/cancelled tasks.")
 
-(defconst my/gcal-file (expand-file-name "gcal.org" my/gtd-dir)
-  "Google Calendar sync file.")
+(defconst my/gcal-calendars-dir (expand-file-name "calendars/" my/gtd-dir)
+  "One Org file per synced Google calendar.")
+
+(defconst my/gcal-calendars-file (expand-file-name "gcal-calendars.el" my/private-dir)
+  "Private file that sets `my/gcal-calendars' (keeps account names out of this repo).")
+
+(defvar my/gcal-calendars nil
+  "Google calendars to sync, set in `my/gcal-calendars-file'.
+Each entry is a plist: :label for prompts, :account whose OAuth token
+is used, :id the calendar ID, and :file the Org file events go to.")
+
+(load my/gcal-calendars-file t t)
+
+(defconst my/gcal-default-calendar "Personal"
+  "Label of the calendar preselected when pushing.")
 
 ;;; Dashboard Files
 
