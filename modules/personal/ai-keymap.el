@@ -10,6 +10,7 @@
 ;;   C-c i p                             pi in a tmux window (terminal-config.el)
 ;;   C-c i i                             Claude Code in a tmux window (terminal-config.el)
 ;;   C-c i d / C-c i r                   agent dashboard / send region (ai-sessions-config.el)
+;;   C-c i o                             devlog Overview (devlog.el)
 ;;
 ;; See Plans/emacs-d/keybinding-redesign for the wider scheme.
 

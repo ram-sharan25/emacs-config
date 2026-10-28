@@ -4,6 +4,7 @@
 (require 'paths)
 (require 'org-capture)
 (require 'org-id)
+(require 'devlog)
 
 (defun my/get-area-files ()
   "Get all .org files in the Areas directory, if it exists."
@@ -305,6 +306,9 @@ captured review."
 
         ("h" "Log Time" entry (file+datetree ,my/logbook-file)
          "* %? \n" :clock-in t :clock-keep t :clock-resume t)
+
+        ("d" "Devlog line" plain (function rsr/devlog-capture-target)
+         ,rsr/devlog-capture-template :empty-lines 0)
 
         ("j" "Journal" plain
          (file+function ,my/journal-file journal--ensure-daily-heading)
@@ -707,6 +711,7 @@ Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
 (defun my/capture-project ()      "Capture new project."       (interactive) (org-capture nil "q"))
 (defun my/capture-note ()         "Capture fleeting note."     (interactive) (org-capture nil "u"))
 (defun my/capture-journal ()      "Capture journal entry."     (interactive) (org-capture nil "j"))
+(defun my/capture-devlog ()       "Capture a devlog line."     (interactive) (org-capture nil "d"))
 (defun my/capture-monthly-review () "Capture a fresh monthly review." (interactive) (org-capture nil "m"))
 (defun my/capture-weekly-review () "Capture a fresh weekly review." (interactive) (org-capture nil "w"))
 (defun my/capture-log-time ()     "Capture log time entry."    (interactive) (org-capture nil "h"))
@@ -723,6 +728,7 @@ Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
 (global-set-key (kbd "C-c c q") 'my/capture-project)
 (global-set-key (kbd "C-c c n") 'my/capture-note)
 (global-set-key (kbd "C-c c j") 'my/capture-journal)
+(global-set-key (kbd "C-c c d") 'my/capture-devlog)
 (global-set-key (kbd "C-c c m") 'my/capture-monthly-review)
 (global-set-key (kbd "C-c c w") 'my/capture-weekly-review)
 (global-set-key (kbd "C-c c h") 'my/capture-log-time)
