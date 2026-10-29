@@ -70,9 +70,8 @@ globalized mode has already enabled `apheleia-mode' by then, and
   :ensure t
   :config
   (add-hook 'apheleia-inhibit-functions #'rsr/apheleia-configure)
-  (apheleia-global-mode +1)
-  ;; Format without saving, for tidying mid-edit.
-  (global-set-key (kbd "C-c f") #'apheleia-format-buffer))
+  (apheleia-global-mode +1))
+;; C-c f formats without saving, for tidying mid-edit (keymaps.el).
 
 (provide 'format-config)
 ;;; format-config.el ends here

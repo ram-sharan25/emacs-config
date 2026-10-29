@@ -109,17 +109,8 @@ sync-conflict files.  Display names omit the .org extension."
   (message "Notes index rebuilt."))
 
 ;;; Keybindings
-(global-set-key (kbd "C-c o j") #'my/open-journal-file)
-(global-set-key (kbd "C-c o d") #'my/open-tasks-file)
-(global-set-key (kbd "C-c o h") #'my/open-logbook-file)
-(global-set-key (kbd "C-c o p") #'my/open-projects-file)
-(global-set-key (kbd "C-c o y") #'my/open-job-applications-file)
-(global-set-key (kbd "C-c o n") #'my/open-notes-file)
-(global-set-key (kbd "C-c o a") #'my/open-area-file)
-(global-set-key (kbd "C-c o b") #'org-narrow-to-subtree)
-(global-set-key (kbd "C-c b n") #'my/notes-rebuild-index)
-(global-set-key (kbd "C-x i")   #'org-clock-in)
-(global-set-key (kbd "C-x j")   #'org-clock-out)
+;; C-c o (open files), C-c n x (rebuild index) and C-c t i / o (clock in / out)
+;; are in keymaps.el.  Narrow to subtree is Org's own C-x n s.
 
 (provide 'daily-todo)
 ;;; daily-todo.el ends here

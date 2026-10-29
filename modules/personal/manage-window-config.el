@@ -66,28 +66,23 @@
 
 ;;; --- Consult (enhanced commands) ---
 
-(defun rsr/consult-line-symbol-at-point ()
-  "Search the buffer with `consult-line', pre-filled with the symbol at point.
-Like `C-s' (`consult-line') but seeded with the word under the cursor, so it
-searches the current word immediately.  Off a symbol, opens an empty prompt."
-  (interactive)
-  (consult-line (thing-at-point 'symbol t)))
-
 (use-package consult
   :ensure t
   :bind (("C-x b"   . consult-buffer)
          ("C-x M-f" . consult-recent-file)
-         ("C-s"     . consult-line)
-         ("C-S-s"   . rsr/consult-line-symbol-at-point)
-         ("M-s"     . consult-imenu)
-         ("M-y"     . consult-yank-pop)))
+         ("M-y"     . consult-yank-pop)
+         ;; consult README: turn a C-s search into the line list.
+         :map isearch-mode-map
+         ("M-s l"   . consult-line)))
 
 ;;; --- Embark (context-sensitive actions) ---
 
 (use-package embark
   :ensure t
-  :bind (("C-." . embark-act)
-         ("C-;" . embark-dwim)))
+  :bind (("C-." . embark-act)            ;; act on thing at point or current candidate
+         ("C-;" . embark-dwim))          ;; do-what-i-mean (smarter default action)
+  :config
+  (setq embark-prompter 'embark-keymap-prompter))
 
 (use-package embark-consult
   :ensure t
@@ -99,10 +94,11 @@ searches the current word immediately.  Off a symbol, opens an empty prompt."
 
 ;;; --- Window Navigation ---
 
-;; ace-window — jump, swap, close windows with letter overlays
+;; ace-window — jump, swap, close windows with letter overlays.  Replaces
+;; `other-window' (C-x o) via a remap in keymaps.el, as its README suggests.
 (use-package ace-window
   :ensure t
-  :bind ("C-c w w" . ace-window)
+  :defer t
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
         aw-scope 'frame
@@ -126,9 +122,7 @@ searches the current word immediately.  Off a symbol, opens an empty prompt."
     (set-window-buffer (next-window) next-win-buffer)))
 
 ;;; Keybindings
-(global-set-key (kbd "C-x 3") #'rsr/split-vertical)
-(global-set-key (kbd "C-x 2") #'rsr/split-horizontal)
-(global-set-key (kbd "C-c w t") #'rsr/toggle-window-split)
+;; C-x 2 / C-x 3 / C-x w t are in keymaps.el.
 
 ;; Unbind windmove shift+arrow keys — conflict with org scheduling
 (global-unset-key [S-left])

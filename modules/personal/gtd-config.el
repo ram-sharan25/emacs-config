@@ -286,7 +286,7 @@ captured review."
 
         ("s" "Study Task" entry
          (file my/inbox-file)
-         "* TODO %^{Read|Watch|Listen}: %^{Source}   :study:\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n- src: %a\n- res: \n- [ ] Resource note: paper/book → =M-m r n= | other → =C-c c r= (paste link in -res:)\n- [ ] Consume: video → =C-c v o= + =C-c v= | article → =C-c c n= | paper → =M-m r p= + =M-i=\n- [ ] Extract Zettels → =M-m r c → z= (same session)\n- [ ] Link Zettels to * Key Concepts in resource → =M-m r i=\n%?"
+         "* TODO %^{Read|Watch|Listen}: %^{Source}   :study:\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n- src: %a\n- res: \n- [ ] Resource note: paper/book → =C-c r n= | other → =C-c c r= (paste link in -res:)\n- [ ] Consume: video → =C-c v o= + =C-c v= | article → =C-c c n= | paper → =C-c r p= + =M-i=\n- [ ] Extract Zettels → =C-c n c → z= (same session)\n- [ ] Link Zettels to * Key Concepts in resource → =C-c n i=\n%?"
          :empty-lines 1)
 
         ("q" "New Project" entry
@@ -720,22 +720,8 @@ Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
 (defun my/capture-activity ()     "Capture activity."          (interactive) (org-capture nil "a"))
 (defun my/capture-job ()          "Capture job application."   (interactive) (org-capture nil "y"))
 
-(global-set-key (kbd "C-c a")   'org-agenda)
-(global-set-key (kbd "C-c d")   'rsr/org-timeblock-split-view)
-(global-set-key (kbd "C-c c g") 'org-clock-goto)
-(global-set-key (kbd "C-c c i") 'my/capture-inbox)
-(global-set-key (kbd "C-c c s") 'my/capture-study)
-(global-set-key (kbd "C-c c q") 'my/capture-project)
-(global-set-key (kbd "C-c c n") 'my/capture-note)
-(global-set-key (kbd "C-c c j") 'my/capture-journal)
-(global-set-key (kbd "C-c c d") 'my/capture-devlog)
-(global-set-key (kbd "C-c c m") 'my/capture-monthly-review)
-(global-set-key (kbd "C-c c w") 'my/capture-weekly-review)
-(global-set-key (kbd "C-c c h") 'my/capture-log-time)
-(global-set-key (kbd "C-c c r") 'my/capture-resource)
-(global-set-key (kbd "C-c c W") 'my/capture-web)
-(global-set-key (kbd "C-c c t") 'my/capture-activity)
-(global-set-key (kbd "C-c c y") 'my/capture-job)
+;; C-c a agenda, C-c c capture, C-c t g clock goto and C-c t b timeblock
+;; view are in keymaps.el.
 (define-key org-agenda-mode-map "j" 'my/org-agenda-process-inbox-item)
 (define-key org-agenda-mode-map "H" 'my/org-agenda-toggle-highlight)
 (define-key org-agenda-mode-map "E" 'my/org-day-effort-budget)

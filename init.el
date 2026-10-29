@@ -57,6 +57,11 @@
 ;; load also makes reloading init.el pick up newly added paths in a live session,
 ;; where `(require 'paths)' would otherwise keep the older definitions.
 (load (expand-file-name "modules/personal/paths.el" user-emacs-directory))
+;; Global keys and prefix maps next, so every module can bind into them.
+;; `load-directory' loads it again; harmless at startup, since `defvar-keymap'
+;; won't redefine.  The flip side: after editing a prefix map, restart Emacs;
+;; reloading leaves the old map (and removed keys) in place.
+(load (expand-file-name "modules/personal/keymaps.el" user-emacs-directory))
 (load-directory (expand-file-name "modules/personal"    user-emacs-directory))
 (load-directory (expand-file-name "modules/git-modules" user-emacs-directory))
 
@@ -125,7 +130,6 @@
                go-mode-hook))
   (add-hook hook #'display-fill-column-indicator-mode))
 (add-hook 'after-change-major-mode-hook #'turn-on-auto-fill)
-(global-set-key (kbd "M-q") #'fill-paragraph)
 (setq dired-use-ls-dired nil)
 
 ;;; Org Defaults

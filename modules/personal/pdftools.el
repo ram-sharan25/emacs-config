@@ -173,9 +173,6 @@ Then manually split and display the PDF buffer where you want it."
 	  (label . 12)
 	  (contents . 114)))
 
-  ;; Use normal isearch
-  (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
-
   ;; Fine-grained scrolling functions
   (defun rsr/pdf-slight-up ()
     "Scroll PDF up slightly."
@@ -322,8 +319,9 @@ No quote, no note — just `[[pdf:...][pg. N]]' to the kill ring."
   (bind-keys :map pdf-view-mode-map
 	     ("x" . rsr/pdf-slight-up)
 	     ("z" . rsr/pdf-slight-down)
-	     ("C-c a" . rsr/pdf-highlight-and-take-note)
-	     ("C-c e" . rsr/pdf-annot-export-as-org)
-             ("C-c Y" . rsr/pdf-copy-text-and-link)
-             ("C-c y" . rsr/pdf-copy-link-only)
-             ("C-c x" . pdf-annot-delete)))
+	     ;; Under pdf-annot's own C-c C-a, so C-c a stays org-agenda.
+	     ("C-c C-a n" . rsr/pdf-highlight-and-take-note)
+	     ("C-c C-a e" . rsr/pdf-annot-export-as-org)
+	     ("C-c C-a x" . pdf-annot-delete)
+             ("C-c C-w" . rsr/pdf-copy-text-and-link)
+             ("C-c C-l" . rsr/pdf-copy-link-only)))

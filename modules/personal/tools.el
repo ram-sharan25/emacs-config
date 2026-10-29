@@ -2,19 +2,26 @@
 
 ;;; Code:
 
-;;; Search
-;; M-g → rgrep: cross-file search with prompt for pattern + directory
-
-;;; Line Selection
-;; s-l → select whole line and copy to kill ring
-(defun rsr/select-whole-line ()
-  "Select the entire current line and copy it to the kill ring."
+;;; Copy / Cut
+;; s-c / s-x: with no region, copy or cut the whole line (VS Code)
+;; Each one starts a fresh kill-ring entry, as VS Code replaces the clipboard:
+;; binding `last-command' to nil stops Emacs appending to a previous kill.
+(defun rsr/copy-region-or-line ()
+  "Copy the region, or the whole current line when no region is active."
   (interactive)
-  (beginning-of-line)
-  (set-mark-command nil)
-  (end-of-line)
-  (forward-char 1)
-  (kill-ring-save (region-beginning) (region-end)))
+  (let ((last-command nil))
+    (if (use-region-p)
+        (call-interactively #'kill-ring-save)
+      (kill-ring-save (line-beginning-position) (line-beginning-position 2))
+      (message "Copied line"))))
+
+(defun rsr/kill-region-or-line ()
+  "Kill the region, or the whole current line when no region is active."
+  (interactive)
+  (let ((last-command nil))
+    (if (use-region-p)
+        (call-interactively #'kill-region)
+      (kill-whole-line))))
 
 ;;; Comment / Uncomment
 ;; works on active region or current line if no region is selected
@@ -62,7 +69,7 @@
 (show-paren-mode 1)           ;; highlight matching parentheses
 
 ;;; Daily Inspiration Video
-;; C-c i → stream a random short video (<5 min) in mpv
+;; C-c o v → stream a random short video (<5 min) in mpv
 ;; Topics: eastern philosophy, Jung/Adler, math history, poems, zen, running
 ;; Reminded once at startup and every 45 min idle if not yet watched today.
 
@@ -176,7 +183,7 @@ Records today as watched to suppress daily reminders."
 (defun my/video-maybe-remind ()
   "Nudge if no inspiration video has been watched today."
   (unless (my/video-watched-today-p)
-    (message "[Inspiration] Haven't watched today — C-c i to get inspired.")))
+    (message "[Inspiration] Haven't watched today — C-c o v to get inspired.")))
 
 (require 'org-crypt)
 (setq org-tags-exclude-from-inheritance '("crypt"))
@@ -210,50 +217,7 @@ Records today as watched to suppress daily reminders."
 (run-with-idle-timer (* 45 60) t #'my/video-maybe-remind)
 
 ;;; Keybindings
-
-;; The NS build defined these in ns-win.el; the emacs-mac port does not, since
-;; it assumes Cmd=meta. We remap Cmd to super in early-init.el, so recreate the
-;; standard macOS chords here. Cmd-C matters most: M-w is unreachable because
-;; the window manager binds Option-w.
-(global-set-key (kbd "s-s")        #'save-buffer)
-(global-set-key (kbd "s-c")        #'kill-ring-save)
-(global-set-key (kbd "s-v")        #'yank)
-(global-set-key (kbd "s-x")        #'kill-region)
-(global-set-key (kbd "s-z")        #'undo)
-(global-set-key (kbd "s-a")        #'mark-whole-buffer)
-(global-set-key (kbd "s-w")        #'delete-window)   ;; Cmd+W closes the split,
-;; not the frame. The NS build bound this to `delete-frame'; use Cmd+Shift+W for
-;; that, so a stray Cmd+W can never take the whole frame down with it.
-(global-set-key (kbd "s-W")        #'delete-frame)
-(global-set-key (kbd "s-u")        #'revert-buffer-quick) ;; Cmd+U reloads from disk
-
-;; The rest of the ns-win.el chords worth having on the mac port.  These were
-;; free from the NS build and vanished with the switch; `ns-open-file-using-panel'
-;; and friends have no mac-port equivalent, so Cmd+O gets plain `find-file'.
-(global-set-key (kbd "s-q")        #'save-buffers-kill-emacs) ;; Cmd+Q
-(global-set-key (kbd "s-n")        #'make-frame)              ;; Cmd+N  new frame
-(global-set-key (kbd "s-m")        #'iconify-frame)           ;; Cmd+M  minimise
-(global-set-key (kbd "s-o")        #'find-file)               ;; Cmd+O
-(global-set-key (kbd "s-,")        #'customize)               ;; Cmd+,  preferences
-(global-set-key (kbd "s-`")        #'other-frame)             ;; Cmd+`  cycle frames
-(global-set-key (kbd "s-&")        #'kill-current-buffer)     ;; Cmd+&
-
-;; Zoom. One function for all four: `text-scale-adjust' reads the key that
-;; invoked it to decide in/out/reset, and stays active for bare = / - repeats.
-;; Inert on Linux — `x-super-modifier' is meta there, so nothing emits s-.
-;; The portable equivalent is `C-x C-=', which works on every platform.
-(global-set-key (kbd "s-=")        #'text-scale-adjust)  ;; Cmd+=       zoom in
-(global-set-key (kbd "s-+")        #'text-scale-adjust)  ;; Cmd+Shift+= zoom in
-(global-set-key (kbd "s--")        #'text-scale-adjust)  ;; Cmd+-       zoom out
-(global-set-key (kbd "s-0")        #'text-scale-adjust)  ;; Cmd+0       reset
-
-(global-set-key (kbd "s-F")        #'consult-ripgrep)  ;; Cmd+Shift+F — project-wide search
-(global-set-key (kbd "M-g")        #'rgrep)
-(global-set-key (kbd "s-l")        #'rsr/select-whole-line)
-(global-set-key (kbd "s-/")        #'rsr/comment-or-uncomment)
-(global-set-key (kbd "C-/")        #'rsr/comment-or-uncomment)
-(global-set-key (kbd "s-k")        #'kill-whole-line)
-(global-set-key (kbd "C-c l")      #'org-store-link)
+;; Cmd keys, C-/ and C-c l / C-c L are in keymaps.el.
 
 ;; C-c L → store link AND push formatted [[link][desc]] to kill-ring/clipboard.
 ;; Lets you paste org-stored links outside Emacs (e.g. into other apps).
@@ -270,13 +234,6 @@ Records today as watched to suppress daily reminders."
                         (format "[[%s]]" link))))
       (kill-new formatted)
       (message "Stored + copied: %s" formatted))))
-(global-set-key (kbd "C-c L")      #'rsr/org-store-link-to-clipboard)
-
-(global-set-key (kbd "C-c o v")    #'my/watch-random-video)   ; C-c i is AI now
-
-(bind-keys :map rsr/global-prefix-map
-           ("t c" . calc)
-           ("t d" . dictionary-search))
 
 (provide 'tools)
 ;;; tools.el ends here

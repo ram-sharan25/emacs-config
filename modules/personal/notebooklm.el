@@ -8,7 +8,7 @@
 ;; stream in under a "** NLM [timestamp]" heading.  Markdown from the CLI
 ;; is converted to org syntax so everything renders natively.
 ;;
-;; All keybindings live under C-c i n (rsr/nlm-map, see ai-keymap.el):
+;; All keybindings live under C-c i n (rsr/nlm-map, see keymaps.el):
 ;;
 ;;   n o  — open / switch to chat buffer
 ;;   n l  — list notebooks + select active
@@ -27,7 +27,6 @@
 ;;
 ;; Inside the *NotebookLM* buffer:
 ;;   C-c RET  — send question to NotebookLM
-;;   C-c C-c  — same
 
 ;;; Code:
 
@@ -101,14 +100,13 @@ styles (asterisk, en-dash, em-dash, numbered) to org-compatible forms."
 (defvar nlm-chat-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c RET") #'rsr/nlm-send)
-    (define-key map (kbd "C-c C-c") #'rsr/nlm-send)
     map)
   "Keymap for `nlm-chat-mode'.")
 
 (define-minor-mode nlm-chat-mode
   "Minor mode for the NotebookLM chat buffer.
 
-Adds C-c RET / C-c C-c to send the current question."
+Adds C-c RET to send the current question."
   :lighter " NLM"
   :keymap nlm-chat-mode-map)
 

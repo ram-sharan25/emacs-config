@@ -13,7 +13,8 @@
   ;; Language-specific modules only add `lsp-deferred' hooks.  Executable
   ;; discovery therefore happens when a matching source buffer is opened,
   ;; after `exec-path-from-shell' has populated the shared `exec-path'.
-  (setq lsp-keymap-prefix "C-c l"
+  ;; s-l (Cmd+L) is lsp's default, and leaves C-c l to org-store-link.
+  (setq lsp-keymap-prefix "s-l"
         lsp-enable-suggest-server-download nil)
   :config
   ;; Only consider system dependencies found through `exec-path'.  In
@@ -38,8 +39,7 @@
         ;; layer VS Code uses on top of its grammar.  Applied after font-lock,
         ;; so tree-sitter still does the bulk of the work.
         lsp-semantic-tokens-enable t
-        lsp-semantic-tokens-honor-refresh-requests t)
-  (define-key lsp-mode-map (kbd "C-M-,") #'xref-go-forward))
+        lsp-semantic-tokens-honor-refresh-requests t))
 
 ;;; lsp-ui — sideline disabled; peek enabled for references
 (use-package lsp-ui
@@ -154,16 +154,17 @@ When focused: q or C-g closes and returns focus."
   (lsp-ui-doc-focus-frame))
 
 (with-eval-after-load 'lsp-mode
-  (define-key lsp-mode-map (kbd "C-c l d") #'my/lsp-doc-show-and-focus)   ;; doc frame — show + focus
-  (define-key lsp-mode-map (kbd "C-c l D") #'lsp-ui-doc-show)             ;; quick hover (no focus)
-  (define-key lsp-mode-map (kbd "C-c l e") #'my/show-error-frame)    ;; error child frame
-  (define-key lsp-mode-map (kbd "C-c l E") #'consult-flymake)        ;; all errors + live code preview
-  (define-key lsp-mode-map (kbd "C-c l p") #'lsp-ui-peek-find-references) ;; references peek
-  (define-key lsp-mode-map (kbd "C-c l q") #'lsp-ui-doc-hide))   ;; dismiss the doc frame
+  ;; Under lsp's own prefix (s-l), on letters lsp leaves free.
+  (define-key lsp-command-map (kbd "d") #'my/lsp-doc-show-and-focus)   ;; doc frame — show + focus
+  (define-key lsp-command-map (kbd "D") #'lsp-ui-doc-show)             ;; quick hover (no focus)
+  (define-key lsp-command-map (kbd "e") #'my/show-error-frame)    ;; error child frame
+  (define-key lsp-command-map (kbd "E") #'consult-flymake)        ;; all errors + live code preview
+  (define-key lsp-command-map (kbd "p") #'lsp-ui-peek-find-references) ;; references peek
+  (define-key lsp-command-map (kbd "q") #'lsp-ui-doc-hide))   ;; dismiss the doc frame
 
 ;; `q' in the doc frame runs `lsp-ui-doc-unfocus-frame', which only makes the
 ;; frame invisible when the popup came from mouse hover -- for a keyboard
-;; C-c l d it hands focus back and leaves the frame on screen.  Worse,
+;; s-l d it hands focus back and leaves the frame on screen.  Worse,
 ;; `lsp-ui-doc-focus-frame' removes the post-command-hook that would otherwise
 ;; auto-hide it, and unfocus never restores it, so nothing dismisses it.
 ;; `lsp-ui-doc-hide' unfocuses *and* hides; bind it where q already is.

@@ -124,7 +124,7 @@ Uses the currently active gptel backend/model."
       (my/resource--compile-sections
        sections (current-buffer) insert-marker (length sections)))))
 
-(global-set-key (kbd "M-m r C") #'my/resource-compile-notes)
+;; C-c n C: keymaps.el.
 
 (provide 'ai-workflows)
 ;;; ai-workflows.el ends here

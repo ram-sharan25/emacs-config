@@ -4,10 +4,8 @@
 ;; The dashboard for Claude/Codex/pi sessions, and the channel `emacs-share'
 ;; and agent hooks report through.  The package lives in the customize-agents
 ;; repo and is loaded from there.  Every agent runs in a tmux window
-;; (agent-sessions-tmux.el); C-c t / C-c i i / C-c i p are bound in
-;; terminal-config.el.
-;;
-;; Named to load after ai-keymap.el, which defines `rsr/ai-map'.
+;; (agent-sessions-tmux.el); C-c o t is bound in keymaps.el, C-c i i /
+;; C-c i p in terminal-config.el.  `rsr/ai-map' is defined in keymaps.el.
 ;; Hook wiring into ~/.claude, ~/.codex and Pi is one-time:
 ;;   M-x rsr/agent-sessions-install
 

@@ -236,13 +236,7 @@ The event is added to that calendar's file."
                           nil t)))
   (find-file (plist-get (my/gcal--calendar :label label) :file)))
 
-(define-prefix-command 'my/gcal-map)
-(global-set-key (kbd "C-c g") 'my/gcal-map)
-(define-key my/gcal-map (kbd "p") #'my/gcal-push-at-point)
-(define-key my/gcal-map (kbd "s") #'my/sync-google-calendar)
-(define-key my/gcal-map (kbd "e") #'my/gcal-push-event)
-(define-key my/gcal-map (kbd "o") #'my/gcal-open-calendar)
-(define-key my/gcal-map (kbd "r") #'my/gcal-reauth)
+;; C-c g p / s / e / o / r: `my/gcal-map' in keymaps.el.
 
 ;; Sync every 30 minutes, waiting for 30 idle seconds so it never interrupts
 ;; typing. Cancel first so reloading this file does not stack timers.

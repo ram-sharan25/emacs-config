@@ -67,7 +67,6 @@ For mermaid, uses :file header pointing to data dir."
   (interactive)
   (dired my/leetcode-dir))
 
-(define-key global-map (kbd "C-c m") #'my-create-new-leetcode-note)
-(define-key global-map (kbd "C-c o l") #'my-open-leetcode-folder)
+;; C-c c L new note, C-c o l open folder: keymaps.el.
 (with-eval-after-load 'org
   (define-key org-mode-map (kbd "C-c k") #'my-org-insert-src-block-with-extras))

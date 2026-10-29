@@ -9,9 +9,8 @@
   (magit-diff-hide-trailing-cr-characters t)
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   :custom
-  (magit-diff-refine-hunk t)   ;; highlight changed words within a hunk
-  :bind
-  ("C-x g" . magit-status))
+  (magit-diff-refine-hunk t))   ;; highlight changed words within a hunk
+;; C-x g, C-c M-g and C-x M-g come from magit's own global bindings.
 
 ;; diff-hl — show git changes in fringe while editing (like VS Code git gutter)
 (use-package diff-hl
@@ -29,10 +28,8 @@
   :defer t
   :custom
   (git-messenger:show-detail t)     ;; include full commit message, not just summary
-  (git-messenger:use-magit-popup t) ;; press 's' in popup to open full magit show
-  :bind
-  (:map rsr/global-prefix-map
-        ("g m" . git-messenger:popup-message)))
+  (git-messenger:use-magit-popup t)) ;; press 's' in popup to open full magit show
+;; C-x v p (git-messenger README), in keymaps.el.
 
 (provide 'magit_config)
 ;;; magit_config.el ends here

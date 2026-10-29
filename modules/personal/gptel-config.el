@@ -8,7 +8,7 @@
 
 (use-package gptel
   :ensure t
-  :bind (:map rsr/ai-map          ; C-c i, see ai-keymap.el
+  :bind (:map rsr/ai-map          ; C-c i, see keymaps.el
               ;; Core
               ("a" . rsr/gptel-quick-chat)
               ("A" . rsr/gptel-dedicated-chat)

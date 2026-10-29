@@ -91,10 +91,10 @@ files beside the Markdown document are never exposed."
 (use-package markdown-preview-mode
   :ensure t
   :after markdown-mode
+  ;; b for browser; C-c C-c p stays markdown's own preview.  gfm-mode-map
+  ;; inherits from markdown-mode-map.
   :bind (:map markdown-mode-map
-         ("C-c C-c p" . markdown-preview-mode)
-         :map gfm-mode-map
-         ("C-c C-c p" . markdown-preview-mode))
+         ("C-c C-c b" . markdown-preview-mode))
   :custom
   (markdown-preview-auto-open 'http)
   (markdown-preview-delay-time 0.5)

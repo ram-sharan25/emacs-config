@@ -56,12 +56,12 @@
 ;; agent-sessions dashboard.  The implementation is agent-sessions-tmux.el in
 ;; ~/Stillness/Development/customize-agents (loaded by ai-sessions-config.el).
 ;;
-;;   C-c t     attach to the repository's session (C-u: plain ghostel shell)
+;;   C-c o t   attach to the repository's session (C-u: plain ghostel shell),
+;;             bound in keymaps.el
 ;;   C-c i i   new window running Claude Code in the session
 ;;   C-c i p   new window running pi in the session
 
-(keymap-global-set "C-c t" #'rsr/agent-tmux-terminal)
-(keymap-set rsr/ai-map "i" #'rsr/agent-tmux-claude)   ; C-c i i, see ai-keymap.el
+(keymap-set rsr/ai-map "i" #'rsr/agent-tmux-claude)   ; C-c i i, see keymaps.el
 (keymap-set rsr/ai-map "p" #'rsr/agent-tmux-pi)       ; C-c i p
 
 (provide 'terminal-config)

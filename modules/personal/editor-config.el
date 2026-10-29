@@ -7,24 +7,20 @@
 (use-package smartparens
   :ensure t
   :hook (prog-mode . smartparens-mode)
-  :bind (("C-M-f" . sp-forward-sexp)
+  :bind (:map smartparens-mode-map
+         ("C-M-f" . sp-forward-sexp)
          ("C-M-b" . sp-backward-sexp)))
 
 ;;; --- Multiple Cursors ---
 
+;; smartrep stays for mpv-notes.el; mc and goto-chg repeat via `repeat-mode'.
 (use-package smartrep
   :ensure t)
 
+;; C-c m p / n / 0 / a (keymaps.el), then tap p / n to repeat.
 (use-package multiple-cursors
   :ensure t
-  :defer t
-  :commands (mc/mark-previous-like-this mc/mark-next-like-this)
-  :init
-  (smartrep-define-key rsr/global-prefix-map "m"
-    '(("p" . mc/mark-previous-like-this)
-      ("n" . mc/mark-next-like-this)
-      ("0" . mc/insert-numbers)
-      ("a" . mc/insert-letters))))
+  :defer t)
 
 ;;; --- Enable Narrowing Commands ---
 
@@ -102,25 +98,13 @@
 
 ;;; --- Avy — jump to any visible text in 2-3 keypresses ---
 
+;; C-: (keymaps.el): type chars, avy highlights matches, press overlay letter.
+;; Not M-j: skhd owns Option+J.
 (use-package avy
   :ensure t
-  :bind (("M-j" . avy-goto-char-timer)) ;; type chars, avy highlights matches, press overlay letter
+  :defer t
   :config
   (setq avy-timeout-seconds 0.3))        ;; how long to wait for more chars before showing overlays
-
-;;; --- Embark — act on any completion candidate or thing at point ---
-
-(use-package embark
-  :ensure t
-  :bind (("C-." . embark-act)            ;; act on thing at point or current candidate
-         ("C-;" . embark-dwim))          ;; do-what-i-mean (smarter default action)
-  :config
-  (setq embark-prompter 'embark-keymap-prompter))
-
-(use-package embark-consult
-  :ensure t
-  :after (embark)
-  :hook (embark-collect-mode . consult-preview-at-point-mode))
 
 ;;; --- Electric Indent ---
 
@@ -128,11 +112,13 @@
 
 ;; org manages its own RET behavior — disable electric-indent there
 (defun rsr/org-disable-electric-indent ()
-  "Disable electric indent in org-mode and use org-return with indent."
-  (electric-indent-local-mode -1)
-  (local-set-key (kbd "RET") (lambda () (interactive) (org-return t))))
+  "Disable electric indent in org-mode; RET indents via `org-return' below."
+  (electric-indent-local-mode -1))
 
 (add-hook 'org-mode-hook #'rsr/org-disable-electric-indent)
+
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "RET") (lambda () (interactive) (org-return t))))
 
 ;;; --- Pulsar (flash line on jump) ---
 
@@ -169,10 +155,12 @@
 (use-package dogears
   :ensure t
   :commands (dogears-mode)
-  :bind (("C-c <left>"  . dogears-back)
-         ("C-c <right>" . dogears-forward)
-         ("C-c <up>"    . dogears-go)
-         ("C-c <down>"  . dogears-list))
+  ;; dogears README keys, under the built-in goto prefix.  Bound here rather
+  ;; than in keymaps.el: dogears-back / -forward are not autoloaded.
+  :bind (("M-g d"   . dogears-go)
+         ("M-g M-b" . dogears-back)
+         ("M-g M-f" . dogears-forward)
+         ("M-g M-d" . dogears-list))
   :init
   (run-with-idle-timer 1 nil (lambda () (dogears-mode 1))))
 
@@ -181,14 +169,10 @@
 ;; Jump to where you last edited, and again to step further back through your
 ;; edits (Vim's g; / g,).  Complements dogears: dogears tracks places you
 ;; *visited*, goto-chg tracks places you *changed*.  Deferred via autoloads.
-;; smartrep makes it repeatable: `C-c g' then tap g/G to keep walking.
+;; `M-g .' then tap . / , to keep walking (keymaps.el, via `repeat-mode').
 (use-package goto-chg
   :ensure t
-  :commands (goto-last-change goto-last-change-reverse)
-  :init
-  (smartrep-define-key global-map "C-c"
-    '(("g" . goto-last-change)
-      ("G" . goto-last-change-reverse))))
+  :commands (goto-last-change goto-last-change-reverse))
 
 ;;; --- Custom Commands ---
 
@@ -204,8 +188,8 @@
     (insert "\n" (make-string final-indent ?\ ) "- [ ] ")))
 
 ;;; Keybindings
-(global-set-key (kbd "C-c 0")   #'rsr/insert-indented-todo-item)
-(global-set-key (kbd "C-c C-0") #'rsr/insert-indented-todo-item)
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c 0") #'rsr/insert-indented-todo-item))
 
 (provide 'editor-config)
 ;;; editor-config.el ends here
