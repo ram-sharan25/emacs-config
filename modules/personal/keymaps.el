@@ -15,6 +15,7 @@
 ;;   C-c g      Google calendar        C-c o  open
 ;;   C-c h      hide/show (prog modes) C-c p  projectile (projectile-config.el)
 ;;   C-c i      AI and agents          C-c r  research / papers
+;;   C-c j      Linear issues (linear-config.el)
 ;;   C-c m      multiple cursors       C-c s  sync
 ;;   C-c w      workspaces (perspective-config.el)
 ;;   C-c t      time and tools
@@ -99,6 +100,16 @@ devlog.el."
   "l" #'my-open-leetcode-folder
   "v" #'my/watch-random-video)
 
+(defvar-keymap rsr/linear-map
+  :doc "Linear issues (C-c j)."
+  :prefix 'rsr/linear-map
+  "l" #'linear-emacs-list-issues
+  "p" #'linear-emacs-list-issues-by-project
+  "n" #'linear-emacs-new-issue
+  "s" #'linear-emacs-sync-current-heading-to-linear
+  "o" #'rsr/linear-open-org
+  "t" #'linear-emacs-test-connection)
+
 (defvar-keymap rsr/research-map
   :doc "Research and papers (C-c r)."
   :prefix 'rsr/research-map
@@ -139,6 +150,7 @@ devlog.el."
 (keymap-global-set "C-c f" #'apheleia-format-buffer)
 (keymap-global-set "C-c g" 'my/gcal-map)
 (keymap-global-set "C-c i" 'rsr/ai-map)
+(keymap-global-set "C-c j" 'rsr/linear-map)
 (keymap-global-set "C-c l" #'org-store-link)
 (keymap-global-set "C-c L" #'rsr/org-store-link-to-clipboard)
 (keymap-global-set "C-c m" 'rsr/mc-map)
@@ -251,7 +263,8 @@ devlog.el."
 (with-eval-after-load 'which-key
   (which-key-add-key-based-replacements
     "C-c c" "capture"     "C-c g" "gcal"        "C-c i" "AI"
-    "C-c i n" "NotebookLM" "C-c m" "multi-cursor" "C-c n" "notes"
+    "C-c i n" "NotebookLM" "C-c j" "Linear"      "C-c m" "multi-cursor"
+    "C-c n" "notes"
     "C-c o" "open"        "C-c r" "research"    "C-c s" "sync"
     "C-c t" "time/tools"  "C-c t m" "mind-state" "C-c w" "workspaces"
     "M-m" "legacy leader" "M-m a" "AI" "M-m n" "NotebookLM" "M-m s" "sync"
