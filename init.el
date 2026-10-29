@@ -86,7 +86,7 @@
 ;;; Line spacing
 ;;
 ;; A float, not a pixel count: a float is a multiple of the line's own height,
-;; so org at Monaco 16pt and code at Fira Code 17pt each get proportional
+;; so org at Menlo 16pt and code at Fira Code 17pt each get proportional
 ;; spacing rather than one fixed gap tuned to whichever buffer came first.
 ;;
 ;; Known cost, accepted: `line-spacing' puts its pixels *below* the glyphs and

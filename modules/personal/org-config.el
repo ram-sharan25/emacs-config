@@ -440,23 +440,27 @@ thought tags, and font-lock does not colour them either."
 
 ;;; Font
 ;;
-;; Org keeps Monaco 16pt -- what this config used everywhere before the switch
-;; to Fira Code 12pt for code.  Prose and headings read better at that size,
-;; and org's scaled heading faces look heavy in a narrow coding font.
+;; Org uses Menlo 16pt rather than the Fira Code used for code.  Prose and
+;; headings read better at that size, and org's scaled heading faces look
+;; heavy in a narrow coding font.
+;;
+;; Menlo, not Monaco: macOS ships Monaco in Regular only, so *bold* and
+;; /italic/ emphasis had no face to render with and showed as plain text.
+;; Menlo is Monaco's descendant and ships Bold, Italic and Bold Italic.
 ;;
 ;; `buffer-face-mode' rather than a global face, so it applies only to org
 ;; buffers.  The `line-height' balancing in init.el is a no-op here: Emacs
-;; never shrinks a line below the font's own box, and Monaco 16pt is already
+;; never shrinks a line below the font's own box, and Menlo 16pt is already
 ;; taller than the 18px that property asks for.
 
 (defun rsr/org-font ()
-  "Use Monaco 16pt in this org buffer."
-  (setq-local buffer-face-mode-face '(:family "Monaco" :height 160))
+  "Use Menlo 16pt in this org buffer."
+  (setq-local buffer-face-mode-face '(:family "Menlo" :height 160))
   (buffer-face-mode 1))
 
 ;; `org-agenda-mode' is a standalone major mode, not derived from `org-mode',
 ;; so it needs its own hook or the agenda renders in the code font while every
-;; .org file is Monaco.
+;; .org file is Menlo.
 (add-hook 'org-mode-hook        #'rsr/org-font)
 (add-hook 'org-agenda-mode-hook #'rsr/org-font)
 
