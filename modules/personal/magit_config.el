@@ -12,6 +12,23 @@
   (magit-diff-refine-hunk t))   ;; highlight changed words within a hunk
 ;; C-x g, C-c M-g and C-x M-g come from magit's own global bindings.
 
+;; forge — GitHub issues and PRs inside magit (N in a magit buffer)
+;; The token lives in ~/.emacs.d/secrets.el.gpg as `my/github-token', not in
+;; authinfo.  gcal.el usually loads that file at startup; otherwise decrypt it
+;; on the first GitHub request.  Other hosts still fall through to auth-source.
+(use-package forge
+  :ensure t
+  :after magit
+  :config
+  (defun rsr/ghub-token-from-secrets (host _username _package &rest _)
+    (when (member host '("api.github.com" "github.com"))
+      (unless (boundp 'my/github-token)
+        (require 'epa-file)
+        (setq epg-pinentry-mode 'loopback)
+        (load "~/.emacs.d/secrets.el.gpg"))
+      my/github-token))
+  (advice-add 'ghub--token :before-until #'rsr/ghub-token-from-secrets))
+
 ;; diff-hl — show git changes in fringe while editing (like VS Code git gutter)
 (use-package diff-hl
   :ensure t

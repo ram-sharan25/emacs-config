@@ -70,3 +70,4 @@ agent-sessions.db*
 # Emacs lock/autosave files and evil-tutor working copies
 #*#
 .tutor/
+forge-database.sqlite
