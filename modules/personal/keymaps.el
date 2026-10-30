@@ -86,9 +86,16 @@ devlog.el."
   "C" #'my/resource-compile-notes
   "x" #'my/notes-rebuild-index)
 
+(defun rsr/open-keybindings-cheatsheet ()
+  "Open the keybinding cheat sheet read-only; q closes it."
+  (interactive)
+  (find-file (expand-file-name "docs/keybindings.org" user-emacs-directory))
+  (view-mode 1))
+
 (defvar-keymap rsr/open-map
   :doc "Open (C-c o)."
   :prefix 'rsr/open-map
+  "k" #'rsr/open-keybindings-cheatsheet
   "t" #'rsr/agent-tmux-terminal
   "j" #'my/open-journal-file
   "d" #'my/open-tasks-file
