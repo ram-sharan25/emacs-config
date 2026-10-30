@@ -18,8 +18,7 @@
 (require 'agent-sessions)
 (require 'agent-workflow)
 
-(setq rsr/agent-sessions-terminal 'tmux
-      rsr/agent-sessions-show-all-worktrees t)
+(setq rsr/agent-sessions-terminal 'tmux)
 ;; The database defaults to ~/.emacs.d/agent-sessions.db (gitignored).
 
 (keymap-set rsr/ai-map "d" #'rsr/agent-sessions-list)          ; C-c i d
