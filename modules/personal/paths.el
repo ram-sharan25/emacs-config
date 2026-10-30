@@ -155,6 +155,13 @@ so total focus hours show up via the agenda's clock report (`R').")
   "Job applications CV library directory.")
 ;;; Development
 
+(defconst my/project-search-dirs
+  `((,my/development-dir . 2)
+    (,(expand-file-name "IMPACT_WORK/Projects/" my/root-dir) . 3))
+  "Where repositories live, each with how many levels down to look.
+Used as `magit-repository-directories' and `projectile-project-search-path',
+so a repository created anywhere under these is found without registering it.")
+
 (defconst my/leetcode-dir (expand-file-name "NeetCode/" my/development-dir)
   "LeetCode/NeetCode solutions and notes.")
 

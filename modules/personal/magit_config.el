@@ -9,7 +9,9 @@
   (magit-diff-hide-trailing-cr-characters t)
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   :custom
-  (magit-diff-refine-hunk t))   ;; highlight changed words within a hunk
+  (magit-diff-refine-hunk t)   ;; highlight changed words within a hunk
+  ;; Scanned, not listed: any repo under these shows up on its own.
+  (magit-repository-directories my/project-search-dirs))
 ;; C-x g, C-c M-g and C-x M-g come from magit's own global bindings.
 
 ;; forge — GitHub issues and PRs inside magit (N in a magit buffer)
