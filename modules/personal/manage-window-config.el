@@ -102,7 +102,12 @@
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
         aw-scope 'frame
-        aw-dispatch-always t))
+        aw-dispatch-always t)
+  ;; The letter overlay merges with the face of the text it covers.  Over a
+  ;; Nerd Font icon (the agent-sessions dashboard's first line) it inherits
+  ;; the symbols-only :family and draws as an empty box; pin the family.
+  (set-face-attribute 'aw-leading-char-face nil
+                      :family (face-attribute 'default :family)))
 
 (defun rsr/toggle-window-split ()
   "Toggle between horizontal and vertical split for two windows."
