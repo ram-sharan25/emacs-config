@@ -103,11 +103,15 @@
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
         aw-scope 'frame
         aw-dispatch-always t)
-  ;; The letter overlay merges with the face of the text it covers.  Over a
-  ;; Nerd Font icon (the agent-sessions dashboard's first line) it inherits
-  ;; the symbols-only :family and draws as an empty box; pin the family.
+  ;; Pin the replacement string's face as well as the overlay face: text
+  ;; under the overlay can have a symbols-only `font-lock-face' (dashboard
+  ;; icons), which otherwise leaks into the selection letter.
   (set-face-attribute 'aw-leading-char-face nil
-                      :family (face-attribute 'default :family)))
+                      :family (face-attribute 'default :family))
+  (defun rsr/ace-window-letter-face (text)
+    "Give ace-window replacement TEXT an explicit text font."
+    (propertize text 'face 'aw-leading-char-face))
+  (advice-add 'aw--overlay-str :filter-return #'rsr/ace-window-letter-face))
 
 (defun rsr/toggle-window-split ()
   "Toggle between horizontal and vertical split for two windows."
