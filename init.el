@@ -22,6 +22,9 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
+;; Vendored modules require Compat even when Emacs itself is recent.
+(use-package compat :ensure t :demand t)
+
 ;;; Paths
 
 (setf custom-file (expand-file-name ".custom" user-emacs-directory))
@@ -35,6 +38,10 @@
 (setq x-super-modifier 'meta)
 (define-prefix-command 'rsr/global-prefix-map)
 (define-key global-map (kbd "M-m") 'rsr/global-prefix-map)
+
+;;; Machine-local overrides (optional, never committed)
+
+(load (expand-file-name "local.el" user-emacs-directory) t t)
 
 ;;; Module Loader
 

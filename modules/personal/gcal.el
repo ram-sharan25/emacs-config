@@ -2,13 +2,17 @@
 
 (require 'epa-file)
 (epa-file-enable)
-(setq epg-pinentry-mode 'loopback)
-(condition-case err
-    (load "~/.emacs.d/secrets.el.gpg")
-  (error (message "gcal: failed to load secrets (wrong passphrase?): %s" err)))
+;; Preserve Mac pinentry behavior; use the desktop agent on Linux.
+(setq epg-pinentry-mode (unless (eq system-type 'gnu/linux) 'loopback))
+(unless (or noninteractive (featurep 'my-secrets))
+  (condition-case err
+      (load "~/.emacs.d/secrets.el.gpg")
+    (error (message "gcal: failed to load secrets: %s" err))))
 (require 'paths)
 
 (use-package org-gcal
+  :if (and (bound-and-true-p my/google-client-id)
+           (bound-and-true-p my/google-client-secret))
   :ensure t
   :init
   (setq plstore-encrypt-to nil

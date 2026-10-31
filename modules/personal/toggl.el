@@ -3,6 +3,7 @@
 (add-to-list 'load-path "~/.emacs.d/modules/git-modules/org-toggle/")
 
 (use-package org-toggl
+  :if (bound-and-true-p my/toggl-auth-token)
   :ensure nil
   :after org
   :init

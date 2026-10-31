@@ -12,7 +12,7 @@
 
 ;; Load autoloads only — no package code, no MCP server, no hooks at startup
 (load (expand-file-name "elpa/claude-code-ide/claude-code-ide-autoloads"
-                        user-emacs-directory) nil t)
+                        user-emacs-directory) t t)
 
 ;; Set backend before the package body loads — avoids "vterm not installed" error
 ;; if claude-code-ide is triggered outside of rsr/claude-code-ide-menu

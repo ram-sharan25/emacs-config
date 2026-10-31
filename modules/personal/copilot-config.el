@@ -2,9 +2,16 @@
 
 ;;; Code:
 
+(defun rsr/copilot-enable-if-available ()
+  "Enable Copilot only when its language server is installed."
+  (when (and (not noninteractive)
+             (require 'copilot nil t)
+             (ignore-errors (copilot-server-executable)))
+    (copilot-mode 1)))
+
 (use-package copilot
   :defer t
-  :hook (prog-mode . copilot-mode)
+  :hook (prog-mode . rsr/copilot-enable-if-available)
   :config
   (setq copilot-idle-delay 0.5)
 

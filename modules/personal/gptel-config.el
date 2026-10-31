@@ -2,7 +2,8 @@
 
 ;;; Code:
 
-(require 'my-secrets)
+(require 'my-secrets nil t)
+(defvar my/gemini-key nil "Gemini API key from the encrypted secrets file.")
 
 ;;; --- GPTel ---
 

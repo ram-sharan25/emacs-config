@@ -37,7 +37,6 @@
 (require 'svg)
 (require 'seq)
 (require 'compat)
-(require 'compat-macs)
 
 ;;;; Faces
 
@@ -361,15 +360,11 @@ are tagged with a tag in car."
 
 ;;;; Functions
 
-(compat-version "29.1")
-
-(compat-defun org-fold-show-context (&optional key)
-  "Make sure point and context are visible."
-  (org-show-context key))
-
 (defun org-timeblock-show-context ()
   "Make sure point and context are visible."
-  (compat-call org-fold-show-context 'agenda))
+  (if (fboundp 'org-fold-show-context)
+      (org-fold-show-context 'agenda)
+    (org-show-context 'agenda)))
 
 (defsubst org-timeblock-format-time (format-string time)
   "Use FORMAT-STRING to format the time value TIME."

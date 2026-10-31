@@ -52,7 +52,13 @@ CLAUDE.md
 # External package clones (vendored separately)
 modules/git-modules/copilot/
 
+# Machine-specific overrides (may contain private paths)
+/local.el
+/local.env
+
 # Runtime state
+places.eld
+projectile-frecency.eld
 .video-watched
 places
 eln-cache/
