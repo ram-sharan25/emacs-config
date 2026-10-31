@@ -95,7 +95,7 @@
 ;;; --- Window Navigation ---
 
 ;; ace-window — jump, swap, close windows with letter overlays.  Replaces
-;; `other-window' (C-x o) via a remap in keymaps.el, as its README suggests.
+;; `other-window' (C-x o) via an explicit binding in keymaps.el.
 (use-package ace-window
   :ensure t
   :defer t

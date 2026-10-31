@@ -193,7 +193,8 @@ devlog.el."
 
 ;;; --- Windows and version control ---
 
-(keymap-global-set "<remap> <other-window>" #'ace-window)
+;; ace-window: choose a window, or x delete / m swap / M move / ? help.
+(keymap-global-set "C-x o" #'ace-window)
 (keymap-global-set "<remap> <split-window-below>" #'rsr/split-horizontal)
 (keymap-global-set "<remap> <split-window-right>" #'rsr/split-vertical)
 (keymap-global-set "C-x w t" #'rsr/toggle-window-split)
