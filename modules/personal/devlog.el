@@ -82,7 +82,7 @@ A new session starts when LAST-SESSION is before CLOCK-START's minute."
   "Capture template for a devlog line.")
 
 (defun rsr/devlog-capture-target ()
-  "Move to the end of the clocked task's Devlog heading, creating it if needed."
+  "Select the clocked task's Devlog heading, creating it if needed."
   (unless (org-clocking-p)
     (user-error "Not clocked in: clock into a task first"))
   (set-buffer (marker-buffer org-clock-marker))
@@ -90,8 +90,9 @@ A new session starts when LAST-SESSION is before CLOCK-START's minute."
   (goto-char (rsr/devlog--ensure-child rsr/devlog-heading))
   (setq rsr/devlog--pending-session
         (rsr/devlog--session-line (rsr/devlog--last-session-time) org-clock-start-time))
-  (org-end-of-subtree t t)
-  (unless (bolp) (insert "\n")))
+  ;; Plain capture appends to the selected entry.  Moving to subtree end can
+  ;; select the NEXT task's heading, causing capture to append under that task.
+  (org-back-to-heading t))
 
 (defun rsr/devlog--task-heading ()
   "Return the position of the nearest task heading at or above point."

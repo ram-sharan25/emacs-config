@@ -60,7 +60,6 @@ modules/git-modules/copilot/
 
 # Runtime state
 places.eld
-projectile-frecency.eld
 .video-watched
 places
 eln-cache/

@@ -55,10 +55,17 @@
 
 ;;; Module Loader
 
+(defvar rsr/local-disabled-modules nil
+  "Module basenames disabled by this machine's local.el, without .el suffix.")
+
 (defun load-directory (directory)
-  "Load all .el files in DIRECTORY."
+  "Load .el files in DIRECTORY except explicitly disabled local modules."
   (dolist (file (directory-files directory t "\\.el$"))
-    (load (file-name-sans-extension file))))
+    (if (member (file-name-base file) rsr/local-disabled-modules)
+        (display-warning 'local-config
+                         (format "Module %s is disabled locally; install its dependencies and update local.el."
+                                 (file-name-base file)))
+      (load (file-name-sans-extension file)))))
 
 ;; Refresh foundational path constants before loading modules.  This explicit
 ;; load also makes reloading init.el pick up newly added paths in a live session,
