@@ -169,6 +169,11 @@ devlog.el."
 
 ;;; --- Goto (M-g) and search (M-s) ---
 
+;; Restore built-in prefixes before adding children: an older live config may
+;; have bound M-g/M-s to commands, which otherwise makes reloading fail.
+(keymap-global-set "M-g" goto-map)
+(keymap-global-set "M-s" search-map)
+
 ;; Jump to the last edit, then tap . / , to keep walking (Vim's g; / g,).
 (defvar-keymap rsr/goto-chg-repeat-map
   :repeat t
