@@ -58,10 +58,10 @@
 ;;
 ;;   C-c o t   attach to the repository's session (C-u: plain ghostel shell),
 ;;             bound in keymaps.el
-;;   C-c i i   new window running Claude Code in the session
+;;   C-c i i   new window running the default agent (C-u: alternate)
 ;;   C-c i p   new window running pi in the session
 
-(keymap-set rsr/ai-map "i" #'rsr/agent-tmux-claude)   ; C-c i i, see keymaps.el
+(keymap-set rsr/ai-map "i" #'rsr/agent-tmux-default)   ; C-c i i, see keymaps.el
 (keymap-set rsr/ai-map "p" #'rsr/agent-tmux-pi)       ; C-c i p
 
 (provide 'terminal-config)

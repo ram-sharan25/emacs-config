@@ -7,7 +7,7 @@
 ;; (agent-sessions-tmux.el); C-c o t is bound in keymaps.el, C-c i i /
 ;; C-c i p in terminal-config.el.  C-c i w is the planning workflow
 ;; (agent-workflow.el): lowercase opens a stage, uppercase its review, `c'
-;; the same keys as a child of the current session, `y' bring in; C-u = Pi.  `rsr/ai-map' is defined in keymaps.el.
+;; the same keys as a child of the current session, `y' bring in; C-u selects the alternate agent.  `rsr/ai-map' is defined in keymaps.el.
 ;; C-c i l goes back to the last agent viewed (again to toggle).
 ;; Hook wiring into ~/.claude, ~/.codex and Pi is one-time:
 ;;   M-x rsr/agent-sessions-install
