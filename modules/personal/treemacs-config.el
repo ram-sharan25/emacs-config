@@ -65,8 +65,7 @@ If the current buffer is not part of a project, fall back to plain Treemacs."
     (_ (treemacs-git-mode 'deferred)))
 
   :bind
-  (("M-0"     . treemacs-select-window)
-   ("C-x t t" . rsr/treemacs-toggle-current-project)
+  (("C-x t t" . rsr/treemacs-toggle-current-project)
    ("C-x t 1" . treemacs-delete-other-windows)
    ("C-x t f" . treemacs-find-file)
    ("C-x t d" . treemacs-select-directory)))

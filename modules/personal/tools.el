@@ -2,19 +2,26 @@
 
 ;;; Code:
 
-;;; Search
-;; M-g → rgrep: cross-file search with prompt for pattern + directory
-
-;;; Line Selection
-;; s-l → select whole line and copy to kill ring
-(defun rsr/select-whole-line ()
-  "Select the entire current line and copy it to the kill ring."
+;;; Copy / Cut
+;; s-c / s-x: with no region, copy or cut the whole line (VS Code)
+;; Each one starts a fresh kill-ring entry, as VS Code replaces the clipboard:
+;; binding `last-command' to nil stops Emacs appending to a previous kill.
+(defun rsr/copy-region-or-line ()
+  "Copy the region, or the whole current line when no region is active."
   (interactive)
-  (beginning-of-line)
-  (set-mark-command nil)
-  (end-of-line)
-  (forward-char 1)
-  (kill-ring-save (region-beginning) (region-end)))
+  (let ((last-command nil))
+    (if (use-region-p)
+        (call-interactively #'kill-ring-save)
+      (kill-ring-save (line-beginning-position) (line-beginning-position 2))
+      (message "Copied line"))))
+
+(defun rsr/kill-region-or-line ()
+  "Kill the region, or the whole current line when no region is active."
+  (interactive)
+  (let ((last-command nil))
+    (if (use-region-p)
+        (call-interactively #'kill-region)
+      (kill-whole-line))))
 
 ;;; Comment / Uncomment
 ;; works on active region or current line if no region is selected
@@ -61,39 +68,8 @@
 (add-hook 'text-mode-hook #'rsr/enable-visual-line-for-text)
 (show-paren-mode 1)           ;; highlight matching parentheses
 
-;;; Keybinding Search
-;; C-c o s → search keybindings.md with live consult-line
-(defun rsr/search-keybindings ()
-  "Search all keybindings by keyword in the minibuffer.
-
-Parses keybindings.md and prefixes each table row with its section heading
-so you can search by topic (e.g. \"roam\", \"capture\") or by key.
-No file buffer is opened or switched to."
-  (interactive)
-  (let* ((file (expand-file-name "docs/reference/keybindings.md" user-emacs-directory))
-         (lines (with-temp-buffer
-                  (insert-file-contents file)
-                  (split-string (buffer-string) "\n")))
-         (section "")
-         candidates)
-    ;; Build candidates: track headings, annotate each data row with section
-    (dolist (line lines)
-      (cond
-       ;; Section heading (## or ###): strip markdown and emoji for clean label
-       ((string-match "^##+ +\\(.+\\)" line)
-        (setq section (replace-regexp-in-string
-                       "[[:nonascii:]] *" "" (match-string 1 line))))
-       ;; Data row: not a separator (|---|)
-       ((string-match-p "^|[^-]" line)
-        (push (format "[%s] %s" (string-trim section) line) candidates))))
-    (let* ((rows (nreverse candidates))
-           (result (let ((completion-styles '(substring))
-                         (completion-ignore-case t))
-                     (completing-read "Keybinding: " rows nil t))))
-      (message "%s" result))))
-
 ;;; Daily Inspiration Video
-;; C-c i → stream a random short video (<5 min) in mpv
+;; C-c o v → stream a random short video (<5 min) in mpv
 ;; Topics: eastern philosophy, Jung/Adler, math history, poems, zen, running
 ;; Reminded once at startup and every 45 min idle if not yet watched today.
 
@@ -197,50 +173,17 @@ If QUERY is nil the script uses its built-in theme list."
   "Open the video watch history file."
   (interactive)
   (find-file my/video-history-file))
-(defun my/watch-random-video (&optional arg)
-  "Pick a random short inspiring video via AI-generated query and stream in mpv.
-
-With no prefix: Claude Haiku (via GitHub Copilot backend) generates the
-search query based on your interests, then yt-dlp finds a video ≤5 min.
-
-With C-u prefix: choose backend interactively —
-  Claude Haiku  — most creative, default
-  Copilot       — GPT-4o via GitHub Copilot
-  Local         — no AI, use built-in theme list
-
+(defun my/watch-random-video (&optional _arg)
+  "Pick a random short inspiring video locally and stream it in mpv.
 Records today as watched to suppress daily reminders."
   (interactive "P")
-  (let* ((backends `(("Copilot GPT-5-mini" . (,rsr/gptel-github-backend . gpt-5-mini))
-                     ("Claude Haiku"       . (,rsr/gptel-github-backend . claude-haiku-4.5))
-                     ("Copilot GPT-4o"    . (,rsr/gptel-github-backend . gpt-4o))
-                     ("Local (no AI)"     . nil)))
-         (choice   (if arg
-                       (completing-read "AI backend: " (mapcar #'car backends) nil t)
-                     "Copilot GPT-5-mini"))
-         (backend-pair (cdr (assoc choice backends))))
-    (if (null backend-pair)
-        ;; Local fallback — no AI
-        (progn
-          (message "Finding inspiration (local)...")
-          (my/video-launch-script nil))
-      ;; AI path — let-bind backend/model, single non-streaming request
-      (message "Asking %s for inspiration..." choice)
-      (let ((gptel-backend (car backend-pair))
-            (gptel-model   (cdr backend-pair)))
-        (gptel-request my/video-ai-prompt
-          :stream   nil
-          :callback (lambda (response info)
-                      (if (stringp response)
-                          (my/video-launch-script (string-trim response))
-                        ;; AI failed — show status and fall back to built-in list
-                        (message "AI failed (%s), using built-in theme..."
-                                 (plist-get info :status))
-                        (my/video-launch-script nil))))))))
+  (message "Finding inspiration (local)...")
+  (my/video-launch-script nil))
 
 (defun my/video-maybe-remind ()
   "Nudge if no inspiration video has been watched today."
   (unless (my/video-watched-today-p)
-    (message "[Inspiration] Haven't watched today — C-c i to get inspired.")))
+    (message "[Inspiration] Haven't watched today — C-c o v to get inspired.")))
 
 (require 'org-crypt)
 (setq org-tags-exclude-from-inheritance '("crypt"))
@@ -274,34 +217,7 @@ Records today as watched to suppress daily reminders."
 (run-with-idle-timer (* 45 60) t #'my/video-maybe-remind)
 
 ;;; Keybindings
-
-;; The NS build defined these in ns-win.el; the emacs-mac port does not, since
-;; it assumes Cmd=meta. We remap Cmd to super in early-init.el, so recreate the
-;; standard macOS chords here. Cmd-C matters most: M-w is unreachable because
-;; the window manager binds Option-w.
-(global-set-key (kbd "s-s")        #'save-buffer)
-(global-set-key (kbd "s-c")        #'kill-ring-save)
-(global-set-key (kbd "s-v")        #'yank)
-(global-set-key (kbd "s-x")        #'kill-region)
-(global-set-key (kbd "s-z")        #'undo)
-(global-set-key (kbd "s-a")        #'mark-whole-buffer)
-
-;; Zoom. One function for all four: `text-scale-adjust' reads the key that
-;; invoked it to decide in/out/reset, and stays active for bare = / - repeats.
-;; Inert on Linux — `x-super-modifier' is meta there, so nothing emits s-.
-;; The portable equivalent is `C-x C-=', which works on every platform.
-(global-set-key (kbd "s-=")        #'text-scale-adjust)  ;; Cmd+=       zoom in
-(global-set-key (kbd "s-+")        #'text-scale-adjust)  ;; Cmd+Shift+= zoom in
-(global-set-key (kbd "s--")        #'text-scale-adjust)  ;; Cmd+-       zoom out
-(global-set-key (kbd "s-0")        #'text-scale-adjust)  ;; Cmd+0       reset
-
-(global-set-key (kbd "s-F")        #'consult-ripgrep)  ;; Cmd+Shift+F — project-wide search
-(global-set-key (kbd "M-g")        #'rgrep)
-(global-set-key (kbd "s-l")        #'rsr/select-whole-line)
-(global-set-key (kbd "s-/")        #'rsr/comment-or-uncomment)
-(global-set-key (kbd "C-/")        #'rsr/comment-or-uncomment)
-(global-set-key (kbd "s-k")        #'kill-whole-line)
-(global-set-key (kbd "C-c l")      #'org-store-link)
+;; Cmd keys, C-/ and C-c l / C-c L are in keymaps.el.
 
 ;; C-c L → store link AND push formatted [[link][desc]] to kill-ring/clipboard.
 ;; Lets you paste org-stored links outside Emacs (e.g. into other apps).
@@ -318,32 +234,6 @@ Records today as watched to suppress daily reminders."
                         (format "[[%s]]" link))))
       (kill-new formatted)
       (message "Stored + copied: %s" formatted))))
-(global-set-key (kbd "C-c L")      #'rsr/org-store-link-to-clipboard)
-
-(global-set-key (kbd "C-c i")      #'my/watch-random-video)
-
-;; Focus-timer: non-blocking bridge to the standalone ~/focus-timer web app
-;; (Node server + browser/mpv dial + menu-bar SwiftBar plugin). Independent of
-;; org-clock and Toggl — see ~/focus-timer/README.md.
-;; C-c f: menu-bar only. C-u C-c f: also opens the full-screen dial window.
-;; M-m f w: open the dial window on its own, any time, without touching the
-;; running block (e.g. started menu-bar-only, now want the window too).
-;; M-m f c: start a block AND launch a background companion (ambient site or
-;; study-with-me video, curated in ~/focus-timer/companions.json).
-;; C-u M-m f c: also open the dial window — menu + dial + video, all three.
-;; M-m f s / f r: stop / restart the video companion on its own, independent
-;; of the block (block, menu bar, dial window all untouched).
-(when (file-exists-p "~/focus-timer/focus-timer.el")
-  (load "~/focus-timer/focus-timer.el"))
-(global-set-key (kbd "C-c f")      #'rsr/focus-start-at-point)
-
-(bind-keys :map rsr/global-prefix-map
-           ("t c" . calc)
-           ("t d" . dictionary-search)
-           ("f w" . rsr/focus-show-window)
-           ("f c" . rsr/focus-start-with-companion)
-           ("f s" . rsr/focus-stop-video)
-           ("f r" . rsr/focus-restart-video))
 
 (provide 'tools)
 ;;; tools.el ends here

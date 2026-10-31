@@ -15,7 +15,7 @@
   :config
   ;; disable in non-editing modes — prevents org-element-at-point warnings
   (add-hook 'org-agenda-mode-hook (lambda () (corfu-mode -1)))
-  (add-hook 'vterm-mode-hook      (lambda () (corfu-mode -1)))
+  (add-hook 'ghostel-mode-hook    (lambda () (corfu-mode -1)))
 
   ;; macOS NS: make-frame-visible calls makeKeyAndOrderFront: which steals the
   ;; macOS key window. When the frame is later hidden, focus goes to the last

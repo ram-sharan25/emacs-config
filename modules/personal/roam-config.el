@@ -16,16 +16,16 @@
 
 (use-package org-roam
   :ensure t
-  :bind (:map global-map
-        (("M-m r f" . org-roam-node-find)
-         ("M-m r i" . org-roam-node-insert)
-         ("M-m r F" . org-roam-ref-find)
-         ("M-m r c" . org-roam-capture)
-         ("M-m r g" . org-roam-graph)
-         ("M-m r r" . org-roam-buffer-toggle)
-         ("M-m r e" . org-roam-ref-add)
-         ("M-m r a" . org-roam-alias-add)
-         ("M-m r t" . org-roam-tag-add)))
+  :bind (:map rsr/notes-map              ; C-c n, org-roam's own prefix
+        (("f" . org-roam-node-find)
+         ("i" . org-roam-node-insert)
+         ("F" . org-roam-ref-find)
+         ("c" . org-roam-capture)
+         ("g" . org-roam-graph)
+         ("r" . org-roam-buffer-toggle)
+         ("e" . org-roam-ref-add)
+         ("a" . org-roam-alias-add)
+         ("t" . org-roam-tag-add)))
   :config
   (setq org-roam-directory my/brain-dir)
   (setq org-roam-file-exclude-regexp '("^gtd/" "^Archives/" "^Dashboard/" "^cleanup_2026_02_27/"))
@@ -179,13 +179,10 @@ native org-cite syntax instead of \\cite{key}."
 
 ;;; Keybindings
 
-(global-set-key (kbd "M-m r s") #'rsr/search-brain)
-(global-set-key (kbd "M-m r p") #'rsr/open-paper)
-(global-set-key (kbd "M-m r n") #'rsr/edit-paper-note)
-(global-set-key (kbd "C-c ]")   #'org-ref-insert-link)
+;; M-s b search brain, C-c r p / n / c papers and org-ref link: keymaps.el.
 
 ;; In org buffers, C-c ] is the completing-read citation picker (mirrors the
-;; LaTeX C-c ] in latex-config.el); overrides the global org-ref-insert-link.
+;; LaTeX C-c ] in latex-config.el); org-ref-insert-link is C-c r c.
 (with-eval-after-load 'org
   (define-key org-mode-map (kbd "C-c ]") #'rsr/org-insert-citation))
 

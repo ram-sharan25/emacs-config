@@ -76,8 +76,21 @@
 (defconst my/discarded-file (expand-file-name "discarded.org" my/gtd-dir)
   "Discarded/cancelled tasks.")
 
-(defconst my/gcal-file (expand-file-name "gcal.org" my/gtd-dir)
-  "Google Calendar sync file.")
+(defconst my/gcal-calendars-dir (expand-file-name "calendars/" my/gtd-dir)
+  "One Org file per synced Google calendar.")
+
+(defconst my/gcal-calendars-file (expand-file-name "gcal-calendars.el" my/private-dir)
+  "Private file that sets `my/gcal-calendars' (keeps account names out of this repo).")
+
+(defvar my/gcal-calendars nil
+  "Google calendars to sync, set in `my/gcal-calendars-file'.
+Each entry is a plist: :label for prompts, :account whose OAuth token
+is used, :id the calendar ID, and :file the Org file events go to.")
+
+(load my/gcal-calendars-file t t)
+
+(defconst my/gcal-default-calendar "Personal"
+  "Label of the calendar preselected when pushing.")
 
 ;;; Dashboard Files
 
@@ -103,6 +116,22 @@ so total focus hours show up via the agenda's clock report (`R').")
 (defconst my/journal-file (expand-file-name "Journal.org" my/private-dir)
   "Daily journal (private, Git-ignored).")
 
+(defconst my/monthly-reviews-file
+  (expand-file-name "monthly-reviews.org" my/private-dir)
+  "Dated monthly reviews (private, Git-ignored).")
+
+(defconst my/weekly-reviews-file
+  (expand-file-name "weekly-reviews.org" my/private-dir)
+  "Dated weekly reviews (private, Git-ignored).")
+
+(defconst my/monthly-review-template-file
+  (expand-file-name "templates/monthly-review.org" user-emacs-directory)
+  "Org template used to create monthly reviews.")
+
+(defconst my/weekly-review-template-file
+  (expand-file-name "templates/weekly-review.org" user-emacs-directory)
+  "Org template used to create weekly reviews.")
+
 ;;; Phone Inbox
 
 (defconst my/phone-inbox-dir (expand-file-name "phone_inbox" my/brain-dir)
@@ -125,6 +154,13 @@ so total focus hours show up via the agenda's clock report (`R').")
 (defconst my/cv-library-dir (expand-file-name "automate-resume/outputs/"   my/job-applications-dir)
   "Job applications CV library directory.")
 ;;; Development
+
+(defconst my/project-search-dirs
+  `((,my/development-dir . 2)
+    (,(expand-file-name "IMPACT_WORK/Projects/" my/root-dir) . 3))
+  "Where repositories live, each with how many levels down to look.
+Used as `magit-repository-directories' and `projectile-project-search-path',
+so a repository created anywhere under these is found without registering it.")
 
 (defconst my/leetcode-dir (expand-file-name "NeetCode/" my/development-dir)
   "LeetCode/NeetCode solutions and notes.")

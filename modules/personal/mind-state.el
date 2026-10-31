@@ -207,13 +207,7 @@
 (add-hook 'emacs-startup-hook #'mind-state--auto-start)
 
 ;;; Keybindings
-(define-prefix-command 'mind-state-map)
-(global-set-key (kbd "C-c s")   'mind-state-map)
-(define-key mind-state-map (kbd "s") #'mind-state-start-tracking)
-(define-key mind-state-map (kbd "q") #'mind-state-stop-tracking)
-(define-key mind-state-map (kbd "l") #'mind-state-manual-log)
-(define-key mind-state-map (kbd "?") #'mind-state-status)
-(define-key mind-state-map (kbd "c") #'mind-state-configure)
+;; C-c t m s / q / l / ? / c: `mind-state-map' in keymaps.el.
 
 (provide 'mind-state)
 ;;; mind-state.el ends here

@@ -27,15 +27,25 @@
 
 ;;; Paths
 
-(setf custom-file (expand-file-name ".custom" user-emacs-directory))
-(push "/Users/stillness/.local/bin" exec-path)
-(setenv "PATH" (concat "/Users/stillness/.local/bin/:" (getenv "PATH")))
+;; Custom's writes go nowhere: this config is hand-written elisp, and a
+;; custom-file that is written but never loaded is a trap -- it accumulated a
+;; stale copy of every face here and would have silently overridden the theme
+;; the day anyone added (load custom-file).
+(setf custom-file null-device)
+
+(defun my/add-local-exec-paths ()
+  "Add available user and Homebrew executable directories to PATH."
+  (dolist (directory (list "/opt/homebrew/bin"))
+    (when (file-directory-p directory)
+      (add-to-list 'exec-path directory)
+      (setenv "PATH" (concat directory path-separator (getenv "PATH"))))))
+
+(my/add-local-exec-paths)
 (add-to-list 'load-path (expand-file-name "modules/personal"    user-emacs-directory))
 (add-to-list 'load-path (expand-file-name "modules/git-modules" user-emacs-directory))
 
 ;;; Global Prefix
 
-(setq x-super-modifier 'meta)
 (define-prefix-command 'rsr/global-prefix-map)
 (define-key global-map (kbd "M-m") 'rsr/global-prefix-map)
 
@@ -50,6 +60,15 @@
   (dolist (file (directory-files directory t "\\.el$"))
     (load (file-name-sans-extension file))))
 
+;; Refresh foundational path constants before loading modules.  This explicit
+;; load also makes reloading init.el pick up newly added paths in a live session,
+;; where `(require 'paths)' would otherwise keep the older definitions.
+(load (expand-file-name "modules/personal/paths.el" user-emacs-directory))
+;; Global keys and prefix maps next, so every module can bind into them.
+;; `load-directory' loads it again; harmless at startup, since `defvar-keymap'
+;; won't redefine.  The flip side: after editing a prefix map, restart Emacs;
+;; reloading leaves the old map (and removed keys) in place.
+(load (expand-file-name "modules/personal/keymaps.el" user-emacs-directory))
 (load-directory (expand-file-name "modules/personal"    user-emacs-directory))
 (load-directory (expand-file-name "modules/git-modules" user-emacs-directory))
 
@@ -59,12 +78,36 @@
   :config
   (when (memq window-system '(mac ns x))
     (setq exec-path-from-shell-variables '("PATH" "MANPATH"))
-    (exec-path-from-shell-initialize)))
+    (exec-path-from-shell-initialize)
+    (my/add-local-exec-paths)))
 
 ;;; Appearance
 
 (global-font-lock-mode 1)
-(set-face-attribute 'default nil :height 160)
+;; :weight medium is deliberate, not the default match falling through.
+;; Installed cuts here: regular, medium, semi-bold, bold (no light).  Keyword
+;; and constant faces track this weight -- see `rsr/match-keyword-weight' in
+;; theme-config.el -- so changing it here keeps the whole buffer consistent.
+(set-face-attribute 'default nil :family "Fira Code" :height 173 :weight 'medium)
+
+;;; Line spacing
+;;
+;; A float, not a pixel count: a float is a multiple of the line's own height,
+;; so org at Menlo 16pt and code at Fira Code 17pt each get proportional
+;; spacing rather than one fixed gap tuned to whichever buffer came first.
+;;
+;; Known cost, accepted: `line-spacing' puts its pixels *below* the glyphs and
+;; paints them with the line's face, so selections, hl-line and diff bands sit
+;; slightly under their text.  Emacs has added the space below since 21.1 and
+;; cannot centre it -- a `line-spacing-vertical-center' patch went to
+;; emacs-devel in 2019 and never landed.
+;;
+;; The `line-height' text property can add space above instead, and was tried.
+;; It is per-newline with an absolute pixel value, so a buffer at a different
+;; font size gets the wrong gap -- smaller fonts get bigger gaps, backwards --
+;; and it needs a jit-lock hook in every buffer to stay applied.  Not worth the
+;; machinery; don't reach for it again without remembering why.
+(setq-default line-spacing 0.175)
 
 ;;; Icons
 
@@ -94,7 +137,6 @@
                go-mode-hook))
   (add-hook hook #'display-fill-column-indicator-mode))
 (add-hook 'after-change-major-mode-hook #'turn-on-auto-fill)
-(global-set-key (kbd "M-q") #'fill-paragraph)
 (setq dired-use-ls-dired nil)
 
 ;;; Org Defaults

@@ -5,7 +5,9 @@
 (use-package perspective
   :ensure t
   :custom
-  (persp-mode-prefix-key (kbd "C-c C-p"))
+  ;; C-c w "workspaces": a user letter, so C-c C-p stays with Org, Markdown,
+  ;; python and ghostel.
+  (persp-mode-prefix-key (kbd "C-c w"))
   :init
   (persp-mode))
 
@@ -29,7 +31,9 @@
     (error (message "rsr/open-project-in-new-frame: %s" (error-message-string err)))))
 
 ;;; Keybindings
-(global-set-key (kbd "C-c C-p F") #'rsr/open-project-in-new-frame)
+;; C-c w F, inside the perspective prefix.
+(with-eval-after-load 'perspective
+  (define-key perspective-map (kbd "F") #'rsr/open-project-in-new-frame))
 
 (provide 'perspective-config)
 ;;; perspective-config.el ends here

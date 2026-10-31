@@ -10,14 +10,36 @@
   :ensure t
   :defer t
   :init
-  (setq lsp-keymap-prefix "C-c l")
+  ;; Language-specific modules only add `lsp-deferred' hooks.  Executable
+  ;; discovery therefore happens when a matching source buffer is opened,
+  ;; after `exec-path-from-shell' has populated the shared `exec-path'.
+  ;; s-l (Cmd+L) is lsp's default, and leaves C-c l to org-store-link.
+  (setq lsp-keymap-prefix "s-l"
+        lsp-enable-suggest-server-download nil)
   :config
-  (setq lsp-idle-delay 0.5
+  ;; Only consider system dependencies found through `exec-path'.  In
+  ;; particular, do not fall back to lsp-mode's private npm, cargo, or
+  ;; download directories.  Future clients inherit this policy.
+  (setq lsp-deps-providers (list :system (plist-get lsp-deps-providers :system))
+        lsp-warn-no-matched-clients t
+        lsp-idle-delay 0.5
         lsp-log-io nil
         lsp-headerline-breadcrumb-enable nil
+        ;; deno is on PATH, so lsp-mode offers deno-ls as a candidate for every
+        ;; TS/JS buffer.  ts-ls outranks it (-2 vs -5) so the right server is
+        ;; always chosen, but the check runs per file and fills *lsp-log*.  No
+        ;; project here is Deno; re-enable per project with a .dir-locals.el
+        ;; entry for `lsp-disabled-clients' if one ever is.
+        lsp-disabled-clients '(deno-ls)
         lsp-document-sync-method 2        ;; incremental — sends diffs only, not full buffer
-        lsp-diagnostics-provider :flymake) ;; flymake handles large error counts better than flycheck
-  (define-key lsp-mode-map (kbd "C-M-,") #'xref-go-forward))
+        lsp-diagnostics-provider :flymake ;; flymake handles large error counts better than flycheck
+        ;; Semantic tokens: the server re-colours symbols using real type
+        ;; information, which tree-sitter cannot know from syntax alone -- a
+        ;; bare identifier as a type vs a variable, say.  This is the last
+        ;; layer VS Code uses on top of its grammar.  Applied after font-lock,
+        ;; so tree-sitter still does the bulk of the work.
+        lsp-semantic-tokens-enable t
+        lsp-semantic-tokens-honor-refresh-requests t))
 
 ;;; lsp-ui — sideline disabled; peek enabled for references
 (use-package lsp-ui
@@ -132,11 +154,22 @@ When focused: q or C-g closes and returns focus."
   (lsp-ui-doc-focus-frame))
 
 (with-eval-after-load 'lsp-mode
-  (define-key lsp-mode-map (kbd "C-c l d") #'my/lsp-doc-show-and-focus)   ;; doc frame — show + focus
-  (define-key lsp-mode-map (kbd "C-c l D") #'lsp-ui-doc-show)             ;; quick hover (no focus)
-  (define-key lsp-mode-map (kbd "C-c l e") #'my/show-error-frame)    ;; error child frame
-  (define-key lsp-mode-map (kbd "C-c l E") #'consult-flymake)        ;; all errors + live code preview
-  (define-key lsp-mode-map (kbd "C-c l p") #'lsp-ui-peek-find-references)) ;; references peek
+  ;; Under lsp's own prefix (s-l), on letters lsp leaves free.
+  (define-key lsp-command-map (kbd "d") #'my/lsp-doc-show-and-focus)   ;; doc frame — show + focus
+  (define-key lsp-command-map (kbd "D") #'lsp-ui-doc-show)             ;; quick hover (no focus)
+  (define-key lsp-command-map (kbd "e") #'my/show-error-frame)    ;; error child frame
+  (define-key lsp-command-map (kbd "E") #'consult-flymake)        ;; all errors + live code preview
+  (define-key lsp-command-map (kbd "p") #'lsp-ui-peek-find-references) ;; references peek
+  (define-key lsp-command-map (kbd "q") #'lsp-ui-doc-hide))   ;; dismiss the doc frame
+
+;; `q' in the doc frame runs `lsp-ui-doc-unfocus-frame', which only makes the
+;; frame invisible when the popup came from mouse hover -- for a keyboard
+;; s-l d it hands focus back and leaves the frame on screen.  Worse,
+;; `lsp-ui-doc-focus-frame' removes the post-command-hook that would otherwise
+;; auto-hide it, and unfocus never restores it, so nothing dismisses it.
+;; `lsp-ui-doc-hide' unfocuses *and* hides; bind it where q already is.
+(with-eval-after-load 'lsp-ui-doc
+  (define-key lsp-ui-doc-frame-mode-map (kbd "q") #'lsp-ui-doc-hide))
 
 (provide 'lsp-mode-config)
 ;;; lsp-mode-config.el ends here

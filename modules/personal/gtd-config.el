@@ -4,10 +4,12 @@
 (require 'paths)
 (require 'org-capture)
 (require 'org-id)
+(require 'devlog)
 
 (defun my/get-area-files ()
-  "Get all .org files in the Areas directory."
-  (directory-files my/areas-dir t "\\.org$"))
+  "Get all .org files in the Areas directory, if it exists."
+  (when (file-directory-p my/areas-dir)
+    (directory-files my/areas-dir t "\\.org$")))
 
 (defvar my/resource-capture-title nil "Temporary storage for resource title during capture.")
 (defvar my/resource-capture-author nil "Temporary storage for resource author during capture.")
@@ -214,6 +216,66 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
     ;; Move to end of the heading line (whether found or created)
     (end-of-line)))
 
+(defun my/review-capture-position ()
+  "Position point at the end of the current year's review subtree."
+  (widen)
+  (goto-char (point-min))
+  (let* ((year (format-time-string "%Y"))
+         (year-heading (format "^\\* %s$" (regexp-quote year))))
+    (if (re-search-forward year-heading nil t)
+        (progn
+          (beginning-of-line)
+          (org-end-of-subtree t t))
+      (goto-char (point-max))
+      (unless (bolp)
+        (insert "\n"))
+      (insert "\n* " year "\n")))
+  (unless (bolp)
+    (insert "\n")))
+
+(defun my/weekly-review-heading ()
+  "Return a heading describing the current Monday-to-Sunday week."
+  (let* ((now (current-time))
+         (weekday (string-to-number (format-time-string "%u" now)))
+         (start (time-subtract now (days-to-time (1- weekday))))
+         (end (time-add start (days-to-time 6))))
+    (format "Week %s — %s to %s Weekly Review"
+            (format-time-string "%V" start)
+            (format-time-string "%Y-%m-%d" start)
+            (format-time-string "%Y-%m-%d" end))))
+
+(defun my/required-review-template (review-type template-file)
+  "Return the capture section from TEMPLATE-FILE for REVIEW-TYPE.
+Signal an explicit error when the file or its template markers are missing.
+Content outside the markers remains documentation and is not copied into each
+captured review."
+  (unless (file-readable-p template-file)
+    (user-error
+     "%s review requires this Org template, but it was not found or readable: %s"
+     review-type template-file))
+  (with-temp-buffer
+    (insert-file-contents template-file)
+    (goto-char (point-min))
+    (unless (re-search-forward "^# TEMPLATE-BEGIN[ \t]*$" nil t)
+      (user-error
+       "%s review template is missing the required # TEMPLATE-BEGIN marker: %s"
+       review-type template-file))
+    (forward-line 1)
+    (let ((begin (point)))
+      (unless (re-search-forward "^# TEMPLATE-END[ \t]*$" nil t)
+        (user-error
+         "%s review template is missing the required # TEMPLATE-END marker: %s"
+         review-type template-file))
+      (buffer-substring-no-properties begin (line-beginning-position)))))
+
+(defun my/monthly-review-template ()
+  "Return the required monthly-review Org template."
+  (my/required-review-template "Monthly" my/monthly-review-template-file))
+
+(defun my/weekly-review-template ()
+  "Return the required weekly-review Org template."
+  (my/required-review-template "Weekly" my/weekly-review-template-file))
+
 ;;; Capture Templates
 
 (setq org-capture-templates
@@ -224,7 +286,7 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
 
         ("s" "Study Task" entry
          (file my/inbox-file)
-         "* TODO %^{Read|Watch|Listen}: %^{Source}   :study:\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n- src: %a\n- res: \n- [ ] Resource note: paper/book → =M-m r n= | other → =C-c c r= (paste link in -res:)\n- [ ] Consume: video → =C-c v o= + =C-c v= | article → =C-c c n= | paper → =M-m r p= + =M-i=\n- [ ] Extract Zettels → =M-m r c → z= (same session)\n- [ ] Link Zettels to * Key Concepts in resource → =M-m r i=\n%?"
+         "* TODO %^{Read|Watch|Listen}: %^{Source}   :study:\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n- src: %a\n- res: \n- [ ] Resource note: paper/book → =C-c r n= | other → =C-c c r= (paste link in -res:)\n- [ ] Consume: video → =C-c v o= + =C-c v= | article → =C-c c n= | paper → =C-c r p= + =M-i=\n- [ ] Extract Zettels → =C-c n c → z= (same session)\n- [ ] Link Zettels to * Key Concepts in resource → =C-c n i=\n%?"
          :empty-lines 1)
 
         ("q" "New Project" entry
@@ -237,7 +299,7 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
          "* %^{Title}\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n:THOUGHTS:\n- %? \n:END:\n- src: %a\n"
          :empty-lines 1)
 
-        ("w" "Web Capture" entry
+        ("W" "Web Capture" entry
          (file my/inbox-file)
          "* [[%:link][%:description]]\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n%?"
          :empty-lines 1)
@@ -245,10 +307,25 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
         ("h" "Log Time" entry (file+datetree ,my/logbook-file)
          "* %? \n" :clock-in t :clock-keep t :clock-resume t)
 
+        ("d" "Devlog line" plain (function rsr/devlog-capture-target)
+         ,rsr/devlog-capture-template :empty-lines 0)
+
         ("j" "Journal" plain
          (file+function ,my/journal-file journal--ensure-daily-heading)
          "** %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n:LOGBOOK:\n:END:\n- src: %a\n- %?"
          :empty-lines 1)
+
+        ("m" "Monthly Review" plain
+         (file+function ,my/monthly-reviews-file my/review-capture-position)
+         (function my/monthly-review-template)
+         :empty-lines 1
+         :jump-to-captured t)
+
+        ("w" "Weekly Review" plain
+         (file+function ,my/weekly-reviews-file my/review-capture-position)
+         (function my/weekly-review-template)
+         :empty-lines 1
+         :jump-to-captured t)
 
         ("t" "Resource" plain
          (file (lambda () (my/capture-resource-file)))
@@ -289,10 +366,10 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
                                      my/waiting-file
                                      my/someday-file
                                      my/rituals-file
-                                     my/gcal-file
                                      my/job-applications-file
                                      my/phone-inbox
                                      my/focus-file)
+                               (mapcar (lambda (c) (plist-get c :file)) my/gcal-calendars)
                                (my/get-area-files)))
 
 (setq org-todo-keywords
@@ -581,7 +658,7 @@ Highlighted tasks appear at the top of the agenda as the daily focus."
   (setq org-timeblock-day-start-hour 6)
   (setq org-timeblock-day-end-hour 23)
   (setq org-timeblock-scale 0.8)
-  (setq org-timeblock-inbox-file my/tasks-file)
+  (setq org-timeblock-inbox-file my/inbox-file)
   (setq org-timeblock-show-future-repeats t)
   (setq org-timeblock-time-grid-step 60))
 
@@ -634,25 +711,17 @@ Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
 (defun my/capture-project ()      "Capture new project."       (interactive) (org-capture nil "q"))
 (defun my/capture-note ()         "Capture fleeting note."     (interactive) (org-capture nil "u"))
 (defun my/capture-journal ()      "Capture journal entry."     (interactive) (org-capture nil "j"))
+(defun my/capture-devlog ()       "Capture a devlog line."     (interactive) (org-capture nil "d"))
+(defun my/capture-monthly-review () "Capture a fresh monthly review." (interactive) (org-capture nil "m"))
+(defun my/capture-weekly-review () "Capture a fresh weekly review." (interactive) (org-capture nil "w"))
 (defun my/capture-log-time ()     "Capture log time entry."    (interactive) (org-capture nil "h"))
 (defun my/capture-resource ()     "Capture resource."          (interactive) (org-capture nil "t"))
-(defun my/capture-web ()          "Capture web link."          (interactive) (org-capture nil "w"))
+(defun my/capture-web ()          "Capture web link."          (interactive) (org-capture nil "W"))
 (defun my/capture-activity ()     "Capture activity."          (interactive) (org-capture nil "a"))
 (defun my/capture-job ()          "Capture job application."   (interactive) (org-capture nil "y"))
 
-(global-set-key (kbd "C-c a")   'org-agenda)
-(global-set-key (kbd "C-c d")   'rsr/org-timeblock-split-view)
-(global-set-key (kbd "C-c c g") 'org-clock-goto)
-(global-set-key (kbd "C-c c i") 'my/capture-inbox)
-(global-set-key (kbd "C-c c s") 'my/capture-study)
-(global-set-key (kbd "C-c c q") 'my/capture-project)
-(global-set-key (kbd "C-c c n") 'my/capture-note)
-(global-set-key (kbd "C-c c j") 'my/capture-journal)
-(global-set-key (kbd "C-c c h") 'my/capture-log-time)
-(global-set-key (kbd "C-c c r") 'my/capture-resource)
-(global-set-key (kbd "C-c c w") 'my/capture-web)
-(global-set-key (kbd "C-c c t") 'my/capture-activity)
-(global-set-key (kbd "C-c c y") 'my/capture-job)
+;; C-c a agenda, C-c c capture, C-c t g clock goto and C-c t b timeblock
+;; view are in keymaps.el.
 (define-key org-agenda-mode-map "j" 'my/org-agenda-process-inbox-item)
 (define-key org-agenda-mode-map "H" 'my/org-agenda-toggle-highlight)
 (define-key org-agenda-mode-map "E" 'my/org-day-effort-budget)

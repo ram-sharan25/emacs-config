@@ -1,7 +1,9 @@
 ;;; mermaid.el --- Mermaid configuration -*- lexical-binding: t; -*-
 
 (require 'paths)
-(use-package ob-mermaid :ensure t :demand t)
+(use-package ob-mermaid
+  :ensure t
+  :demand t)
 
 ;; Use the specific chrome version installed via puppeteer
 (setq ob-mermaid-cli-path "/opt/homebrew/bin/mmdc")

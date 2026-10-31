@@ -284,7 +284,7 @@ IN-PROGRESS → other-state pairs.
 Reads from `my/mobile-sync-dir' and `my/mobile-sync-failed-dir'.
 Successfully processed files are deleted; failures move to failed/ with .error logs.
 
-Usage: M-m s s"
+Usage: C-c s s"
   (interactive)
   (unless (file-directory-p my/mobile-sync-dir)
     (user-error "Sync directory does not exist: %s" my/mobile-sync-dir))
@@ -341,8 +341,7 @@ Usage: M-m s s"
 ;;;
 ;;; Keybindings
 
-(define-key rsr/global-prefix-map (kbd "s e") #'my/export-mobile-agenda-minimal)
-(define-key rsr/global-prefix-map (kbd "s s") #'my/mobile-sync-from-json)
+;; C-c s e / C-c s s: `rsr/sync-map' in keymaps.el.
 
 (provide 'mobile-agenda-sync)
 

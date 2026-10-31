@@ -10,14 +10,41 @@
 ;; [[data:image.png]] expands to my/data-dir/image.png
 (add-to-list 'org-link-abbrev-alist (cons "data" (concat my/data-dir "%s")))
 
-;; imap-message: links — open in Thunderbird on macOS.
-;; macOS doesn't register imap-message:// as a system scheme, so we pass
-;; the URL directly to Thunderbird with open -a.
+;;; Email links
+;;
+;; mid: links name an email by its Message-ID, as [[mid:ID][description]].
+;; They are made in Thunderbird with the cb_thunderlink add-on: a
+;; configurable link with the template
+;;   [[mid:$msgid$][$author_name$: $subject$ ($date_iso$)]]
+;; copies a ready-made org link to paste.  Dragging a message into Emacs no
+;; longer works -- current Thunderbird puts only private Mozilla types on the
+;; drag pasteboard, which the mac port refuses before any Lisp runs.
+;;
+;; Thunderbird's binary takes mid:ID on its command line and hands it to the
+;; running instance, which opens that message.
+
+(defconst rsr/thunderbird-program
+  "/Applications/Thunderbird.app/Contents/MacOS/thunderbird"
+  "Thunderbird's binary, which accepts a mid: URL as its argument.")
+
+(defun rsr/open-mid (message-id)
+  "Open the email whose Message-ID is MESSAGE-ID in Thunderbird."
+  (start-process "org-mid-open" nil rsr/thunderbird-program
+                 (concat "mid:" (string-trim message-id "<" ">"))))
+
+(org-link-set-parameters "mid" :follow #'rsr/open-mid)
+
+;; imap-message: links -- older links copied from Thunderbird.  macOS doesn't
+;; register imap-message:// as a system scheme, so the URL goes straight to
+;; Thunderbird with open -a.  A hand-written imap-message://mid:ID link is a
+;; Message-ID in disguise, so it goes through the mid: path instead.
 (org-link-set-parameters "imap-message"
   :follow (lambda (path)
-            (start-process "org-imap-open" nil "open"
-                           "-a" "Thunderbird"
-                           (concat "imap-message:" path))))
+            (if (string-prefix-p "//mid:" path)
+                (rsr/open-mid (string-remove-prefix "//mid:" path))
+              (start-process "org-imap-open" nil "open"
+                             "-a" "Thunderbird"
+                             (concat "imap-message:" path)))))
 
 ;;; Org Core Settings
 
@@ -410,6 +437,32 @@ thought tags, and font-lock does not colour them either."
   (define-key org-mode-map (kbd "C-c !") (lambda ()
     (interactive)
     (org-time-stamp-inactive '(4)))))
+
+;;; Font
+;;
+;; Org uses Menlo 16pt rather than the Fira Code used for code.  Prose and
+;; headings read better at that size, and org's scaled heading faces look
+;; heavy in a narrow coding font.
+;;
+;; Menlo, not Monaco: macOS ships Monaco in Regular only, so *bold* and
+;; /italic/ emphasis had no face to render with and showed as plain text.
+;; Menlo is Monaco's descendant and ships Bold, Italic and Bold Italic.
+;;
+;; `buffer-face-mode' rather than a global face, so it applies only to org
+;; buffers.  The `line-height' balancing in init.el is a no-op here: Emacs
+;; never shrinks a line below the font's own box, and Menlo 16pt is already
+;; taller than the 18px that property asks for.
+
+(defun rsr/org-font ()
+  "Use Menlo 16pt in this org buffer."
+  (setq-local buffer-face-mode-face '(:family "Menlo" :height 160))
+  (buffer-face-mode 1))
+
+;; `org-agenda-mode' is a standalone major mode, not derived from `org-mode',
+;; so it needs its own hook or the agenda renders in the code font while every
+;; .org file is Menlo.
+(add-hook 'org-mode-hook        #'rsr/org-font)
+(add-hook 'org-agenda-mode-hook #'rsr/org-font)
 
 (provide 'org-config)
 ;;; org-config.el ends here

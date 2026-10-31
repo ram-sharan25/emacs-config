@@ -93,13 +93,14 @@
 ;; Auto mermaid → LaTeX figure via org-native attrs (global, all files)
 ;;
 ;; On C-c C-c of any mermaid block:
-;;   1. Rewrites [[file:X]] → [[data:X]] in results (Emacs inline display)
-;;   2. Removes #+RESULTS: line (so the image link exports directly)
-;;   3. Inserts #+CAPTION / #+NAME / #+ATTR_LATEX above the image (idempotent)
+;;   1. Rewrites [[file:X]] → [[data:X]] for Emacs inline display.
+;;   2. Keeps #+CAPTION / #+NAME / #+ATTR_LATEX before #+RESULTS.
+;;   3. Replaces the previous image result instead of appending another one.
 ;; -------------------------------------------------------------------------
 (defun my/mermaid-latex-attrs ()
-  "After a mermaid src block executes, add org-native figure attributes.
-Replaces all result content with attrs + data: image link."
+  "Add an idempotent Org figure result after executing a Mermaid block.
+Keep figure metadata before `#+RESULTS' so Org can replace the image link on
+later executions instead of appending duplicate output."
   (let* ((info (ignore-errors
                  (save-excursion
                    (org-babel-goto-src-block-head)
@@ -110,23 +111,44 @@ Replaces all result content with attrs + data: image link."
       (let* ((fig-name (file-name-nondirectory file))
              (base (file-name-sans-extension fig-name))
              (label (replace-regexp-in-string "_" "-" base))
-             (caption (capitalize (replace-regexp-in-string "_" " " base))))
+             (caption (capitalize (replace-regexp-in-string "_" " " base)))
+             (caption-line (format "#+CAPTION: %s" caption))
+             (name-line (format "#+NAME: fig:%s" label))
+             (attr-line "#+ATTR_LATEX: :width 0.8\\textwidth :height 1.0\\textheight :options keepaspectratio :float t")
+             (generated-line-re
+              (concat
+               "^[ \t]*\\(?:"
+               "#\\+RESULTS\\(?:[^\n]*\\)"
+               "\\|" (regexp-quote caption-line)
+               "\\|" (regexp-quote name-line)
+               "\\|" (regexp-quote attr-line)
+               "\\|\\[\\[\\(?:file\\|data\\):[^]]+\\]\\]"
+               "\\)[ \t]*$")))
         (save-excursion
-          ;; 1. Ensure :exports results (not none) so image link exports
+          ;; Ensure the generated image is exported.
           (org-babel-goto-src-block-head)
           (when (re-search-forward ":exports +none" (line-end-position) t)
             (replace-match ":exports results"))
 
-          ;; 2. Replace all result content with attrs + data: link
           (org-babel-goto-src-block-head)
           (when-let ((rp (org-babel-where-is-src-block-result)))
+            ;; Include metadata left immediately before #+RESULTS by a previous
+            ;; execution, then consume all old generated result lines after it.
             (goto-char rp)
-            (forward-line) ;; past #+RESULTS:
-            (let ((content-start (point))
-                  (content-end (org-babel-result-end)))
-              (delete-region content-start content-end)
-              (insert (format "#+CAPTION: %s\n#+NAME: fig:%s\n#+ATTR_LATEX: :width 0.8\\textwidth :height 1.0\\textheight :options keepaspectratio :float t\n[[data:%s]]\n"
-                              caption label fig-name)))))))))
+            (beginning-of-line)
+            (let ((start (point)))
+              (while (and (= (forward-line -1) 0)
+                          (looking-at-p generated-line-re))
+                (setq start (point)))
+              (goto-char rp)
+              (beginning-of-line)
+              (while (and (not (eobp))
+                          (looking-at-p generated-line-re))
+                (forward-line 1))
+              (delete-region start (point))
+              (goto-char start)
+              (insert (format "%s\n%s\n%s\n#+RESULTS:\n[[data:%s]]\n"
+                              caption-line name-line attr-line fig-name)))))))))
 
 (add-hook 'org-babel-after-execute-hook #'my/mermaid-latex-attrs)
 

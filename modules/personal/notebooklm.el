@@ -8,7 +8,7 @@
 ;; stream in under a "** NLM [timestamp]" heading.  Markdown from the CLI
 ;; is converted to org syntax so everything renders natively.
 ;;
-;; All keybindings live under M-m n (rsr/global-prefix-map):
+;; All keybindings live under C-c i n (rsr/nlm-map, see keymaps.el):
 ;;
 ;;   n o  — open / switch to chat buffer
 ;;   n l  — list notebooks + select active
@@ -27,7 +27,6 @@
 ;;
 ;; Inside the *NotebookLM* buffer:
 ;;   C-c RET  — send question to NotebookLM
-;;   C-c C-c  — same
 
 ;;; Code:
 
@@ -101,14 +100,13 @@ styles (asterisk, en-dash, em-dash, numbered) to org-compatible forms."
 (defvar nlm-chat-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c RET") #'rsr/nlm-send)
-    (define-key map (kbd "C-c C-c") #'rsr/nlm-send)
     map)
   "Keymap for `nlm-chat-mode'.")
 
 (define-minor-mode nlm-chat-mode
   "Minor mode for the NotebookLM chat buffer.
 
-Adds C-c RET / C-c C-c to send the current question."
+Adds C-c RET to send the current question."
   :lighter " NLM"
   :keymap nlm-chat-mode-map)
 
@@ -285,7 +283,7 @@ HEADING is used as the org heading for this management block."
 (defun rsr/nlm-send ()
   "Send the current question to NotebookLM.
 
-Works from anywhere (mirrors M-m a s / gptel-send):
+Works from anywhere (mirrors C-c i s / gptel-send):
 - Called outside the chat buffer → switches to it, ready to type.
 - Called inside the chat buffer → extracts and sends the question.
 Response streams in under a new '** NLM [timestamp]' org heading."
@@ -517,7 +515,7 @@ and inserts it at point, trimmed."
 
 ;;; ─── Keybindings ─────────────────────────────────────────────────────────────
 ;;
-;; Mirrored from gptel (M-m a …) so muscle memory transfers:
+;; Mirrored from gptel (C-c i …) so muscle memory transfers:
 ;;
 ;;   gptel       notebooklm    action
 ;;   ───────     ──────────    ──────────────────────────────────────
@@ -537,21 +535,21 @@ and inserts it at point, trimmed."
 ;;   ─           n d           download artifact
 ;;   ─           n x           clear chat buffer
 
-(define-key rsr/global-prefix-map (kbd "n n") #'rsr/nlm-open)
-(define-key rsr/global-prefix-map (kbd "n s") #'rsr/nlm-send)
-(define-key rsr/global-prefix-map (kbd "n f") #'rsr/nlm-source-add-file)
-(define-key rsr/global-prefix-map (kbd "n .") #'rsr/nlm-source-add-from-buffer)
-(define-key rsr/global-prefix-map (kbd "n +") #'rsr/nlm-source-add)
-(define-key rsr/global-prefix-map (kbd "n A") #'rsr/nlm-prefill-region)
-(define-key rsr/global-prefix-map (kbd "n y") #'rsr/nlm-capture-answer)
-(define-key rsr/global-prefix-map (kbd "n l") #'rsr/nlm-list)
-(define-key rsr/global-prefix-map (kbd "n c") #'rsr/nlm-create)
-(define-key rsr/global-prefix-map (kbd "n i") #'rsr/nlm-status)
-(define-key rsr/global-prefix-map (kbd "n S") #'rsr/nlm-source-list)
-(define-key rsr/global-prefix-map (kbd "n g") #'rsr/nlm-generate)
-(define-key rsr/global-prefix-map (kbd "n G") #'rsr/nlm-artifact-list)
-(define-key rsr/global-prefix-map (kbd "n d") #'rsr/nlm-download)
-(define-key rsr/global-prefix-map (kbd "n x") #'rsr/nlm-clear)
+(keymap-set rsr/nlm-map "n" #'rsr/nlm-open)
+(keymap-set rsr/nlm-map "s" #'rsr/nlm-send)
+(keymap-set rsr/nlm-map "f" #'rsr/nlm-source-add-file)
+(keymap-set rsr/nlm-map "." #'rsr/nlm-source-add-from-buffer)
+(keymap-set rsr/nlm-map "+" #'rsr/nlm-source-add)
+(keymap-set rsr/nlm-map "A" #'rsr/nlm-prefill-region)
+(keymap-set rsr/nlm-map "y" #'rsr/nlm-capture-answer)
+(keymap-set rsr/nlm-map "l" #'rsr/nlm-list)
+(keymap-set rsr/nlm-map "c" #'rsr/nlm-create)
+(keymap-set rsr/nlm-map "i" #'rsr/nlm-status)
+(keymap-set rsr/nlm-map "S" #'rsr/nlm-source-list)
+(keymap-set rsr/nlm-map "g" #'rsr/nlm-generate)
+(keymap-set rsr/nlm-map "G" #'rsr/nlm-artifact-list)
+(keymap-set rsr/nlm-map "d" #'rsr/nlm-download)
+(keymap-set rsr/nlm-map "x" #'rsr/nlm-clear)
 
 (provide 'notebooklm)
 ;;; notebooklm.el ends here
