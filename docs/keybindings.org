@@ -1,0 +1,182 @@
+#+TITLE: Keybindings
+#+STARTUP: overview
+
+Opened with =C-c o k=.  TAB folds a section, S-TAB cycles all, =M-g i= jumps
+to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
+
+* Layout
+| Prefix  | Area                       | Prefix | Area                     |
+|---------+----------------------------+--------+--------------------------|
+| C-c a   | Org agenda                 | C-c n  | notes (org-roam)         |
+| C-c c   | capture                    | C-c o  | open                     |
+| C-c f   | format buffer              | C-c p  | projectile               |
+| C-c g   | Google calendar            | C-c r  | research / papers        |
+| C-c h   | hide/show (prog modes)     | C-c s  | sync                     |
+| C-c i   | AI and agents              | C-c t  | time and tools           |
+| C-c j   | Linear issues              |        |                          |
+| C-c l/L | store link / to clipboard  | C-c w  | workspaces (perspective) |
+| C-c m   | multiple cursors           | M-g    | goto                     |
+| M-s     | search                     | C-x w  | windows                  |
+| C-x v   | version control            | C-x n  | narrow                   |
+
+* C-c c  Capture
+| c | org-capture (menu) | j | journal          |
+| i | inbox              | d | devlog           |
+| s | study              | m | monthly review   |
+| q | project            | w | weekly review    |
+| n | note               | h | log time         |
+| r | resource           | W | web              |
+| t | activity           | y | job              |
+| L | leetcode note      |   |                  |
+
+* C-c o  Open
+| t | agent tmux terminal | n | notes file         |
+| j | journal             | a | area file          |
+| d | tasks file          | l | leetcode folder    |
+| h | logbook             | v | random video       |
+| p | projects file       | k | this cheat sheet   |
+| y | job applications    |   |                    |
+
+* C-c t  Time and tools
+| i   | clock in             | c | calc              |
+| o   | clock out            | d | dictionary        |
+| g   | go to active clock   | b | timeblock view    |
+| m … | mind-state (below)   |   |                   |
+
+** C-c t m  Mind-state
+| s | start tracking | ? | status    |
+| q | stop tracking  | c | configure |
+| l | manual log     |   |           |
+
+* C-c i  AI and agents
+| i | Claude in tmux        | d | agent dashboard     |
+| p | Pi in tmux            | r | send region to agent|
+| w | planning workflow …   | o | devlog overview     |
+| n | NotebookLM …          | l | back to the last agent |
+
+** gptel
+| a | quick chat      | f | add file           |
+| A | dedicated chat  | F | add buffer         |
+| s | send            | + | add context        |
+| c | coding session  | - | clear context      |
+| q | abort           | = | show context       |
+| m | menu            | t | toggle model       |
+| T | chat model      | C | coding model       |
+
+** C-c i w  Planning workflow (C-u = Pi; =c= prefix = child session; =y= bring in)
+| r | clarify requirements  | R | review requirements    |
+| p | plan                  | P | review plan            |
+| i | implement             | I | review implementation  |
+| w | issue workflow        | e | explore                |
+| x | bug fix               |   |                        |
+
+** C-c i n  NotebookLM
+| n | open            | l | list notebooks   |
+| s | send            | c | create           |
+| f | add file source | i | status           |
+| . | add buffer      | S | list sources     |
+| + | add source      | g | generate         |
+| A | prefill region  | G | list artifacts   |
+| y | capture answer  | d | download         |
+| x | clear           |   |                  |
+
+* Agent dashboard (=C-c i d=)
+| RET | jump to session       | N / P   | next / prev needing attention |
+| n/p | next / prev           | M-n/M-p | move row down / up            |
+| SPC | edit title            | e       | edit note                     |
+| t   | cycle state           | u, m    | mark unread                   |
+| d   | file diff             | v / V   | display / display or browse   |
+| w   | copy attachment       | k       | kill                          |
+| b   | branch                | B       | mark parent                   |
+| R   | restore               | g       | refresh                       |
+| s   | toggle sort           | f / F   | folder view / folder action   |
+| +   | new terminal          | o       | workflow open menu            |
+| c   | child workflow …      | y       | bring in                      |
+| S   | fixed order on/off    | C-c C-o | clear manual order            |
+
+* C-c j  Linear
+| l | list issues            | s | sync heading to Linear |
+| p | list issues by project | o | open Linear org file   |
+| n | new issue              | t | test connection        |
+
+* C-c n  Notes (org-roam)
+| f | find node     | e | add ref         |
+| i | insert node   | a | add alias       |
+| F | find by ref   | t | add tag         |
+| c | capture       | C | compile notes   |
+| g | graph         | x | rebuild index   |
+| r | roam buffer   |   |                 |
+
+* C-c r  Research
+| p | open paper | n | paper note | c | insert citation |
+
+* C-c g  Google calendar
+| p | push heading | o | open calendar |
+| s | sync         | r | re-auth       |
+| e | push event   |   |               |
+
+* C-c s  Sync
+| e | export mobile agenda | s | sync from mobile JSON |
+
+* C-c m  Multiple cursors (keep tapping n / p)
+| n | mark next     | 0 | insert numbers |
+| p | mark previous | a | insert letters |
+
+* C-c h  Hide/show (prog modes)
+| t | toggle  | a | hide all |
+| h | hide    | A | show all |
+| s | show    |   |          |
+
+* C-c w  Workspaces / C-c p  Projectile
+| C-c w … | perspective commands (s switch, k kill, …) |
+| C-c w F | project in new frame                       |
+| C-c p … | projectile commands                        |
+| C-c p p | switch project (with its perspective)      |
+
+* Org built-ins worth knowing
+| C-c C-w   | refile               | C-x n s | narrow to heading       |
+| C-c C-x b | heading in new buffer| C-x n w | widen                   |
+| C-c C-t   | TODO state           | C-c C-s | schedule                |
+| C-c C-d   | deadline             | C-c C-q | tags                    |
+| C-c C-j   | go to heading        | C-c C-o | open link               |
+| s-r       | paste image (org-download) |   |                         |
+
+* Goto (M-g) and search (M-s)
+| M-g i     | imenu (consult)          | M-s l | lines (consult)   |
+| M-g . / , | last change (repeat . ,) | M-s r | ripgrep (consult) |
+| M-g d     | dogears pick             | M-s g | rgrep             |
+| M-g M-b/f | dogears back / forward   | M-s b | search brain      |
+| M-g M-d   | dogears list             | C-:   | avy jump          |
+
+* Buffers, windows, actions
+| C-x b   | buffers (consult)    | C-x o   | ace-window         |
+| C-x M-f | recent files         | C-x w t | toggle split       |
+| M-y     | yank ring            | C-x v p | git blame popup    |
+| C-.     | embark act           | C-x t   | treemacs           |
+| C-;     | embark dwim          | C-/     | comment / uncomment|
+
+* C-x o  Window actions (ace-window)
+Press =C-x o=, then a window's letter to jump there, or an action key first
+and then the target window's letter.
+| m | swap with window      | x | delete window          |
+| M | move window there     | o | delete other windows   |
+| c | copy window there     | n | flip to last window    |
+| j | pick buffer in window | u | switch buffer there    |
+| e | run command there     | T | transpose frame        |
+| v | split vertically      | b | split horizontally     |
+| F | split fairly          | ? | show this list         |
+
+* Cmd (s-) keys
+| s-s | save          | s-w   | close window      |
+| s-c | copy (line)   | s-W   | close frame       |
+| s-x | cut (line)    | s-u   | revert from disk  |
+| s-v | paste         | s-q   | quit Emacs        |
+| s-z | undo          | s-n   | new frame         |
+| s-Z | redo          | s-m   | minimise          |
+| s-a | select all    | s-o   | open file         |
+| s-f | find lines    | s-F   | project search    |
+| s-/ | comment       | s-k   | kill line         |
+| s-= | zoom in       | s--   | zoom out          |
+| s-0 | zoom reset    | s-\`  | cycle frames      |
+| s-& | kill buffer   | s-,   | customize         |
+| s-l … | lsp         | s-p … | projectile        |

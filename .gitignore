@@ -44,8 +44,9 @@ history
 *.authinfo
 .DS_Store
 
-# Documentation folder
-docs/
+# Documentation folder, except the cheat sheet C-c o k opens
+docs/*
+!docs/keybindings.org
 CLAUDE.md
 *.elc
 /backups/
@@ -57,6 +58,7 @@ modules/git-modules/copilot/
 # Machine-specific overrides (may contain private paths)
 /local.el
 /local.env
+/gcal-calendars.el
 
 # Runtime state
 places.eld
