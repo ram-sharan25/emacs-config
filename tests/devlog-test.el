@@ -85,36 +85,124 @@
   (let ((org-clock-marker (make-marker)))
     (should-error (rsr/devlog-capture-target) :type 'user-error)))
 
-(defun devlog-test--capture-twice (content)
-  "Capture two devlog lines into a temp file holding CONTENT; return its text."
-  (let* ((file (make-temp-file "devlog-test-" nil ".org" content))
-         (buf (find-file-noselect file))
-         (org-capture-templates
-          `(("d" "Devlog" plain (function rsr/devlog-capture-target)
-             ,rsr/devlog-capture-template :immediate-finish t :empty-lines 0)))
-         (org-clock-marker (with-current-buffer buf (copy-marker (point-min))))
-         (org-clock-start-time (org-time-string-to-time "2000-01-01 Sat 10:00")))
-    (unwind-protect
-        (progn
-          (org-capture nil "d")
-          (org-capture nil "d")
-          (with-current-buffer buf (buffer-string)))
-      ;; Detach the fake clock first, or kill-buffer asks "Clock-out …?"
-      ;; and a batch run hangs forever waiting for y/n.
-      (set-marker org-clock-marker nil)
-      (with-current-buffer buf (set-buffer-modified-p nil))
-      (kill-buffer buf)
-      (delete-file file))))
+(defmacro devlog-test--with-capture (content task &rest body)
+  "Run BODY with a devlog template and a clock on TASK in a file holding CONTENT.
+TASK is a regexp for the clocked heading; nil means the first line.
+BODY sees the file's buffer as `buf'."
+  (declare (indent 2))
+  `(let* ((file (make-temp-file "devlog-test-" nil ".org" ,content))
+          (buf (find-file-noselect file))
+          (org-capture-templates
+           `(("d" "Devlog" plain (function rsr/devlog-capture-target)
+              ,rsr/devlog-capture-template :empty-lines 0
+              :hook rsr/devlog-capture-show-devlog)))
+          (org-clock-marker
+           (with-current-buffer buf
+             (goto-char (point-min))
+             (when ,task (re-search-forward ,task))
+             (copy-marker (line-beginning-position))))
+          (org-clock-start-time (org-time-string-to-time "2000-01-01 Sat 10:00")))
+     (unwind-protect
+         (progn ,@body)
+       ;; Detach the fake clock first, or kill-buffer asks "Clock-out …?"
+       ;; and a batch run hangs forever waiting for y/n.
+       (set-marker org-clock-marker nil)
+       (with-current-buffer buf (set-buffer-modified-p nil))
+       (kill-buffer buf)
+       (delete-file file))))
+
+(defun devlog-test--capture-twice (content &optional task)
+  "Capture two devlog lines into a temp file holding CONTENT; return its text.
+TASK is a regexp for the clocked heading; nil means the first line."
+  (devlog-test--with-capture content task
+    (dotimes (_ 2)
+      (org-capture nil "d")
+      (org-capture-finalize))
+    (with-current-buffer buf (buffer-string))))
+
+(defconst devlog-test--session "- Session \\[2000-01-01 Sat 10:00\\]\n"
+  "Regexp for the session line of the fake clock.")
+
+(defconst devlog-test--entry
+  "  - \\[[0-9]\\{4\\}-[0-9][0-9]-[0-9][0-9] [^]]+ [0-9][0-9]:[0-9][0-9]\\] *\n"
+  "Regexp for one empty captured devlog line.")
 
 (ert-deftest devlog-capture-adds-session-once-and-two-lines ()
   (let ((text (devlog-test--capture-twice "* TODO Task\n* TODO Next\n")))
     (should (string-match-p
              (concat "\\`\\* TODO Task\n\\*\\* Devlog\n"
-                     "- Session \\[2000-01-01 Sat 10:00\\]\n"
-                     "  - \\[[0-9]\\{4\\}-[0-9][0-9]-[0-9][0-9] [^]]+ [0-9][0-9]:[0-9][0-9]\\] *\n"
-                     "  - \\[[0-9]\\{4\\}-[0-9][0-9]-[0-9][0-9] [^]]+ [0-9][0-9]:[0-9][0-9]\\] *\n"
-                     "\\* TODO Next\n")
+                     devlog-test--session devlog-test--entry devlog-test--entry
+                     "\\* TODO Next\n\\'")
              text))))
+
+(ert-deftest devlog-capture-appends-before-later-sibling ()
+  (let ((text (devlog-test--capture-twice
+               (concat "* TODO Task\n** Context\n- plan\n"
+                       "** Devlog\n- Session [2000-01-01 Sat 10:00]\n  - old\n"
+                       "** Overview\n*** Goal\n* TODO Next\n"))))
+    (should (string-match-p
+             (concat "\\`\\* TODO Task\n\\*\\* Context\n- plan\n"
+                     "\\*\\* Devlog\n" devlog-test--session "  - old\n"
+                     devlog-test--entry devlog-test--entry
+                     "\\*\\* Overview\n\\*\\*\\* Goal\n\\* TODO Next\n\\'")
+             text))))
+
+(ert-deftest devlog-capture-deep-task ()
+  (let ((text (devlog-test--capture-twice
+               "* P\n** Dashboard\n*** Tasks\n**** TODO T\n**** TODO N\n"
+               "^\\*+ TODO T")))
+    (should (string-match-p
+             (concat "\\`\\* P\n\\*\\* Dashboard\n\\*\\*\\* Tasks\n\\*\\*\\*\\* TODO T\n"
+                     "\\*\\*\\*\\*\\* Devlog\n"
+                     devlog-test--session devlog-test--entry devlog-test--entry
+                     "\\*\\*\\*\\* TODO N\n\\'")
+             text))))
+
+(ert-deftest devlog-capture-task-with-child-no-devlog ()
+  (let ((text (devlog-test--capture-twice
+               "* TODO Task\n** Notes\n- n\n* TODO Next\n")))
+    (should (string-match-p
+             (concat "\\`\\* TODO Task\n\\*\\* Notes\n- n\n\\*\\* Devlog\n"
+                     devlog-test--session devlog-test--entry devlog-test--entry
+                     "\\* TODO Next\n\\'")
+             text))))
+
+(ert-deftest devlog-capture-at-eob-without-newline ()
+  (let ((text (devlog-test--capture-twice "* TODO Task\n** Devlog\n- a")))
+    (should (string-match-p
+             (concat "\\`\\* TODO Task\n\\*\\* Devlog\n- a\n"
+                     devlog-test--session devlog-test--entry devlog-test--entry
+                     "\\'")
+             text))))
+
+(ert-deftest devlog-capture-shows-whole-devlog-and-kill-restores ()
+  (let ((content (concat "* TODO Task\n** Devlog\n- Session [1999-01-01 Fri 09:00]\n"
+                         "  - old\n** Overview\n* TODO Next\n")))
+    (devlog-test--with-capture content nil
+      (org-capture nil "d")
+      (should (string-match-p
+               (concat "\\`\\*\\* Devlog\n- Session \\[1999[^]]+\\]\n  - old\n"
+                       devlog-test--session devlog-test--entry "\\'")
+               ;; Capture narrows to just before the new line's newline.
+               (concat (buffer-string) "\n")))
+      (org-capture-kill)
+      (should (equal (with-current-buffer buf (buffer-string)) content)))))
+
+(ert-deftest devlog-capture-opens-on-the-right ()
+  (devlog-test--with-capture "* TODO Task\n" nil
+    (delete-other-windows)
+    (let ((origin (selected-window)))
+      (org-capture nil "d")
+      (should (string-prefix-p "CAPTURE-" (buffer-name)))
+      (should (> (window-left-column) (window-left-column origin)))
+      (org-capture-finalize))))
+
+(ert-deftest devlog-capture-buffer-p-only-for-devlog ()
+  (let ((org-capture-plist '(:target (function rsr/devlog-capture-target))))
+    (should (rsr/devlog--capture-buffer-p "CAPTURE-x.org" nil))
+    (should-not (rsr/devlog--capture-buffer-p "x.org" nil)))
+  (let ((org-capture-plist '(:target (file "x.org"))))
+    (should-not (rsr/devlog--capture-buffer-p "CAPTURE-x.org" nil))))
 
 (ert-deftest devlog-task-heading-from-inside-devlog ()
   (devlog-test--with-org "* Project\n** TODO Task\n*** Devlog\n- [2026-10-28 Wed 10:05] x\n"

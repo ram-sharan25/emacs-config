@@ -308,7 +308,8 @@ captured review."
          "* %? \n" :clock-in t :clock-keep t :clock-resume t)
 
         ("d" "Devlog line" plain (function rsr/devlog-capture-target)
-         ,rsr/devlog-capture-template :empty-lines 0)
+         ,rsr/devlog-capture-template :empty-lines 0
+         :hook rsr/devlog-capture-show-devlog)
 
         ("j" "Journal" plain
          (file+function ,my/journal-file journal--ensure-daily-heading)

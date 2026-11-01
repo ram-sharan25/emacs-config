@@ -81,18 +81,43 @@ A new session starts when LAST-SESSION is before CLOCK-START's minute."
   "%(identity rsr/devlog--pending-session)  - %U %?"
   "Capture template for a devlog line.")
 
+(defvar rsr/devlog--capture-heading nil
+  "Marker at the Devlog heading chosen by `rsr/devlog-capture-target'.")
+
 (defun rsr/devlog-capture-target ()
-  "Select the clocked task's Devlog heading, creating it if needed."
+  "Move to the end of the clocked task's Devlog heading, creating it if needed."
   (unless (org-clocking-p)
     (user-error "Not clocked in: clock into a task first"))
   (set-buffer (marker-buffer org-clock-marker))
   (goto-char org-clock-marker)
   (goto-char (rsr/devlog--ensure-child rsr/devlog-heading))
+  (setq rsr/devlog--capture-heading (point-marker))
   (setq rsr/devlog--pending-session
         (rsr/devlog--session-line (rsr/devlog--last-session-time) org-clock-start-time))
-  ;; Plain capture appends to the selected entry.  Moving to subtree end can
-  ;; select the NEXT task's heading, causing capture to append under that task.
-  (org-back-to-heading t))
+  ;; A function target always inserts at point (Org's :exact-position), so
+  ;; point must be at the Devlog subtree's end, not on its heading.
+  (org-end-of-subtree t t)
+  (unless (bolp) (insert "\n")))
+
+(defun rsr/devlog-capture-show-devlog ()
+  "Widen the capture buffer to show the whole Devlog above the new line.
+Use as the devlog template's :hook."
+  (when (markerp rsr/devlog--capture-heading)
+    (narrow-to-region rsr/devlog--capture-heading (point-max))
+    (set-marker rsr/devlog--capture-heading nil)
+    (setq rsr/devlog--capture-heading nil)))
+
+(defun rsr/devlog--capture-buffer-p (buffer _action)
+  "Return non-nil when BUFFER is the capture buffer of a devlog capture."
+  (and (string-prefix-p "CAPTURE-" (if (stringp buffer) buffer (buffer-name buffer)))
+       (equal (org-capture-get :target) '(function rsr/devlog-capture-target))))
+
+;; Org deletes other windows, then splits; open the capture on the right.
+(add-to-list 'display-buffer-alist
+             '(rsr/devlog--capture-buffer-p
+               (display-buffer-in-direction)
+               (direction . right)
+               (window-width . 0.5)))
 
 (defun rsr/devlog--task-heading ()
   "Return the position of the nearest task heading at or above point."
