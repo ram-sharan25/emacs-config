@@ -6,6 +6,7 @@
 (require 'org-capture)
 (require 'org-id)
 (require 'paths)
+(require 'gtd-config)   ; my/get-project-files, my/area-hub-file
 
 ;;; --- File Open Commands ---
 
@@ -22,25 +23,13 @@
       (insert (format "\n* %s\n" heading)))
     (end-of-line)))
 
-(defun my/open-tasks-file ()
-  "Open the main tasks file."
+(defun my/open-project-file ()
+  "Pick a project file under Areas/<Area>/ via completion and open it."
   (interactive)
-  (find-file my/tasks-file))
-
-(defun my/open-logbook-file ()
-  "Open the logbook file."
-  (interactive)
-  (find-file my/logbook-file))
-
-(defun my/open-projects-file ()
-  "Open the projects file."
-  (interactive)
-  (find-file my/gtd-projects-file))
-
-(defun my/open-shortcuts-file ()
-  "Open the shortcuts reference file."
-  (interactive)
-  (find-file my/shortcuts-file))
+  (let* ((files (my/get-project-files))
+         (names (mapcar (lambda (f) (file-relative-name f my/areas-dir)) files))
+         (choice (completing-read "Project: " names nil t)))
+    (find-file (expand-file-name choice my/areas-dir))))
 
 (defun my/open-job-applications-file ()
   "Open the job applications file."
@@ -48,68 +37,17 @@
   (find-file my/job-applications-file))
 
 (defun my/open-area-file ()
-  "Pick an Area file from `my/areas-dir' via completion and open it.
-Lists all .org files in the Areas directory, excluding hidden and
-sync-conflict files.  Display names omit the .org extension."
+  "Pick one of the three area hubs and open it."
   (interactive)
-  (let* ((files (directory-files my/areas-dir nil "\\`[^.#].*\\.org\\'"))
-         (names (mapcar #'file-name-sans-extension files))
-         (choice (completing-read "Area: " names nil t)))
-    (find-file (expand-file-name (concat choice ".org") my/areas-dir))))
+  (find-file (my/area-hub-file (completing-read "Area: " my/area-names nil t))))
 
 (defun my/open-notes-file ()
   "Open the rough notes file."
   (interactive)
   (find-file my/rough-notes-file))
 
-;;; --- Notes Index ---
-
-(defun my/notes-rebuild-index ()
-  "Rebuild the notes index file with a Year->Month->Week structure."
-  (interactive)
-  (let ((notes-by-date (make-hash-table :test 'equal)))
-    (with-current-buffer (find-file-noselect my/rough-notes-file)
-      (org-map-entries
-       (lambda ()
-         (let* ((id (org-entry-get (point) "ID"))
-                (headline (org-get-heading t t))
-                (time-str (org-entry-get (point) "TIME"))
-                (time (and time-str (org-time-string-to-seconds time-str))))
-           (when (and id time)
-             (let* ((year  (format-time-string "%Y" time))
-                    (month (format-time-string "%m" time))
-                    (week  (format-time-string "%V" time))
-                    (year-ht   (or (gethash year notes-by-date)
-                                   (make-hash-table :test 'equal)))
-                    (month-ht  (or (gethash month year-ht)
-                                   (make-hash-table :test 'equal)))
-                    (week-list (or (gethash week month-ht) '())))
-               (setf (gethash week month-ht) (cons (list headline id) week-list))
-               (setf (gethash month year-ht) month-ht)
-               (setf (gethash year notes-by-date) year-ht)))))
-       "NOTE|IDEA" 'file))
-    (with-temp-file my/shortcuts-file
-      (insert "#+TITLE: Notes and Ideas Index\n\n")
-      (dolist (year (cl-sort (hash-table-keys notes-by-date) #'string<))
-        (insert (format "* %s\n" year))
-        (let ((year-ht (gethash year notes-by-date)))
-          (dolist (month (cl-sort (hash-table-keys year-ht) #'string<))
-            (let* ((month-name (format-time-string "%B"
-                                (encode-time 0 0 0 1
-                                  (string-to-number month)
-                                  (string-to-number year))))
-                   (month-ht (gethash month year-ht)))
-              (insert (format "** %s-%s %s\n" year month month-name))
-              (dolist (week (cl-sort (hash-table-keys month-ht) #'string<))
-                (let ((note-list (gethash week month-ht)))
-                  (insert (format "*** Week %s\n" week))
-                  (dolist (item (reverse note-list))
-                    (insert (format "- [[id:%s][%s]]\n"
-                                    (cadr item) (car item))))))))))))
-  (message "Notes index rebuilt."))
-
 ;;; Keybindings
-;; C-c o (open files), C-c n x (rebuild index) and C-c t i / o (clock in / out)
+;; C-c o (open files) and C-c t i / o (clock in / out)
 ;; are in keymaps.el.  Narrow to subtree is Org's own C-x n s.
 
 (provide 'daily-todo)

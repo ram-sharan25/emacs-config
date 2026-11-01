@@ -54,7 +54,6 @@ devlog.el."
   "d" #'my/capture-devlog
   "m" #'my/capture-monthly-review
   "w" #'my/capture-weekly-review
-  "h" #'my/capture-log-time
   "r" #'my/capture-resource
   "W" #'my/capture-web
   "t" #'my/capture-activity
@@ -84,7 +83,7 @@ devlog.el."
   :doc "Notes (C-c n); org-roam keys are bound in roam-config.el."
   :prefix 'rsr/notes-map
   "C" #'my/resource-compile-notes
-  "x" #'my/notes-rebuild-index)
+)
 
 (defun rsr/open-keybindings-cheatsheet ()
   "Open the keybinding cheat sheet read-only; q closes it."
@@ -98,9 +97,7 @@ devlog.el."
   "k" #'rsr/open-keybindings-cheatsheet
   "t" #'rsr/agent-tmux-terminal
   "j" #'my/open-journal-file
-  "d" #'my/open-tasks-file
-  "h" #'my/open-logbook-file
-  "p" #'my/open-projects-file
+  "p" #'my/open-project-file
   "y" #'my/open-job-applications-file
   "n" #'my/open-notes-file
   "a" #'my/open-area-file

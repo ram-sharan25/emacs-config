@@ -5,6 +5,9 @@
 (require 'paths)
 (require 'gtd-config)
 (require 'ai-workflows)
+;; Roam node policy, whole-repo org-id coverage, duplicate-ID guard (D16).
+;; See Plans/Brain/.../2026-11-01-brain-roam-id-links/findings.md.
+(require 'brain-roam-ids)
 
 ;; Prefer ID links over file+headline links in `org-store-link' (C-c l).
 ;; Set at top level, not inside the org-roam :config block below — org-roam
@@ -28,7 +31,22 @@
          ("t" . org-roam-tag-add)))
   :config
   (setq org-roam-directory my/brain-dir)
-  (setq org-roam-file-exclude-regexp '("^gtd/" "^Archives/" "^Dashboard/" "^cleanup_2026_02_27/"))
+  ;; Target layout (D3/D5/D11): nodes live in Public/, Resources/ and Areas/.
+  ;; gtd/ mechanics, Archives/, Trackers/ (tables) and Private/ (gpg) are
+  ;; not indexed at all; `data/' and `output/' hold no notes.
+  (setq org-roam-file-exclude-regexp
+        '("^gtd/" "^Archives/" "^Trackers/" "^Private/" "^data/" "^output/"
+          "^Dashboard/" "^cleanup_2026_02_27/" "^phone_inbox/" "^gtasks/"
+          "\\.bak\\'" "~\\'"))
+  ;; Which headings become nodes.  File-level nodes always.  Under Areas/
+  ;; (project files, area hubs) no heading is a node: tasks, Log entries and
+  ;; scaffolding keep their :ID: for linking, and a link written inside a
+  ;; task is credited to the project/hub file node (org-roam walks up to the
+  ;; nearest included node).  Elsewhere a heading is a node unless it, or an
+  ;; ancestor, carries a TODO keyword.  REQUIRES every Areas/ file to have a
+  ;; file-level :ID:, or roam drops the links inside its tasks; check with
+  ;; M-x my/org-roam-files-without-file-id after a sync.
+  (setq org-roam-db-node-include-function #'my/org-roam-node-include-p)
   (setq org-roam-file-extensions '("org"))
   (setq org-roam-list-files-commands '(fd find))
 
@@ -38,7 +56,7 @@
         '(("z" "Zettel" plain
            "%?"
            :if-new (file+head "Public/${slug}.org"
-                              "#+title: ${title}\n#+filetags: :ZETTEL:\n\n* Source\n- %(my/zettel-source-link)\n")
+                              "#+title: ${title}\n#+filetags: :zettel:\n\n* Source\n- %(my/zettel-source-link)\n")
            :unnarrowed t))))
 
 ;;; --- Org-download ---
@@ -135,7 +153,7 @@ fleeting note itself. Falls back to current position otherwise."
                  "%?"
                  :if-new
                  (file+head ,(concat (file-name-as-directory my/resources-dir) "${citekey}.org")
-                            "#+title: ${title}\n#+filetags: :research:\n#+AUTHOR: ${author-or-editor}\n#+CREATED_FROM: %a\n\n* Summary\n\n* Key Concepts\n\n* Quotes\n#+BEGIN_QUOTE\n\n#+END_QUOTE\n")
+                            "#+title: ${title}\n#+filetags: :source:\n#+AUTHOR: ${author-or-editor}\n#+CREATED_FROM: %a\n\n* Summary\n\n* Key Concepts\n\n* Quotes\n#+BEGIN_QUOTE\n\n#+END_QUOTE\n")
                  :unnarrowed t)))
 
 ;;; --- LaTeX export with BibTeX citations ---

@@ -7,9 +7,23 @@
 (require 'devlog)
 
 (defun my/get-area-files ()
-  "Get all .org files in the Areas directory, if it exists."
+  "Every project file and hub under Areas/, recursively (agenda and refile set).
+Skips autosaves (#x#), lockfiles (.#x) and dotfiles."
   (when (file-directory-p my/areas-dir)
-    (directory-files my/areas-dir t "\\.org$")))
+    (directory-files-recursively my/areas-dir "\\`[^.#].*\\.org\\'")))
+
+(defun my/area-hub-file (area)
+  "Path of AREA's hub file, Areas/<AREA>/<AREA>.org."
+  (expand-file-name (concat area "/" area ".org") my/areas-dir))
+
+(defun my/get-area-hub-files ()
+  "The three hub files."
+  (mapcar #'my/area-hub-file my/area-names))
+
+(defun my/get-project-files ()
+  "Area files that are projects, i.e. everything under Areas/ except the hubs."
+  (let ((hubs (my/get-area-hub-files)))
+    (seq-remove (lambda (f) (member f hubs)) (my/get-area-files))))
 
 (defvar my/resource-capture-title nil "Temporary storage for resource title during capture.")
 (defvar my/resource-capture-author nil "Temporary storage for resource author during capture.")
@@ -97,66 +111,6 @@ For others: Structure is Brain/Resources/Type_Name_Author.org"
           (make-directory my/resources-dir t))
         path))))
 
-(defvar my/selected-area-file nil
-  "Temporary storage for the selected area file during capture.")
-
-(defun my/select-area-file ()
-  "Prompt user to select an Area and return its file path."
-  (let* ((area-files (directory-files my/areas-dir nil "\\.org$"))
-         (area-names (mapcar (lambda (f) (file-name-sans-extension f)) area-files))
-         (selected-area (completing-read "Select Area: " area-names nil t))
-         (area-file (expand-file-name (concat selected-area ".org") my/areas-dir)))
-    (setq my/selected-area-file area-file)
-    area-file))
-
-(defun my/get-area-names ()
-  "Return a list of Area names (filenames without extension) from `my/areas-dir`."
-  (let ((files (directory-files my/areas-dir nil "\\.org$")))
-    (mapcar #'file-name-sans-extension files)))
-
-(defun my/get-area-id-by-name (area-name)
-  "Return the ID of the Area file corresponding to AREA-NAME.
-Creates the ID if it doesn't exist."
-  (let ((file (expand-file-name (concat area-name ".org") my/areas-dir)))
-    (when (file-exists-p file)
-      (with-current-buffer (find-file-noselect file)
-        (org-id-get-create)))))
-
-(defun my/org-get-project-headings (&optional area-filter)
-  "Return an alist of (Project Name . ID) from `my/projects-file` with ACTIVE=TRUE.
-If AREA-FILTER is provided, only include projects with a matching :AREA: property."
-  (with-current-buffer (find-file-noselect my/projects-file)
-    (let ((projects '()))
-      (org-map-entries
-       (lambda ()
-         (let* ((heading (org-get-heading t t))
-                (id (org-id-get-create))
-                (area (org-entry-get nil "AREA")))
-           (when (or (null area-filter)
-                     (string= area area-filter))
-             (push (cons heading id) projects))))
-       "LEVEL=1+ACTIVE=\"TRUE\"" 'file)
-      (nreverse projects))))
-
-(defun my/select-area-default-misc ()
-  "Prompt for Area, defaulting to 'Misc' and showing it first."
-  (let* ((areas (my/get-area-names))
-         (options (cons "Misc" (remove "Misc" areas)))
-         (selected (completing-read "Area: " options nil t nil nil "Misc")))
-    (if (string-empty-p selected) "Misc" selected)))
-
-(defun my/org-select-project-allow-empty (&optional area-filter)
-  "Prompt user to select a project, optionally filtered by AREA-FILTER.
-Returns a cons cell (Name . ID). Includes 'Dump' as the first option."
-  (let* ((project-alist (my/org-get-project-headings area-filter))
-         (options (cons '("Dump" . nil) project-alist))
-         (project-names (mapcar #'car options))
-         (selected-name (completing-read "Select Project: "
-                                         project-names nil t nil nil "Dump")))
-    (if (string-empty-p selected-name)
-        '("Dump" . nil)
-      (assoc selected-name options))))
-
 ;; Variable to store the selected project for activity refile
 (defvar my/last-toggl-project-choice nil
   "Stores the last Toggl project selected, used for activity auto-refile.")
@@ -164,13 +118,11 @@ Returns a cons cell (Name . ID). Includes 'Dump' as the first option."
 (defun my/activity-auto-refile ()
   "Auto-refile ACTIVITY_TYPE entries to the Area's Tasks section.
 Uses the project selected in Toggl (stored in my/last-toggl-project-choice).
-After refile, saves and opens today's agenda.
-Skips execution if `my/mobile-sync-in-progress' is non-nil."
-  (when (and (not (bound-and-true-p my/mobile-sync-in-progress))
-             (derived-mode-p 'org-mode)
+After refile, saves and opens today's agenda."
+  (when (and (derived-mode-p 'org-mode)
              (org-entry-get (point) "ACTIVITY_TYPE")
              my/last-toggl-project-choice)
-    (let ((area-file (expand-file-name (concat my/last-toggl-project-choice ".org") my/areas-dir))
+    (let ((area-file (my/area-hub-file my/last-toggl-project-choice))
           (source-buffer (current-buffer)))
       (when (file-exists-p area-file)
         ;; Cut the current entry
@@ -179,7 +131,7 @@ Skips execution if `my/mobile-sync-in-progress' is non-nil."
         (with-current-buffer (find-file-noselect area-file)
           (goto-char (point-min))
           ;; Find Tasks heading and determine its level
-          (if (re-search-forward "^\\(\\*\\*\\*?\\) Tasks" nil t)
+          (if (re-search-forward "^\\(\\*\\) Tasks" nil t)
               (let ((tasks-level (length (match-string 1))))
                 (org-end-of-subtree t)
                 (unless (bolp) (insert "\n"))
@@ -276,6 +228,32 @@ captured review."
   "Return the required weekly-review Org template."
   (my/required-review-template "Weekly" my/weekly-review-template-file))
 
+;;; New-project file target (used by the "q" capture template; D3/D5, brain-roam-id-links patch)
+
+(defvar my/new-project-title nil)
+(defvar my/new-project-area nil)
+(defvar my/new-project-kinds nil)
+
+(defun my/new-project-file ()
+  "Ask for area, title and kinds; return the path Areas/<Area>/<slug>.org.
+Sets `my/new-project-title', `my/new-project-area' and `my/new-project-kinds'
+for the template."
+  (setq my/new-project-area (completing-read "Area: " my/area-names nil t)
+        my/new-project-title (read-string "Project title: ")
+        my/new-project-kinds (completing-read-multiple "Kind(s), one or two: " my/project-kinds nil t))
+  (let* ((slug (replace-regexp-in-string "[^a-z0-9]+" "-" (downcase my/new-project-title)))
+         (slug (string-trim slug "-+" "-+"))
+         (dir (expand-file-name my/new-project-area my/areas-dir))
+         (file (expand-file-name (concat slug ".org") dir)))
+    (make-directory dir t)
+    (when (file-exists-p file)
+      (user-error "Project file exists: %s" file))
+    file))
+
+(defun my/new-project-filetags ()
+  "FILETAGS line value for the project being captured."
+  (concat ":" (mapconcat #'identity my/new-project-kinds ":") ":"))
+
 ;;; Capture Templates
 
 (setq org-capture-templates
@@ -289,10 +267,13 @@ captured review."
          "* TODO %^{Read|Watch|Listen}: %^{Source}   :study:\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n- src: %a\n- res: \n- [ ] Resource note: paper/book → =C-c r n= | other → =C-c c r= (paste link in -res:)\n- [ ] Consume: video → =C-c v o= + =C-c v= | article → =C-c c n= | paper → =C-c r p= + =M-i=\n- [ ] Extract Zettels → =C-c n c → z= (same session)\n- [ ] Link Zettels to * Key Concepts in resource → =C-c n i=\n%?"
          :empty-lines 1)
 
-        ("q" "New Project" entry
-         (file my/gtd-projects-file)
-         "* %^{Project Name} [/]\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:COOKIE_DATA: todo recursive\n:CATEGORY: %\\1\n:END:\n- Tags: %?\n- src: %a\n\n** Description\n\n** Dashboard\n*** Tasks\n\n*** Notes\n"
-         :empty-lines 1)
+        ;; One file per project under Areas/<Area>/ (D5). The :ID: drawer comes
+        ;; FIRST so the file is a roam node and links inside its tasks are
+        ;; credited to it (D16 R3).
+        ("q" "New Project" plain
+         (file (lambda () (my/new-project-file)))
+         ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+TITLE: %(symbol-value 'my/new-project-title)\n#+PROPERTY: AREA %(symbol-value 'my/new-project-area)\n#+FILETAGS: %(my/new-project-filetags)\n#+ARCHIVE: ::* Archive\n\n* Outcome\n%?\n\n* Tasks [/]\n:PROPERTIES:\n:COOKIE_DATA: todo recursive\n:END:\n\n* Log\n\n* Notes\n- src: %a\n\n* Retro\n\n* Archive                                                            :ARCHIVE:\n"
+         :unnarrowed t)
 
         ("u" "Fleeting Note" entry
          (file ,my/rough-notes-file)
@@ -303,9 +284,6 @@ captured review."
          (file my/inbox-file)
          "* [[%:link][%:description]]\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n%?"
          :empty-lines 1)
-
-        ("h" "Log Time" entry (file+datetree ,my/logbook-file)
-         "* %? \n" :clock-in t :clock-keep t :clock-resume t)
 
         ("d" "Devlog line" plain (function rsr/devlog-capture-target)
          ,rsr/devlog-capture-template :empty-lines 0
@@ -330,7 +308,7 @@ captured review."
 
         ("t" "Resource" plain
          (file (lambda () (my/capture-resource-file)))
-         ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:COMPILE_STATE: raw\n%(symbol-value 'my/resource-capture-noter-field):END:\n#+TITLE: %(symbol-value 'my/resource-capture-type):%(symbol-value 'my/resource-capture-title):%(symbol-value 'my/resource-capture-author)\n#+DATE: %U\n#+FILETAGS: \n#+AUTHOR: %(symbol-value 'my/resource-capture-author)\n#+SOURCE_TYPE: %(symbol-value 'my/resource-capture-type)\n#+URL: %(symbol-value 'my/resource-capture-url)\n%(symbol-value 'my/resource-capture-file-field)#+CREATED_FROM: %a\n\n%(symbol-value 'my/resource-capture-sections)%?"
+         ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:COMPILE_STATE: raw\n%(symbol-value 'my/resource-capture-noter-field):END:\n#+TITLE: %(symbol-value 'my/resource-capture-type):%(symbol-value 'my/resource-capture-title):%(symbol-value 'my/resource-capture-author)\n#+DATE: %U\n#+FILETAGS: :source:\n#+AUTHOR: %(symbol-value 'my/resource-capture-author)\n#+SOURCE_TYPE: %(symbol-value 'my/resource-capture-type)\n#+URL: %(symbol-value 'my/resource-capture-url)\n%(symbol-value 'my/resource-capture-file-field)#+CREATED_FROM: %a\n\n%(symbol-value 'my/resource-capture-sections)%?"
          :unnarrowed t)
 
         ("S" "Capture Stream" plain
@@ -338,13 +316,15 @@ captured review."
          "%(my/stream--scaffold my/stream--capture-title)- %?"
          :unnarrowed t)
 
+        ;; Lands in the inbox and is auto-refiled to the area hub by
+        ;; `my/activity-auto-refile' once Toggl has the project (D8: no clock log).
         ("a" "Activity" entry
-         (file+datetree my/logbook-file)
+         (file my/inbox-file)
          "* IN-PROGRESS %^{Activity}\n:PROPERTIES:\n:CREATED: %U\n:ACTIVITY_TYPE: t\n:END:\n- %?"
          :clock-in t :clock-keep t :empty-lines 1)
 
         ("y" "Job Application" entry
- (file+headline my/job-applications-file "Applications")
+ (file+headline my/job-applications-file "Tasks")
  "* TODO %^{Job Title} @ %^{Company}
 :PROPERTIES:
 :Job_Title: %\\1
@@ -362,15 +342,20 @@ captured review."
 
 
 (setq org-agenda-files (append (list my/inbox-file
-                                     my/next-file
-                                     my/gtd-projects-file
                                      my/waiting-file
                                      my/someday-file
-                                     my/rituals-file
-                                     my/job-applications-file
-                                     my/focus-file)
+                                     my/rituals-file)
                                (mapcar (lambda (c) (plist-get c :file)) my/gcal-calendars)
                                (my/get-area-files)))
+
+;; Habits (D15): rituals.org holds habits only, each with :STYLE: habit and a
+;; repeater; the agenda draws the consistency graph.
+(add-to-list 'org-modules 'org-habit)
+(require 'org-habit)
+(setq org-habit-graph-column 50
+      org-habit-preceding-days 21
+      org-habit-following-days 3
+      org-habit-show-habits-only-for-today nil)
 
 (setq org-todo-keywords
       '((sequence "TODO(t)" "IN-PROGRESS(p)" "HOLD(h)" "WAITING(w)" "|" "DONE(d)"
@@ -389,21 +374,14 @@ captured review."
   (org-super-agenda-mode))
 
 (defun my/org-agenda-project-suffix ()
-  "Format as [Project]:Category, pad to fixed width, and hide 'nil' or '???'."
-  (let* ((cat (org-get-category))
-         (width 40))
+  "Category (= the project or hub file name, D5) padded to a fixed width."
+  (let ((cat (org-get-category))
+        (width 40))
     (if (or (null cat)
             (string= (format "%s" cat) "nil")
             (string= (format "%s" cat) "???"))
         (make-string width ?\s)
-      (let* ((project (ignore-errors (org-entry-get nil "PROJECT")))
-             (output-str
-              (if project
-                  (concat (propertize (format "[%s]" project)
-                                      'face '(:foreground "orange" :weight bold))
-                          ":" cat)
-                (format "%s:" cat))))
-        (format (format "%%-%ds" width) output-str)))))
+      (format (format "%%-%ds" width) (format "%s:" cat)))))
 
 (setq org-agenda-prefix-format
       '((agenda . " %i %(my/org-agenda-project-suffix) %?-12t% s")
@@ -432,8 +410,7 @@ captured review."
                 (:discard (:anything t))))))
     (todo "HOLD|IN-PROGRESS|WAITING"
           ((org-agenda-overriding-header "In Progress")
-           (org-agenda-files (append (list my/gtd-projects-file my/next-file)
-                                     (my/get-area-files)))))))
+           (org-agenda-files (my/get-area-files))))))
 
 (setq org-agenda-custom-commands
       `(("o" "GTD Dashboard"
@@ -446,13 +423,8 @@ captured review."
                  (org-agenda-files (list my/waiting-file))))
           (todo "TODO|HOLD|WAITING"
                 ((org-agenda-overriding-header "Projects & Areas (Backlog)")
-                 (org-agenda-files (append (list my/gtd-projects-file my/job-applications-file)
-                                           (my/get-area-files)))
+                 (org-agenda-files (my/get-area-files))
                  (org-super-agenda-groups '((:auto-category t)))
-                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled))))
-          (todo "TODO"
-                ((org-agenda-overriding-header "One-off Tasks")
-                 (org-agenda-files (list my/next-file))
                  (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled))))
           (todo "TODO|HOLD|WAITING"
                 ((org-agenda-overriding-header "Someday/Maybe")
@@ -518,7 +490,7 @@ captured review."
         ("p" "Projects"
          ((todo "TODO|IN-PROGRESS|HOLD|WAITING"
                 ((org-agenda-overriding-header "Projects")
-                 (org-agenda-files (list my/gtd-projects-file))
+                 (org-agenda-files (my/get-project-files))
                  (org-super-agenda-groups '((:auto-category t)))
                  (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled)))))
          nil)))
@@ -538,9 +510,7 @@ captured review."
 ;;; Refile Targets
 
 (setq org-refile-targets
-      `((,my/gtd-projects-file :regexp . "Tasks\\|Notes")
-        (my/get-area-files :regexp . "Tasks\\|Notes")
-        (,my/next-file :maxlevel . 1)
+      `((my/get-area-files :regexp . "^\\* Tasks")   ; * Tasks of every project file and hub
         (,my/someday-file :maxlevel . 1)
         (,my/waiting-file :maxlevel . 1)
         (,my/inbox-file :maxlevel . 1)
@@ -677,18 +647,16 @@ Highlighted tasks appear at the top of the agenda as the daily focus."
   (org-timeblock-list))
 
 (defun my/org-clock-on-state-change ()
-  "Clock in/out when TODO state changes to/from IN-PROGRESS.
-Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
-  (unless (bound-and-true-p my/mobile-sync-in-progress)
-    (when (string= org-state "IN-PROGRESS")
-      (org-clock-in))
-    (when (and (string= org-last-state "IN-PROGRESS")
-               (not (string= org-state "IN-PROGRESS")))
-      (when (org-clock-is-active)
-        (org-clock-out)))))
+  "Clock in/out when TODO state changes to/from IN-PROGRESS."
+  (when (string= org-state "IN-PROGRESS")
+    (org-clock-in))
+  (when (and (string= org-last-state "IN-PROGRESS")
+             (not (string= org-state "IN-PROGRESS")))
+    (when (org-clock-is-active)
+      (org-clock-out))))
 
 (add-hook 'org-after-todo-state-change-hook 'my/org-clock-on-state-change)
-(setq org-archive-location (concat my/archive-dir "%s_archive.org::"))
+(setq org-archive-location (concat my/archive-dir "%s_archive.org::"))  ; gtd/ files; project and hub files override with #+ARCHIVE: ::* Archive (D5)
 (setq org-confirm-elisp-link-function nil) ;; don't confirm elisp links
 
 (defun my/org-agenda-add-effort-suffix (original-fn &rest args)
@@ -714,7 +682,6 @@ Skips if `my/mobile-sync-in-progress' is non-nil (mobile sync guard)."
 (defun my/capture-devlog ()       "Capture a devlog line."     (interactive) (org-capture nil "d"))
 (defun my/capture-monthly-review () "Capture a fresh monthly review." (interactive) (org-capture nil "m"))
 (defun my/capture-weekly-review () "Capture a fresh weekly review." (interactive) (org-capture nil "w"))
-(defun my/capture-log-time ()     "Capture log time entry."    (interactive) (org-capture nil "h"))
 (defun my/capture-resource ()     "Capture resource."          (interactive) (org-capture nil "t"))
 (defun my/capture-web ()          "Capture web link."          (interactive) (org-capture nil "W"))
 (defun my/capture-activity ()     "Capture activity."          (interactive) (org-capture nil "a"))

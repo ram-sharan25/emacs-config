@@ -24,18 +24,17 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | i | inbox              | d | devlog           |
 | s | study              | m | monthly review   |
 | q | project            | w | weekly review    |
-| n | note               | h | log time         |
+| n | note               |   |                  |
 | r | resource           | W | web              |
 | t | activity           | y | job              |
 | L | leetcode note      |   |                  |
 
 * C-c o  Open
-| t | agent tmux terminal | n | notes file         |
-| j | journal             | a | area file          |
-| d | tasks file          | l | leetcode folder    |
-| h | logbook             | v | random video       |
-| p | projects file       | k | this cheat sheet   |
-| y | job applications    |   |                    |
+| t | agent tmux terminal | n | fleeting notes     |
+| j | journal             | a | area hub           |
+| p | project file        | l | leetcode folder    |
+| y | job applications    | v | random video       |
+| k | this cheat sheet    |   |                    |
 
 * C-c t  Time and tools
 | i   | clock in             | c | calc              |
@@ -104,7 +103,7 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | i | insert node   | a | add alias       |
 | F | find by ref   | t | add tag         |
 | c | capture       | C | compile notes   |
-| g | graph         | x | rebuild index   |
+| g | graph         |   |                 |
 | r | roam buffer   |   |                 |
 
 * C-c r  Research

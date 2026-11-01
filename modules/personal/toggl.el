@@ -40,15 +40,7 @@
                                     (cons (alist-get 'name item) (alist-get 'id item))
                                   nil))
                               (append projects-vector nil))))
-          (rsr/export-toggl-projects-for-focus-timer)
           (message "Synced %d active projects." (length toggl-projects))))))
-
-  (defun rsr/export-toggl-projects-for-focus-timer ()
-    "Write active Toggl project names to ~/focus-timer/projects.json.
-Lets the focus-timer web app suggest the same projects Emacs completes over."
-    (when (file-directory-p "~/focus-timer")
-      (with-temp-file (expand-file-name "~/focus-timer/projects.json")
-        (insert (json-encode (mapcar #'car toggl-projects))))))
 
   ;; Fetch projects after 5s of idle — avoids blocking startup
   (run-with-idle-timer 5 nil #'rsr/update-toggl-projects)
@@ -77,13 +69,15 @@ Lets the focus-timer web app suggest the same projects Emacs completes over."
 
   (defun rsr/toggl-clock-in-hook ()
     "Start Toggl timer on org-clock-in.
-Maps AREA property to Toggl project, PROJECT + org tags to Toggl tags."
+Maps the inherited AREA property (a #+PROPERTY: line in every project file
+and hub, D3) to the Toggl project, and the inherited kind tags (#+FILETAGS,
+D4) plus the category (= project file name, D5) to Toggl tags."
     (when (derived-mode-p 'org-mode)
       (let* ((heading      (org-get-heading t t t t))
              (prop-area    (org-entry-get (point) "AREA" t))
-             (prop-project (org-entry-get (point) "PROJECT" t))
+             (prop-project (org-get-category))
              (org-tags     (org-get-tags))
-             (project-tag  (when prop-project
+             (project-tag  (when (and prop-project (not (member prop-project my/area-names)))
                              (replace-regexp-in-string "[^a-zA-Z0-9-_]" "_"
                                                        (replace-regexp-in-string " " "_" prop-project))))
              (final-tags   (append org-tags (when project-tag (list project-tag))))

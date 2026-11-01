@@ -2,7 +2,7 @@
 
 ;;; Commentary:
 ;; Single source of truth for all paths in the config.
-;; All paths follow ~/Stillness/Brain/{Areas,Dashboard,Private,gtd}
+;; All paths follow ~/Stillness/Brain/{Areas/<Area>/,gtd,Private,Trackers}
 ;; Use (require 'paths) in other modules to reference these variables.
 
 ;;; Code:
@@ -28,7 +28,14 @@
   "GTD files directory.")
 
 (defconst my/areas-dir (expand-file-name "Areas/" my/brain-dir)
-  "Area hubs — ongoing responsibilities.")
+  "Areas/<Area>/<Area>.org hubs and Areas/<Area>/<project>.org project files (D3).")
+
+(defconst my/area-names '("Impact" "Personal" "Craft")
+  "The three live areas (D3). Each is a folder under `my/areas-dir' and a Toggl project.")
+
+(defconst my/project-kinds
+  '("build" "write" "learn" "practice" "tool" "admin" "health" "people" "reflect" "play")
+  "Closed kind vocabulary (D4): one or two per project file, loose task or habit.")
 
 (defconst my/resources-dir (expand-file-name "Resources/" my/brain-dir)
   "Resource hubs — topics, books, references.")
@@ -57,12 +64,6 @@
 
 (defconst my/inbox-file (expand-file-name "inbox.org" my/gtd-dir)
   "Inbox — all new captures land here.")
-
-(defconst my/next-file (expand-file-name "next.org" my/gtd-dir)
-  "Standalone next actions not tied to a project.")
-
-(defconst my/gtd-projects-file (expand-file-name "projects.org" my/gtd-dir)
-  "Active projects.")
 
 (defconst my/someday-file (expand-file-name "someday.org" my/gtd-dir)
   "Someday/Maybe list.")
@@ -94,22 +95,8 @@ is used, :id the calendar ID, and :file the Org file events go to.")
 
 ;;; Dashboard Files
 
-(defconst my/tasks-file (expand-file-name "tasks.org" my/dashboard-dir)
-  "Actionable tasks file (used by org-timeblock).")
-
 (defconst my/rough-notes-file (expand-file-name "fleeting_notes.org" my/gtd-dir)
   "Fleeting notes: quick capture of unprocessed thoughts (D10).")
-
-(defconst my/logbook-file (expand-file-name "log-book.org" my/dashboard-dir)
-  "Time tracking and clock-in log.")
-
-(defconst my/shortcuts-file (expand-file-name "shortcuts_in_emacs.org" my/dashboard-dir)
-  "Emacs shortcuts and keybinding reference.")
-
-(defconst my/focus-file (expand-file-name "focus-blocks.org" my/dashboard-dir)
-  "Log of completed focus-timer blocks (~/focus-timer), one CLOCK entry each.
-Written by the focus-timer server, not Emacs; included in `org-agenda-files'
-so total focus hours show up via the agenda's clock report (`R').")
 
 ;;; Private Files
 
@@ -141,8 +128,9 @@ so total focus hours show up via the agenda's clock report (`R').")
 (defconst my/job-applications-dir "~/Stillness/Personal/Applications/"
   "Job applications directory.")
 
-(defconst my/job-applications-file (expand-file-name "applications.org" my/job-applications-dir)
-  "Job applications tracking file.")
+(defconst my/job-applications-file
+  (expand-file-name "Personal/job-applications.org" my/areas-dir)
+  "Job applications tracker: a Personal project file (one heading per job under * Tasks).")
 
 (defconst my/cv-library-dir (expand-file-name "automate-resume/outputs/"   my/job-applications-dir)
   "Job applications CV library directory.")
