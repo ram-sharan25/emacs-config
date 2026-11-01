@@ -349,13 +349,17 @@ for the template."
                                (my/get-area-files)))
 
 ;; Habits (D15): rituals.org holds habits only, each with :STYLE: habit and a
-;; repeater; the agenda draws the consistency graph.
+;; repeater. org-habit is loaded for its scheduling (done/not-done per day)
+;; but the consistency graph is off: the user wants clean agenda buffers.
+;; `org-habit-show-habits' must stay t: nil removes habit entries from every
+;; agenda view (org-agenda-get-scheduled skips them), it does not hide the
+;; graph. The graph is drawn by `org-habit-insert-consistency-graphs' in
+;; org-agenda-finalize, so that function is the one to silence.
 (add-to-list 'org-modules 'org-habit)
 (require 'org-habit)
-(setq org-habit-graph-column 50
-      org-habit-preceding-days 21
-      org-habit-following-days 3
+(setq org-habit-show-habits t
       org-habit-show-habits-only-for-today nil)
+(advice-add 'org-habit-insert-consistency-graphs :override #'ignore)
 
 (setq org-todo-keywords
       '((sequence "TODO(t)" "IN-PROGRESS(p)" "HOLD(h)" "WAITING(w)" "|" "DONE(d)"
