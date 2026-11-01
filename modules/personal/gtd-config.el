@@ -368,7 +368,6 @@ captured review."
                                      my/someday-file
                                      my/rituals-file
                                      my/job-applications-file
-                                     my/phone-inbox
                                      my/focus-file)
                                (mapcar (lambda (c) (plist-get c :file)) my/gcal-calendars)
                                (my/get-area-files)))
@@ -441,7 +440,7 @@ captured review."
          (,@(my/gtd-standard-header)
           (todo "TODO"
                 ((org-agenda-overriding-header "To Refile")
-                 (org-agenda-files (list my/inbox-file my/phone-inbox))))
+                 (org-agenda-files (list my/inbox-file))))
           (todo "TODO|WAITING|HOLD"
                 ((org-agenda-overriding-header "Waiting")
                  (org-agenda-files (list my/waiting-file))))

@@ -79,8 +79,8 @@
 (defconst my/gcal-calendars-dir (expand-file-name "calendars/" my/gtd-dir)
   "One Org file per synced Google calendar.")
 
-(defconst my/gcal-calendars-file (expand-file-name "gcal-calendars.el" my/private-dir)
-  "Private file that sets `my/gcal-calendars' (keeps account names out of this repo).")
+(defconst my/gcal-calendars-file (expand-file-name "gcal-calendars.el" user-emacs-directory)
+  "Git-ignored file that sets `my/gcal-calendars' (keeps account names out of this repo).")
 
 (defvar my/gcal-calendars nil
   "Google calendars to sync, set in `my/gcal-calendars-file'.
@@ -97,8 +97,8 @@ is used, :id the calendar ID, and :file the Org file events go to.")
 (defconst my/tasks-file (expand-file-name "tasks.org" my/dashboard-dir)
   "Actionable tasks file (used by org-timeblock).")
 
-(defconst my/rough-notes-file (expand-file-name "fleeting_notes.org" my/dashboard-dir)
-  "Quick capture scratchpad for unprocessed thoughts.")
+(defconst my/rough-notes-file (expand-file-name "fleeting_notes.org" my/gtd-dir)
+  "Fleeting notes: quick capture of unprocessed thoughts (D10).")
 
 (defconst my/logbook-file (expand-file-name "log-book.org" my/dashboard-dir)
   "Time tracking and clock-in log.")
@@ -135,17 +135,6 @@ so total focus hours show up via the agenda's clock report (`R').")
 (defconst my/weekly-review-template-file
   (expand-file-name "templates/weekly-review.org" user-emacs-directory)
   "Org template used to create weekly reviews.")
-
-;;; Phone Inbox
-
-(defconst my/phone-inbox-dir (expand-file-name "phone_inbox" my/brain-dir)
-  "Phone inbox directory for captures.")
-
-(defconst my/dictation-dir (expand-file-name "dictations/" my/phone-inbox-dir)
-  "Dictations directory from phone.")
-
-(defconst my/phone-inbox (expand-file-name "inbox/inbox.org" my/phone-inbox-dir)
-  "Inbox file from phone captures.")
 
 ;;; Personal
 

@@ -124,12 +124,6 @@ devlog.el."
   "n" #'rsr/edit-paper-note
   "c" #'org-ref-insert-link)
 
-(defvar-keymap rsr/sync-map
-  :doc "Sync (C-c s)."
-  :prefix 'rsr/sync-map
-  "e" #'my/export-mobile-agenda-minimal
-  "s" #'my/mobile-sync-from-json)
-
 (defvar-keymap mind-state-map
   :doc "Mind-state tracking (C-c t m)."
   :prefix 'mind-state-map
@@ -164,7 +158,6 @@ devlog.el."
 (keymap-global-set "C-c n" 'rsr/notes-map)
 (keymap-global-set "C-c o" 'rsr/open-map)
 (keymap-global-set "C-c r" 'rsr/research-map)
-(keymap-global-set "C-c s" 'rsr/sync-map)
 (keymap-global-set "C-c t" 'rsr/time-map)
 
 ;;; --- Goto (M-g) and search (M-s) ---
@@ -253,7 +246,6 @@ devlog.el."
 ;; whole block (and the leader in init.el) in the leader cleanup.
 (keymap-set rsr/global-prefix-map "a" 'rsr/ai-map)
 (keymap-set rsr/global-prefix-map "n" 'rsr/nlm-map)
-(keymap-set rsr/global-prefix-map "s" 'rsr/sync-map)
 (keymap-set rsr/global-prefix-map "t" 'rsr/time-map)
 (keymap-set rsr/global-prefix-map "m" 'rsr/mc-map)
 (keymap-set rsr/global-prefix-map "g m" #'git-messenger:popup-message)
