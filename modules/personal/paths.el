@@ -113,16 +113,20 @@ so total focus hours show up via the agenda's clock report (`R').")
 
 ;;; Private Files
 
-(defconst my/journal-file (expand-file-name "Journal.org" my/private-dir)
-  "Daily journal (private, Git-ignored).")
+;; Files under Private/ are GPG-encrypted (*.gpg); EasyPG decrypts them on
+;; open and re-encrypts to this key on save without asking for recipients.
+(setq-default epa-file-encrypt-to '("908F2A3087D3DFFCD986F8616BEE6200A001282B"))
+
+(defconst my/journal-file (expand-file-name "Journal.org.gpg" my/private-dir)
+  "Daily journal (private, GPG-encrypted).")
 
 (defconst my/monthly-reviews-file
-  (expand-file-name "monthly-reviews.org" my/private-dir)
-  "Dated monthly reviews (private, Git-ignored).")
+  (expand-file-name "monthly-reviews.org.gpg" my/private-dir)
+  "Dated monthly reviews (private, GPG-encrypted).")
 
 (defconst my/weekly-reviews-file
-  (expand-file-name "weekly-reviews.org" my/private-dir)
-  "Dated weekly reviews (private, Git-ignored).")
+  (expand-file-name "weekly-reviews.org.gpg" my/private-dir)
+  "Dated weekly reviews (private, GPG-encrypted).")
 
 (defconst my/monthly-review-template-file
   (expand-file-name "templates/monthly-review.org" user-emacs-directory)
