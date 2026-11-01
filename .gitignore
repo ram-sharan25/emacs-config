@@ -47,6 +47,8 @@ history
 # Documentation folder, except the cheat sheet C-c o k opens
 docs/*
 !docs/keybindings.org
+# and the pointer to where the GPG / git-crypt keys live (no secrets inside)
+!docs/secrets.org
 CLAUDE.md
 *.elc
 /backups/
