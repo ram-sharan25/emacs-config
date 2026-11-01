@@ -59,7 +59,19 @@
     (let* ((ext (file-name-extension filename))
            (base-name (read-string "Image name (without extension): "))
            (final-name (concat base-name "." ext)))
-      (expand-file-name final-name my/data-dir))))
+      (expand-file-name final-name my/data-dir)))
+
+  ;; Compress every pasted image to the data/ standard (D12) before
+  ;; org-download inserts its link.  One implementation of the standard:
+  ;; .githooks/compress-images.py in the Brain repo (the pre-commit hook runs
+  ;; the same script).  Synchronous, ~0.2-1 s per paste.
+  (defun my/org-download-compress (_link filename)
+    "Compress FILENAME to the data/ standard before its link is inserted."
+    (when (and (file-exists-p filename)
+               (string-match-p "\\.\\(png\\|jpe?g\\|heic\\)\\'" filename))
+      (call-process (expand-file-name "../.githooks/compress-images.py" my/data-dir)
+                    nil nil nil filename)))
+  (advice-add 'org-download-insert-link :before #'my/org-download-compress))
 
 (defun my/zettel-source-link ()
   "Get source link for Zettel.
