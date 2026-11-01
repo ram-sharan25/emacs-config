@@ -117,15 +117,15 @@ so total focus hours show up via the agenda's clock report (`R').")
 ;; open and re-encrypts to this key on save without asking for recipients.
 (setq-default epa-file-encrypt-to '("908F2A3087D3DFFCD986F8616BEE6200A001282B"))
 
-(defconst my/journal-file (expand-file-name "Journal.org.gpg" my/private-dir)
+(defconst my/journal-file (expand-file-name "Journal/Journal.org.gpg" my/private-dir)
   "Daily journal (private, GPG-encrypted).")
 
 (defconst my/monthly-reviews-file
-  (expand-file-name "monthly-reviews.org.gpg" my/private-dir)
+  (expand-file-name "Journal/monthly-reviews.org.gpg" my/private-dir)
   "Dated monthly reviews (private, GPG-encrypted).")
 
 (defconst my/weekly-reviews-file
-  (expand-file-name "weekly-reviews.org.gpg" my/private-dir)
+  (expand-file-name "Journal/weekly-reviews.org.gpg" my/private-dir)
   "Dated weekly reviews (private, GPG-encrypted).")
 
 (defconst my/monthly-review-template-file
