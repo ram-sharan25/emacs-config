@@ -25,9 +25,9 @@ maps to the default calendar's account; unknown IDs map to themselves."
            (plist-get (my/gcal--calendar :label my/gcal-default-calendar) :account))
       calendar-id))
 
-(defun my/gcal--token-args (args)
-  "Swap the calendar ID in ARGS for its account, so tokens are per account."
-  (cons (my/gcal--account-for (car args)) (cdr args)))
+(defun my/gcal--label-for (calendar-id)
+  "The label of CALENDAR-ID in `my/gcal-calendars', for messages."
+  (or (plist-get (my/gcal--calendar :id calendar-id) :label) calendar-id))
 
 (defun my/gcal--quiet-archive (fn &rest args)
   "Call FN with ARGS without one notification per archived event."
@@ -63,47 +63,40 @@ maps to the default calendar's account; unknown IDs map to themselves."
   (org-gcal-remove-api-cancelled-events nil)
   (org-gcal-strip-html-descriptions t)
   :config
-  (advice-add 'org-gcal--get-access-token :filter-args #'my/gcal--token-args)
-  (advice-add 'org-gcal--refresh-token :filter-args #'my/gcal--token-args)
-  (advice-add 'org-gcal--archive-old-event :around #'my/gcal--quiet-archive))
-
-(defvar my/gcal--sync-started nil
-  "Time the last `my/sync-google-calendar' started.")
+  (advice-add 'org-gcal--archive-old-event :around #'my/gcal--quiet-archive)
+  ;; Bounded requests, one run at a time, tokens refreshed before a run
+  ;; without blocking, and no browser outside `my/gcal-reauth'.
+  (require 'gcal-resilience)
+  (setq my/gcal-account-function #'my/gcal--account-for
+        my/gcal-calendar-label-function #'my/gcal--label-for)
+  (my/gcal-resilience-install))
 
 (defun my/sync-google-calendar ()
   "Sync Google Calendar; quiet unless called interactively.
-A sync lock older than 10 minutes is treated as left by a failed sync."
+A sync already running is reported, not started again."
   (interactive)
   (when (featurep 'org-gcal)
-    (when (and org-gcal--sync-lock my/gcal--sync-started
-               (> (float-time (time-since my/gcal--sync-started)) 600))
-      (org-gcal--sync-unlock))
-    (setq my/gcal--sync-started (current-time))
-    (condition-case err
-        (org-gcal-sync nil (not (called-interactively-p 'any)))
-      (error (message "Google Calendar sync failed: %s"
-                      (error-message-string err))))))
+    (my/gcal-sync nil (not (called-interactively-p 'any)))))
 
 (defun my/gcal-reauth (label)
-  "Forget the OAuth token of calendar LABEL's account.
-The next sync opens the Google login for that account."
+  "Sign in again to calendar LABEL's Google account in the browser.
+This is the only place a browser opens; syncs report when it is needed."
   (interactive
    (list (completing-read "Re-authenticate calendar: "
                           (mapcar (lambda (c) (plist-get c :label)) my/gcal-calendars)
                           nil t)))
   (require 'oauth2-auto)
-  (let* ((account (plist-get (my/gcal--calendar :label label) :account))
-         (id (oauth2-auto--compute-id account 'org-gcal))
-         (store (plstore-open oauth2-auto-plstore)))
-    (unwind-protect
-        (progn
-          ;; Decrypt first, or saving would keep the old ciphertext.
-          (plstore-get store id)
-          (plstore-delete store id)
-          (plstore-save store))
-      (plstore-close store))
-    (rsr/clear-plstore-cache)
-    (message "Forgot the token for %s; the next sync opens the Google login" account)))
+  (rsr/clear-plstore-cache)
+  (let ((account (plist-get (my/gcal--calendar :label label) :account)))
+    ;; Asynchronous: Emacs stays usable while you sign in.
+    (aio-listen (oauth2-auto-force-reauth account 'org-gcal)
+                (lambda (result)
+                  (condition-case err
+                      (progn (funcall result)
+                             (message "Google Calendar: signed in to %s; tokens saved" account))
+                    (error (message "Google Calendar: sign-in to %s failed: %s"
+                                    account (my/gcal--sanitize (error-message-string err)))))))
+    (message "Google Calendar: finish signing in to %s in your browser" account)))
 
 (defvar org-time-was-given)
 (defvar org-end-time-was-given)
@@ -175,6 +168,10 @@ Otherwise org-gcal would create a zero-length event."
 Use the calendar it is already linked to, else CALENDAR, else ask.
 The event takes its time from SCHEDULED and its description from the
 notes under the heading; events pulled from Google keep theirs."
+  ;; Refuse before the prompts, not after them.
+  (when my/gcal--run
+    (user-error "Google Calendar %s is still running; push when it finishes"
+                (my/gcal-run-kind my/gcal--run)))
   ;; Pulled events keep their time in the :org-gcal: drawer, not SCHEDULED.
   (unless (plist-get (org-gcal--get-time-and-desc) :start)
     (call-interactively #'org-schedule)
@@ -189,7 +186,7 @@ notes under the heading; events pulled from Google keep theirs."
                (not (equal (org-entry-get nil org-gcal-managed-property) "gcal")))
       (my/gcal--set-description notes))
     (save-buffer)
-    (org-gcal-post-at-point)
+    (my/gcal-user-command #'org-gcal-post-at-point)
     (message "Pushing to %s: %s" cal-id (org-get-heading t t t t))))
 
 (defun my/gcal-push-at-point ()
@@ -243,14 +240,15 @@ The event is added to that calendar's file."
 ;; C-c g p / s / e / o / r: `my/gcal-map' in keymaps.el.
 
 ;; Sync every 30 minutes, waiting for 30 idle seconds so it never interrupts
-;; typing. Cancel first so reloading this file does not stack timers.
+;; typing; one idle wait at a time.  Cancel first so reloading this file does
+;; not stack timers.
 (defvar my/gcal--timer nil
   "Repeating timer that schedules the background sync.")
 (when (timerp my/gcal--timer)
   (cancel-timer my/gcal--timer))
 (setq my/gcal--timer
       (run-with-timer 1800 1800
-                      (lambda () (run-with-idle-timer 30 nil #'my/sync-google-calendar))))
+                      (lambda () (my/gcal-schedule-sync #'my/sync-google-calendar))))
 
 (provide 'gcal)
 ;;; gcal.el ends here
