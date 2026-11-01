@@ -341,12 +341,18 @@ for the template."
          ))
 
 
+;; The three area DIRECTORIES, not their files: `org-agenda-files' (the
+;; function) expands a directory entry on every call, so a project captured
+;; with "q" (or synced in from another device) shows up in the next agenda
+;; without a restart. Areas/<Area>/ is flat (D5), so the non-recursive
+;; expansion is enough. Always read the set through (org-agenda-files).
 (setq org-agenda-files (append (list my/inbox-file
                                      my/waiting-file
                                      my/someday-file
                                      my/rituals-file)
                                (mapcar (lambda (c) (plist-get c :file)) my/gcal-calendars)
-                               (my/get-area-files)))
+                               (mapcar (lambda (a) (expand-file-name a my/areas-dir))
+                                       my/area-names)))
 
 ;; Habits (D15): rituals.org holds habits only, each with :STYLE: habit and a
 ;; repeater. org-habit is loaded for its scheduling (done/not-done per day)
@@ -446,7 +452,7 @@ for the template."
                    (org-agenda-start-on-weekday 1)
                    (org-agenda-overriding-header "Completed This Week")
                    (org-agenda-files (seq-remove (lambda (f) (equal f my/rituals-file))
-                                                 org-agenda-files))
+                                                 (org-agenda-files)))
                    (org-agenda-show-log 'closed)
                    (org-agenda-log-mode-items '(closed))))
           ;; scheduled but not done — exclude rituals
@@ -455,7 +461,7 @@ for the template."
                    (org-agenda-start-on-weekday 1)
                    (org-agenda-overriding-header "Not Completed — reschedule or drop")
                    (org-agenda-files (seq-remove (lambda (f) (equal f my/rituals-file))
-                                                 org-agenda-files))
+                                                 (org-agenda-files)))
                    (org-agenda-entry-types '(:scheduled :deadline))
                    (org-agenda-skip-function
                     '(org-agenda-skip-entry-if 'todo '("DONE" "CANCELED")))))
@@ -463,7 +469,7 @@ for the template."
           (todo "TODO|HOLD|WAITING"
                 ((org-agenda-overriding-header "Open Tasks — schedule for next week")
                  (org-agenda-files (seq-remove (lambda (f) (equal f my/rituals-file))
-                                               org-agenda-files))
+                                               (org-agenda-files)))
                  (org-super-agenda-groups '((:auto-category t)))))
           ;; someday/maybe — promote or drop?
           (todo "TODO"
@@ -530,9 +536,10 @@ for the template."
 See also `org-save-all-org-buffers'"
   (interactive)
   (message "Saving org-agenda-files buffers...")
-  (save-some-buffers t (lambda ()
-                         (when (member (buffer-file-name) org-agenda-files)
-                           t)))
+  (let ((files (org-agenda-files)))
+    (save-some-buffers t (lambda ()
+                           (when (member (buffer-file-name) files)
+                             t))))
   (message "Saving org-agenda-files buffers... done"))
 
 (advice-add 'org-refile :after
