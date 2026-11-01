@@ -50,7 +50,7 @@ unless it or an ancestor is a task (TODO keyword)."
 
 (defvar my/org-roam-exclude-regexps
   '("^gtd/" "^Archives/" "^Trackers/" "^Private/" "^data/" "^output/"
-    "^Dashboard/" "^cleanup_2026_02_27/" "^phone_inbox/" "\\.bak\\'" "~\\'")
+    "^cleanup_2026_02_27/" "^phone_inbox/" "\\.bak\\'" "~\\'")
   "Value for `org-roam-file-exclude-regexp' (target layout).")
 
 (defun my/org-roam-files-without-file-id ()

@@ -2,7 +2,7 @@
 
 ;;; Commentary:
 ;; linear-emacs is cloned, not on MELPA.  Its deps (request, dash, s) come from
-;; ~/.emacs.d/elpa.  Issues land in Brain/Dashboard/linear.org.
+;; ~/.emacs.d/elpa.  Issues land in Brain/output/linear.org (`my/linear-org-file').
 ;; Keys live under C-c j (`rsr/linear-map' in keymaps.el).
 
 ;;; Code:
@@ -12,7 +12,7 @@
 (require 'org)
 (require 'paths)
 (require 'linear-emacs)
-(setq linear-emacs-org-file-path (expand-file-name "linear.org" my/dashboard-dir))
+(setq linear-emacs-org-file-path my/linear-org-file)
 
 ;; The key lives in ~/.emacs.d/secrets.el.gpg as `my/linear-key'.  gcal.el
 ;; usually loads that file at startup already; otherwise decrypt it on the

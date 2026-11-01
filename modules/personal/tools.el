@@ -101,10 +101,6 @@ they are. Return ONLY the search query string — no quotes, no explanation, not
 Be specific, creative, and vary widely each time."
   "Prompt sent to the AI to generate a YouTube search theme.")
 
-(defvar my/video-history-file
-  (expand-file-name "~/Stillness/Brain/Dashboard/video-history.org")
-  "Org file where watched inspiration videos are logged.")
-
 (defun my/video-format-duration (seconds)
   "Format SECONDS as mm:ss string."
   (let ((s (round (string-to-number (format "%s" seconds)))))

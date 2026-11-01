@@ -36,7 +36,7 @@
   ;; not indexed at all; `data/' and `output/' hold no notes.
   (setq org-roam-file-exclude-regexp
         '("^gtd/" "^Archives/" "^Trackers/" "^Private/" "^data/" "^output/"
-          "^Dashboard/" "^cleanup_2026_02_27/" "^phone_inbox/" "^gtasks/"
+          "^cleanup_2026_02_27/" "^phone_inbox/" "^gtasks/"
           "\\.bak\\'" "~\\'"))
   ;; Which headings become nodes.  File-level nodes always.  Under Areas/
   ;; (project files, area hubs) no heading is a node: tasks, Log entries and

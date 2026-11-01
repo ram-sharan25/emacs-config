@@ -21,8 +21,8 @@
 (defconst my/private-dir (expand-file-name "Private/" my/brain-dir)
   "Private notes directory (Git-ignored, sensitive content).")
 
-(defconst my/dashboard-dir (expand-file-name "Dashboard/" my/brain-dir)
-  "Dashboard directory for workflow files.")
+(defconst my/trackers-dir (expand-file-name "Trackers/" my/brain-dir)
+  "Tool-written plaintext Org tables and logs; git-crypt in git (D11).")
 
 (defconst my/gtd-dir (expand-file-name "gtd/" my/brain-dir)
   "GTD files directory.")
@@ -93,10 +93,18 @@ is used, :id the calendar ID, and :file the Org file events go to.")
 (defconst my/gcal-default-calendar "Personal"
   "Label of the calendar preselected when pushing.")
 
-;;; Dashboard Files
+;;; GTD Files
 
 (defconst my/rough-notes-file (expand-file-name "fleeting_notes.org" my/gtd-dir)
   "Fleeting notes: quick capture of unprocessed thoughts (D10).")
+
+;;; Trackers Files
+
+(defconst my/video-history-file (expand-file-name "video-history.org" my/trackers-dir)
+  "Watched inspiration videos, appended by `my/video-log-entry' in tools.el.")
+
+(defconst my/linear-org-file (expand-file-name "linear.org" my/export-output-dir)
+  "Linear issues mirror written by linear-emacs; regenerated, not in git.")
 
 ;;; Private Files
 
