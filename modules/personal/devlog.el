@@ -119,6 +119,55 @@ Use as the devlog template's :hook."
                (direction . right)
                (window-width . 0.5)))
 
+;; Entry stamps under a Devlog heading show as [HH:MM] in Org's own date
+;; face.  The file keeps the full stamp; only its date part is invisible.
+(defvar-local rsr/devlog-short-stamps t
+  "Non-nil shows devlog entry stamps as their time only.")
+
+(defconst rsr/devlog--entry-stamp-regexp
+  (concat "^[ \t]*[-+] \\[\\([0-9]\\{4\\}-[0-9][0-9]-[0-9][0-9] [^]\n]*? \\)"
+          "[0-9][0-9]:[0-9][0-9]\\]")
+  "Matches an entry stamp; group 1 is the date part that is hidden.")
+
+(defun rsr/devlog--in-devlog-p ()
+  "Return non-nil when point is anywhere inside a Devlog heading's subtree."
+  (save-excursion
+    (and (re-search-backward org-outline-regexp-bol nil t)
+         (catch 'found
+           (while t
+             (when (string= (org-get-heading t t t t) rsr/devlog-heading)
+               (throw 'found t))
+             (unless (org-up-heading-safe)
+               (throw 'found nil)))))))
+
+(defun rsr/devlog--match-entry-stamp (limit)
+  "Font-lock matcher for entry stamps under a Devlog heading, up to LIMIT."
+  (let (found)
+    (while (and (not found)
+                rsr/devlog-short-stamps
+                (re-search-forward rsr/devlog--entry-stamp-regexp limit t))
+      (setq found (save-match-data (rsr/devlog--in-devlog-p))))
+    found))
+
+(defconst rsr/devlog--stamp-font-lock-keywords
+  '((rsr/devlog--match-entry-stamp
+     (1 '(face nil invisible rsr-devlog-stamp))))
+  "Font-lock keywords that shorten devlog entry stamps.")
+
+(defun rsr/devlog--activate-short-stamps ()
+  "Shorten devlog entry stamps in this Org buffer."
+  (add-to-invisibility-spec 'rsr-devlog-stamp)
+  (font-lock-add-keywords nil rsr/devlog--stamp-font-lock-keywords 'append))
+
+(add-hook 'org-mode-hook #'rsr/devlog--activate-short-stamps)
+
+(defun rsr/devlog-toggle-short-stamps ()
+  "Toggle between short and full devlog entry stamps in this buffer."
+  (interactive)
+  (setq rsr/devlog-short-stamps (not rsr/devlog-short-stamps))
+  (font-lock-flush)
+  (message "Devlog stamps: %s" (if rsr/devlog-short-stamps "time only" "full")))
+
 (defun rsr/devlog--task-heading ()
   "Return the position of the nearest task heading at or above point."
   (save-excursion

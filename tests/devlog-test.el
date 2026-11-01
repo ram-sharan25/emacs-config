@@ -204,6 +204,51 @@ TASK is a regexp for the clocked heading; nil means the first line."
   (let ((org-capture-plist '(:target (file "x.org"))))
     (should-not (rsr/devlog--capture-buffer-p "CAPTURE-x.org" nil))))
 
+(defun devlog-test--visible-line (text)
+  "Return the visible part of the line containing TEXT."
+  (goto-char (point-min))
+  (search-forward text)
+  (let ((pos (line-beginning-position)) (end (line-end-position)) out)
+    (while (< pos end)
+      (unless (invisible-p pos) (push (char-after pos) out))
+      (setq pos (1+ pos)))
+    (concat (nreverse out))))
+
+(defconst devlog-test--stamp-text
+  (concat "* TODO Task\n** Devlog\n- Session [2026-10-31 Sat 22:00]\n"
+          "  - [2026-10-31 Sat 22:45] entry\n"
+          "  - [16:04] short\n"
+          "    - [2026-10-31 Sat 22:46] nested\n"
+          "- [2026-10-28 Wed 10:05] top\n"
+          "*** Sub\n- [2026-10-31 Sat 22:47] deeper\n"
+          "** Notes\n  - [2026-10-31 Sat 22:50] note\n")
+  "A task whose Devlog and Notes both hold stamped list items.")
+
+(ert-deftest devlog-short-stamps-only-under-devlog ()
+  (devlog-test--with-org devlog-test--stamp-text
+    (font-lock-ensure)
+    (should (equal (devlog-test--visible-line "] entry") "  - [22:45] entry"))
+    (should (equal (devlog-test--visible-line "Session")
+                   "- Session [2026-10-31 Sat 22:00]"))
+    (should (equal (devlog-test--visible-line "short") "  - [16:04] short"))
+    (should (equal (devlog-test--visible-line "nested") "    - [22:46] nested"))
+    (should (equal (devlog-test--visible-line "top") "- [10:05] top"))
+    (should (equal (devlog-test--visible-line "deeper") "- [22:47] deeper"))
+    (should (equal (devlog-test--visible-line "] note")
+                   "  - [2026-10-31 Sat 22:50] note"))
+    (should (equal (buffer-string) devlog-test--stamp-text))))
+
+(ert-deftest devlog-short-stamps-toggle ()
+  (devlog-test--with-org devlog-test--stamp-text
+    (font-lock-ensure)
+    (rsr/devlog-toggle-short-stamps)
+    (font-lock-ensure)
+    (should (equal (devlog-test--visible-line "] entry")
+                   "  - [2026-10-31 Sat 22:45] entry"))
+    (rsr/devlog-toggle-short-stamps)
+    (font-lock-ensure)
+    (should (equal (devlog-test--visible-line "] entry") "  - [22:45] entry"))))
+
 (ert-deftest devlog-task-heading-from-inside-devlog ()
   (devlog-test--with-org "* Project\n** TODO Task\n*** Devlog\n- [2026-10-28 Wed 10:05] x\n"
     (search-forward "] x")
