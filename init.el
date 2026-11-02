@@ -171,13 +171,5 @@
 (unless (server-running-p)
   (server-start))
 
-;;; Agent Skills (Claude Code)
-
-(dolist (skill '("describe" "highlight" "open" "select" "dired"))
-  (let ((path (expand-file-name
-               (concat ".agent/skills/" skill)
-               user-emacs-directory)))
-    (add-to-list 'load-path path)
-    (require (intern (concat "agent-skill-" skill)) nil t)))
 (put 'narrow-to-region 'disabled nil)
  (setq org-latex-prefer-user-labels t)
