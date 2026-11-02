@@ -14,8 +14,6 @@
 ;;    CLOCK line is then moved out of rituals.org, the event carries it.
 ;;  - `my/habit-skip' marks the habit done for the day without a done event.
 ;;  - `my/habit-note' appends the day's note event.
-;;  - `my/org-clock-in-deep' clocks a task in deep mode: the Toggl entry gets
-;;    the tag "deep" and a "- mode: deep" line sits under the CLOCK line.
 ;;  - The day agenda is the snapshot: log mode is on by default and shows
 ;;    the habit events from the log like closed tasks.
 ;;  - `my/habits-log-merge-conflicts' folds Syncthing .sync-conflict-* copies
@@ -37,9 +35,6 @@
   "When non-nil, the CLOCK line of a finished habit leaves rituals.org.
 The event line in the log carries its duration and Toggl id instead, so
 rituals.org does not grow by one line per habit per day.")
-
-(defvar my/habit-clock-mode nil
-  "Mode of the clock being started: nil, or \"deep\" for a deep session.")
 
 (defvar my/habit-measure-files-function
   (lambda () (seq-filter #'file-regular-p (org-agenda-files)))
@@ -337,8 +332,8 @@ Weekly and monthly habits without fixed days return `window'."
 
 (defun my/habit--take-recent-clock ()
   "Duration in minutes of a CLOCK line in this entry closed within 3 minutes.
-With `my/habit-move-clock-to-log', that line (and a mode line under it) is
-removed.  Returns nil when there is no such clock."
+With `my/habit-move-clock-to-log', that line is removed.  Returns nil when
+there is no such clock."
   (save-excursion
     (org-back-to-heading t)
     (let ((end (save-excursion (org-end-of-subtree t t) (point)))
@@ -356,9 +351,7 @@ removed.  Returns nil when there is no such clock."
                 (setq found (my/habit--parse-hhmm dur))
                 (when my/habit-move-clock-to-log
                   (let ((b (line-beginning-position))
-                        (e (progn (forward-line 1)
-                                  (while (looking-at "^[ \t]*- mode: ") (forward-line 1))
-                                  (point))))
+                        (e (progn (forward-line 1) (point))))
                     (delete-region b e))))))))
       found)))
 
@@ -395,45 +388,6 @@ Works in an org buffer and in the agenda.  NOTE goes under the event line."
   (interactive (list (read-string "What did today want that it did not get? ")))
   (my/habit-append-event (current-time) "note" nil nil nil nil nil text)
   (message "Day note logged."))
-
-;;;; Deep mode on the clock
-
-(defun my/habit--add-mode-tag (args)
-  "Filter the arguments of `toggl-start-time-entry' to carry the mode tag."
-  (if (and my/habit-clock-mode (>= (length args) 3))
-      (let ((tags (append (nth 2 args) nil)))
-        (append (list (nth 0 args) (nth 1 args)
-                      (vconcat (cl-remove-duplicates
-                                (append tags (list my/habit-clock-mode))
-                                :test #'equal)))
-                (nthcdr 3 args)))
-    args))
-
-(with-eval-after-load 'toggl
-  (advice-add 'toggl-start-time-entry :filter-args #'my/habit--add-mode-tag))
-
-(defun my/habit--record-clock-mode ()
-  "Write \"- mode: MODE\" under the CLOCK line that was just opened."
-  (when (and my/habit-clock-mode org-clock-marker (marker-buffer org-clock-marker))
-    (with-current-buffer (marker-buffer org-clock-marker)
-      (org-with-wide-buffer
-       (goto-char org-clock-marker)
-       (beginning-of-line)
-       (when (looking-at "^\\([ \t]*\\)CLOCK:")
-         (let ((indent (match-string 1)))
-           (end-of-line)
-           (insert "\n" indent "- mode: " my/habit-clock-mode)))))))
-
-(add-hook 'org-clock-in-hook #'my/habit--record-clock-mode 95)
-
-(defun my/org-clock-in-deep ()
-  "Clock in the task at point as a deep session.
-Toggl gets the tag \"deep\"; a \"- mode: deep\" line follows the CLOCK line."
-  (interactive)
-  (let ((my/habit-clock-mode "deep"))
-    (if (derived-mode-p 'org-agenda-mode)
-        (org-agenda-clock-in)
-      (org-clock-in))))
 
 ;;;; Measurements from CLOCK lines
 
