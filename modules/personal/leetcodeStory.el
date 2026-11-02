@@ -3,7 +3,8 @@
 
 (defun my-sanitize-filename (filename)
   "Replace invalid filename characters with underscores, strip leading/trailing dots and spaces."
-  (let ((sanitized (replace-regexp-in-string "[\\/:*?\"<>| \[\]]" "_" filename)))
+  ;; `]' must come first in the class and `[' needs no escape inside it.
+  (let ((sanitized (replace-regexp-in-string "[][\\/:*?\"<>| ]" "_" filename)))
     (string-trim sanitized "[. ]+" "[. ]+"  )))
 
 (defun my-create-new-leetcode-note ()
@@ -13,6 +14,11 @@
          (full-path (expand-file-name
                      (format "%s.org" (my-sanitize-filename title-input))
                      my/leetcode-dir)))
+    (when (and (file-exists-p full-path)
+               (not (yes-or-no-p (format "%s exists.  Overwrite it? "
+                                         (file-name-nondirectory full-path)))))
+      (find-file full-path)
+      (user-error "Opened the existing note instead"))
     (switch-to-buffer (generate-new-buffer (format "*LeetCode: %s*" title-input)))
     (org-mode)
     (insert (format "#+TITLE: %s\n" title-input))
