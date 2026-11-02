@@ -36,7 +36,6 @@
   ;; not indexed at all; `data/' and `output/' hold no notes.
   (setq org-roam-file-exclude-regexp
         '("^gtd/" "^Archives/" "^Trackers/" "^Private/" "^data/" "^output/"
-          "^cleanup_2026_02_27/" "^phone_inbox/" "^gtasks/"
           "\\.bak\\'" "~\\'"))
   ;; Which headings become nodes.  File-level nodes always.  Under Areas/
   ;; (project files, area hubs) no heading is a node: tasks, Log entries and
@@ -82,14 +81,24 @@
   ;; Compress every pasted image to the data/ standard (D12) before
   ;; org-download inserts its link.  One implementation of the standard:
   ;; .githooks/compress-images.py in the Brain repo (the pre-commit hook runs
-  ;; the same script).  Synchronous, ~0.2-1 s per paste.
-  (defun my/org-download-compress (_link filename)
-    "Compress FILENAME to the data/ standard before its link is inserted."
-    (when (and (file-exists-p filename)
-               (string-match-p "\\.\\(png\\|jpe?g\\|heic\\)\\'" filename))
-      (call-process (expand-file-name "../.githooks/compress-images.py" my/data-dir)
-                    nil nil nil filename)))
-  (advice-add 'org-download-insert-link :before #'my/org-download-compress))
+  ;; the same script).  Synchronous, ~0.2-1 s per paste.  The script turns
+  ;; HEIC into JPEG and removes the .heic, so the link must name the .jpg.
+  (defun my/org-download-compress (args)
+    "Compress the file in ARGS (LINK FILENAME) before its link is inserted.
+Return ARGS with FILENAME renamed when compression changed its extension."
+    (let ((link (nth 0 args))
+          (filename (nth 1 args)))
+      (when (and (file-exists-p filename)
+                 (string-match-p "\\.\\(png\\|jpe?g\\|heic\\)\\'" filename))
+        (call-process (expand-file-name "../.githooks/compress-images.py" my/data-dir)
+                      nil nil nil filename)
+        (let ((jpg (concat (file-name-sans-extension filename) ".jpg")))
+          (when (and (string-match-p "\\.heic\\'" filename)
+                     (not (file-exists-p filename))
+                     (file-exists-p jpg))
+            (setq filename jpg))))
+      (list link filename)))
+  (advice-add 'org-download-insert-link :filter-args #'my/org-download-compress))
 
 (defun my/zettel-source-link ()
   "Get source link for Zettel.

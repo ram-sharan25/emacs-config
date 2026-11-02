@@ -48,11 +48,6 @@ unless it or an ancestor is a task (TODO keyword)."
         ((my/org-roam--file-only-p) nil)
         (t (not (my/org-roam--task-p)))))
 
-(defvar my/org-roam-exclude-regexps
-  '("^gtd/" "^Archives/" "^Trackers/" "^Private/" "^data/" "^output/"
-    "^cleanup_2026_02_27/" "^phone_inbox/" "\\.bak\\'" "~\\'")
-  "Value for `org-roam-file-exclude-regexp' (target layout).")
-
 (defun my/org-roam-files-without-file-id ()
   "List roam files that have no file-level node (no :ID: drawer at the top).
 Links written inside their tasks (or other excluded headings) are
@@ -74,8 +69,11 @@ dropped by roam, because there is no enclosing node to credit.  Run after
 (defvar my/org-id-scan-root nil
   "Root scanned for IDs; defaults to `org-roam-directory'.")
 
-(defvar my/org-id-scan-exclude '("/\\.git/" "/output/" "/data/" "\\.bak\\'" "~\\'" "/#")
-  "Regexps of paths never scanned for IDs.")
+(defvar my/org-id-scan-exclude '("/\\.git/" "/output/" "/data/" "\\.bak\\'" "~\\'" "/#"
+                                 "/cleanup_meta_docs\\.zip/")
+  "Regexps of paths never scanned for IDs.
+The recovered cleanup_meta_docs are agent documents whose `:ID: [UUID]'
+lines are placeholder examples, not IDs.")
 
 (defun my/org-id-files ()
   "Every .org file under the brain, minus `my/org-id-scan-exclude'.

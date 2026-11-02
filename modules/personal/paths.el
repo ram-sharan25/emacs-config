@@ -19,7 +19,7 @@
   "Public knowledge notes directory (Git-synced).")
 
 (defconst my/private-dir (expand-file-name "Private/" my/brain-dir)
-  "Private notes directory (Git-ignored, sensitive content).")
+  "Private notes directory; only GPG-encrypted .gpg files are tracked in git.")
 
 (defconst my/trackers-dir (expand-file-name "Trackers/" my/brain-dir)
   "Tool-written plaintext Org tables and logs; git-crypt in git (D11).")

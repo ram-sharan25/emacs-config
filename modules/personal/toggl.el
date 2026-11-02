@@ -9,7 +9,6 @@
   :init
   (setq toggl-auth-token my/toggl-auth-token)
   (setq toggl-workspace-id 8843824)
-  (setq org-use-property-inheritance '("PROJECT"))
 
   :config
   (require 'org-toggl)
@@ -71,12 +70,13 @@
     "Start Toggl timer on org-clock-in.
 Maps the inherited AREA property (a #+PROPERTY: line in every project file
 and hub, D3) to the Toggl project, and the inherited kind tags (#+FILETAGS,
-D4) plus the category (= project file name, D5) to Toggl tags."
+D4) plus the category (= project file name, D5) to Toggl tags.  The hub
+files' note-kind FILETAGS tag \"hub\" is not a kind and is dropped."
     (when (derived-mode-p 'org-mode)
       (let* ((heading      (org-get-heading t t t t))
              (prop-area    (org-entry-get (point) "AREA" t))
              (prop-project (org-get-category))
-             (org-tags     (org-get-tags))
+             (org-tags     (remove "hub" (org-get-tags)))
              (project-tag  (when (and prop-project (not (member prop-project my/area-names)))
                              (replace-regexp-in-string "[^a-zA-Z0-9-_]" "_"
                                                        (replace-regexp-in-string " " "_" prop-project))))

@@ -291,7 +291,7 @@ for the template."
 
         ("j" "Journal" plain
          (file+function ,my/journal-file journal--ensure-daily-heading)
-         "** %<%I:%M %p>:\n:PROPERTIES:\n:PROJECT: Habits\n:END:\n:LOGBOOK:\n:END:\n- src: %a\n- %?"
+         "** %<%I:%M %p>:\n:PROPERTIES:\n:AREA: Personal\n:END:\n:LOGBOOK:\n:END:\n- src: %a\n- %?"
          :empty-lines 1)
 
         ("m" "Monthly Review" plain
