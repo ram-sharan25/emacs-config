@@ -15,7 +15,7 @@
 ;;; Code:
 
 (add-to-list 'load-path
-             (expand-file-name "~/Stillness/Development/customize-agents/emacs/agent-sessions"))
+             (expand-file-name "~/Stillness/Development/customize-agents/main/emacs/agent-sessions"))
 (if (not (and (require 'agent-sessions nil t)
               (require 'agent-workflow nil t)))
     (display-warning 'ai-sessions-config
