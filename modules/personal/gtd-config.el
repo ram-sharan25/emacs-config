@@ -722,11 +722,12 @@ Highlighted tasks appear at the top of the agenda as the daily focus."
 
 ;; C-c a agenda, C-c c capture, C-c t g clock goto and C-c t b timeblock
 ;; view are in keymaps.el.
-(define-key org-agenda-mode-map "j" 'my/org-agenda-process-inbox-item)
-(define-key org-agenda-mode-map "H" 'my/org-agenda-toggle-highlight)
-(define-key org-agenda-mode-map "E" 'my/org-day-effort-budget)
-(define-key org-agenda-mode-map "D" 'my/schedule-deep-work-block)
-(define-key org-agenda-mode-map "V" 'my/agenda-toggle-delayed)
+(with-eval-after-load 'org-agenda
+  (define-key org-agenda-mode-map "j" 'my/org-agenda-process-inbox-item)
+  (define-key org-agenda-mode-map "H" 'my/org-agenda-toggle-highlight)
+  (define-key org-agenda-mode-map "E" 'my/org-day-effort-budget)
+  (define-key org-agenda-mode-map "D" 'my/schedule-deep-work-block)
+  (define-key org-agenda-mode-map "V" 'my/agenda-toggle-delayed))
 
 ;;; --- Reschedule / Deadline change logging ---
 
