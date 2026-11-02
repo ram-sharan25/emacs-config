@@ -123,7 +123,7 @@
 
 (use-package all-the-icons-ibuffer
   :commands all-the-icons-ibuffer-mode
-  :hook (after-init-hook . all-the-icons-ibuffer-mode))
+  :hook (after-init . all-the-icons-ibuffer-mode))
 
 ;;; Editing Defaults
 
