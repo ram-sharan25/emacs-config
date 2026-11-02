@@ -4,7 +4,6 @@
 
 (require 'paths)
 (require 'gtd-config)
-(require 'ai-workflows)
 ;; Roam node policy, whole-repo org-id coverage, duplicate-ID guard (D16).
 ;; See Plans/Brain/.../2026-11-01-brain-roam-id-links/findings.md.
 (require 'brain-roam-ids)

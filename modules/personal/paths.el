@@ -15,9 +15,6 @@
 (defconst my/brain-dir (expand-file-name "Brain/" my/root-dir)
   "Brain directory containing all org-roam notes.")
 
-(defconst my/public-dir (expand-file-name "Public/" my/brain-dir)
-  "Public knowledge notes directory (Git-synced).")
-
 (defconst my/private-dir (expand-file-name "Private/" my/brain-dir)
   "Private notes directory; only GPG-encrypted .gpg files are tracked in git.")
 
@@ -153,9 +150,6 @@ so a repository created anywhere under these is found without registering it.")
 
 (defconst my/leetcode-dir (expand-file-name "NeetCode/" my/development-dir)
   "LeetCode/NeetCode solutions and notes.")
-
-(defconst my/leetcode-index-file (expand-file-name "Index.org" my/leetcode-dir)
-  "Auto-generated index of LeetCode problems.")
 
 ;;; Classes
 

@@ -91,16 +91,6 @@
   (with-temp-file my/video-watch-log
     (insert (format-time-string "%Y-%m-%d"))))
 
-(defconst my/video-ai-prompt
-  "Generate one creative YouTube search query (4-8 words) for a video under 5 minutes.
-The person loves: eastern philosophy (Krishnamurti, Osho, Ramana Maharshi, Vivekananda,
-Vimalananda), Jungian psychology, Alfred Adler, mathematics history (how theorems and
-techniques emerged and why), spoken word poetry, zen, meditation, running, personal human
-stories, science discoveries, history of ideas, how people think and why they are the way
-they are. Return ONLY the search query string — no quotes, no explanation, nothing else.
-Be specific, creative, and vary widely each time."
-  "Prompt sent to the AI to generate a YouTube search theme.")
-
 (defun my/video-format-duration (seconds)
   "Format SECONDS as mm:ss string."
   (let ((s (round (string-to-number (format "%s" seconds)))))

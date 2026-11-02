@@ -82,17 +82,6 @@
 (defconst my/error-frame-buf " *flymake-posframe*"
   "Buffer name for the flymake error posframe.")
 
-(defun my/posframe-point-top-right (info)
-  "Position posframe above and to the right of point."
-  (let* ((px (plist-get info :position-pixel-x))
-         (py (plist-get info :position-pixel-y))
-         (fw (plist-get info :posframe-width))
-         (fh (plist-get info :posframe-height))
-         (pw (plist-get info :parent-frame-width))
-         (x  (min (+ px 16) (- pw fw 10)))
-         (y  (max 0 (- py fh 6))))
-    (cons x y)))
-
 (defun my/error-frame--format (diags)
   "Format DIAGS with colors: errors red, warnings yellow, notes green."
   (let* ((header (propertize " Diagnostics:\n" 'face '(:weight bold)))

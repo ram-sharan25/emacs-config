@@ -18,7 +18,6 @@
 
   ;; Pass --start=<secs> to mpv so it natively seeks to the timestamp.
   ;; More reliable than post-start IPC seeking for streaming URLs.
-  (advice-remove 'org-mpv-notes--open #'my/mpv-notes-retry-seek)
   (defun my/mpv-notes-start-at-timestamp (orig-fn path &optional arg)
     "Wrap `org-mpv-notes--open' to pass --start flag for timestamped links."
     (cl-multiple-value-bind (_parsed-path secs)

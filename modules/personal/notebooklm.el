@@ -258,19 +258,6 @@ HEADING is used as the org heading for this management block."
 
 ;;; ─── Artifact helpers ────────────────────────────────────────────────────────
 
-(defun rsr/nlm--get-artifacts ()
-  "Fetch artifacts; return list of (LABEL . ID) pairs."
-  (let* ((raw       (rsr/nlm--run-sync '("artifact" "list" "--json")))
-         (data      (rsr/nlm--parse-json raw))
-         (artifacts (alist-get 'artifacts data)))
-    (mapcar (lambda (a)
-              (cons (format "%s  [%s]  %s"
-                            (alist-get 'title  a "")
-                            (alist-get 'type   a "")
-                            (alist-get 'status a ""))
-                    (alist-get 'id a)))
-            artifacts)))
-
 ;;; ─── Chat commands ───────────────────────────────────────────────────────────
 
 ;;;###autoload

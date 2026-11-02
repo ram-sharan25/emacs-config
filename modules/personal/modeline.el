@@ -52,23 +52,6 @@
     "Org clock: truncated task + elapsed time."
     (or (rsr/modeline-org-clock) ""))
 
-  (defun rsr/buffer-path-last-n (n)
-    "Return buffer file path showing only last N directory components + filename."
-    (if-let ((file (buffer-file-name)))
-        (let* ((parts (seq-filter (lambda (s) (not (string-empty-p s)))
-                                  (split-string (abbreviate-file-name file) "/")))
-               (tail  (last parts (1+ n)))
-               (dirs  (butlast tail))
-               (fname (car (last tail))))
-          (concat (propertize (if dirs (concat (mapconcat #'identity dirs "/") "/") "")
-                              'face 'doom-modeline-buffer-path)
-                  (propertize fname 'face 'doom-modeline-buffer-file)))
-      (propertize (buffer-name) 'face 'doom-modeline-buffer-file)))
-
-  (doom-modeline-def-segment rsr/buffer-info-prog
-    "Buffer path showing last 3 folder components + filename."
-    (concat " " (rsr/buffer-path-last-n 3)))
-
   ;; --- modeline layouts ---
 
   ;; default
