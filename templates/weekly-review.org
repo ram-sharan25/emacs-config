@@ -1,0 +1,111 @@
+#+TITLE: Weekly Review Template and Workflow Guide
+#+STARTUP: content
+
+# TEMPLATE-BEGIN
+** %(my/weekly-review-heading)
+:PROPERTIES:
+:ID: %(org-id-new)
+:CREATED: %U
+:EFFORT: 0:10
+:END:
+
+*** Ten-minute rule
+Set a 10-minute timer. This is a review, not a work session: do not complete,
+reorganize, or research items now. Capture a follow-up action and move on. A
+short completed review is better than a perfect review you stop doing.
+
+*** Get Clear — 2 minutes [0/2]
+- [ ] Scan physical, email, phone, notes, and GTD inboxes; flag anything that needs a separate processing block
+- [ ] Do a 30-second mind sweep; capture only important tasks, promises, worries, or ideas
+
+*** Get Current — 4 minutes [0/6]
+- [ ] Open =C-c a w= and scan what was completed
+- [ ] Update the deep sittings table below with =C-c C-c= on its =#+BEGIN:= line; count the rows by eye, AREA says the room (Impact is work, Personal and Craft are home)
+- [ ] Review unfinished work; deliberately do, defer, delegate, or drop it
+- [ ] Scan the previous and upcoming week on the calendar
+- [ ] Review Waiting For items and active projects that lack a next action
+- [ ] Scan Next Actions and Someday/Maybe for anything obviously stale or newly relevant
+
+#+BEGIN: clocktable :scope agenda :block thisweek :maxlevel 2 :match "deep" :tags t :properties ("AREA") :inherit-props t :link t
+#+END:
+
+*** Reflect — 2 minutes
+- Best thing about this week: %?
+- Main friction or recurring problem:
+- One lesson or pattern worth remembering:
+- Energy and mood: low / mixed / good — why?
+
+*** Choose next week — 1 minute
+- Most important outcome:
+- Two supporting outcomes:
+  1.
+  2.
+- Something I will intentionally not prioritize:
+- Monday's first visible action:
+
+*** Close — 1 minute [0/2]
+- [ ] Convert necessary follow-ups into tasks, calendar events, or Waiting For items
+- [ ] Save with =C-c C-c= and mark the Weekly Review ritual =DONE=
+# TEMPLATE-END
+
+* Workflow guideline for future automation
+This section documents the complete weekly-review responsibility. It is not
+copied into captured reviews. Keep the recurring review within ten minutes:
+automation should gather and summarize evidence, while the person reviews,
+judges, and decides.
+
+** Automation principles
+- Never silently reschedule, cancel, complete, or create commitments.
+- Present links back to source entries so every summary can be verified.
+- Highlight exceptions and changes instead of reproducing every task.
+- Prefer one review dashboard generated before the ritual begins.
+- Require confirmation before applying proposed task or calendar changes.
+- Preserve each written review as a dated historical record.
+
+** Get Clear
+*** Automate or assist
+- Collect counts and links for unprocessed GTD, phone, notes, email, and other known inboxes.
+- Identify inbox items older than an agreed threshold.
+- Offer one consolidated list of possible loose ends.
+*** Human responsibility
+- Notice uncaptured promises, worries, ideas, and obligations.
+- Decide whether each item is actionable, reference, someday, or trash.
+
+** Get Current
+*** Automate or assist
+- Summarize tasks completed during the week.
+- List scheduled or deadline items that were not completed.
+- Show the previous and upcoming week from the calendar.
+- List Waiting For items with age and last follow-up date.
+- Flag active projects with no next action, no recent activity, or stale deadlines.
+- Flag stale Next Actions and newly relevant Someday/Maybe items.
+*** Human responsibility
+- Confirm whether the system reflects reality.
+- Choose do, defer, delegate, drop, or renegotiate.
+- Decide which projects and opportunities still matter.
+
+** Reflect
+*** Automate or assist
+- Provide factual signals: completions, carryovers, focus time, habits, and notable calendar events.
+- Compare with recent weeks to reveal recurring postponement or overload.
+*** Human responsibility
+- Name the week's win, friction, lesson, energy, and emotional meaning.
+- Interpret patterns without treating metrics as judgment.
+
+** Choose the next week
+*** Automate or assist
+- Show existing commitments, available time, deadlines, and unresolved carryovers.
+- Detect obvious schedule conflicts and unrealistic workload.
+- Suggest source-linked candidate outcomes without selecting them automatically.
+*** Human responsibility
+- Select one primary and at most two supporting outcomes.
+- Decide what not to prioritize.
+- Define Monday's first visible action.
+
+** Close
+*** Automate or assist
+- Convert confirmed decisions into proposed task, calendar, Waiting For, or project updates.
+- Validate that chosen outcomes have concrete next actions.
+- Save and link the dated review.
+*** Human responsibility
+- Approve changes and mark the ritual complete.

@@ -139,5 +139,64 @@
     (org-next-visible-heading 1)
     (should (equal (rsr/toggl-tags-at-point) '("deep")))))
 
+(defconst sittings-test--deep-clocktable
+  "#+BEGIN: clocktable :scope agenda :block thisweek :maxlevel 2 :match \"deep\" :tags t :properties (\"AREA\") :inherit-props t :link t"
+  "The dynamic block line the weekly review template must carry.")
+
+(ert-deftest sittings-weekly-review-template-has-deep-clocktable ()
+  (with-temp-buffer
+    (insert-file-contents my/weekly-review-template-file)
+    (goto-char (point-min))
+    (re-search-forward "^# TEMPLATE-BEGIN")
+    (let ((end (save-excursion (re-search-forward "^# TEMPLATE-END") (point))))
+      (should (re-search-forward (concat "^" (regexp-quote sittings-test--deep-clocktable) "$") end t))
+      (should (re-search-forward "^#\\+END:$" end t))
+      (should (re-search-backward "C-c C-c" nil t)))))
+
+(defun sittings-test--weekday (n)
+  "\"YYYY-MM-DD Day\" of day N of the current week, 0 being Monday."
+  (let* ((now (current-time))
+         (dow (string-to-number (format-time-string "%u" now)))
+         (day (time-add now (days-to-time (- n (1- dow))))))
+    (format-time-string "%Y-%m-%d %a" day)))
+
+(defun sittings-test--sitting-on (day heading tag duration &optional end)
+  "One task clocked on DAY from 10:00 to END (default 11:30) => DURATION.
+Org recomputes the duration from the timestamps, so END must agree with it."
+  (format "** TODO %s%s\n:LOGBOOK:\nCLOCK: [%s 10:00]--[%s %s] =>  %s\n:END:\n"
+          heading (if tag (concat " " tag) "") day day (or end "11:30") duration))
+
+(defun sittings-test--clocktable (file params)
+  "Text of a clocktable with PARAMS appended to FILE and updated, FILE being the agenda."
+  (with-current-buffer (find-file-noselect file)
+    (let ((org-agenda-files (list file)))
+      (goto-char (point-max))
+      (insert "\n" params "\n#+END:\n")
+      (search-backward "#+BEGIN:")
+      (org-dblock-update)
+      (prog1 (buffer-substring-no-properties (point) (point-max))
+        (set-buffer-modified-p nil)))))
+
+(ert-deftest sittings-deep-clocktable-lists-each-sitting ()
+  (sittings-test--with-temp-org-file
+   (concat "#+PROPERTY: AREA Craft\n#+FILETAGS: :build:\n* Tasks [/]\n"
+           (sittings-test--sitting-on (sittings-test--weekday 0) "Trace one request through Flask" ":deep:" "1:30")
+           (sittings-test--sitting-on (sittings-test--weekday 1) "Reimplement the routing commit" ":deep:" "1:30")
+           (sittings-test--sitting-on (sittings-test--weekday 2) "Answer two emails" nil "0:30" "10:30"))
+   (lambda (file)
+     (let ((deep (sittings-test--clocktable file sittings-test--deep-clocktable))
+           (all (sittings-test--clocktable
+                 file "#+BEGIN: clocktable :scope agenda :block thisweek :maxlevel 2")))
+       (should (string-match-p "Trace one request through Flask" deep))
+       (should (string-match-p "Reimplement the routing commit" deep))
+       (should-not (string-match-p "Answer two emails" deep))
+       (should (= 2 (length (seq-filter (lambda (l) (string-match-p "build, deep" l))
+                                        (split-string deep "\n")))))
+       (should (string-match-p "| Craft |" deep))
+       (should (string-match-p "\\*3:00\\*" deep))
+       ;; the unfiltered table on the project sums all three sittings
+       (should (string-match-p "\\*3:30\\*" all))
+       (should (string-match-p "Answer two emails" all))))))
+
 (provide 'sittings-test)
 ;;; sittings-test.el ends here
