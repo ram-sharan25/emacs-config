@@ -67,7 +67,8 @@ dropped by roam, because there is no enclosing node to credit.  Run after
 ;;;; 2. org-id coverage of the whole repo -----------------------------------
 
 (defvar my/org-id-scan-root nil
-  "Root scanned for IDs; defaults to `org-roam-directory'.")
+  "Root scanned for IDs; defaults to `org-roam-directory', or `my/brain-dir'
+before org-roam has loaded.")
 
 (defvar my/org-id-scan-exclude '("/\\.git/" "/output/" "/data/" "\\.bak\\'" "~\\'" "/#"
                                  "/cleanup_meta_docs\\.zip/")
@@ -78,7 +79,7 @@ lines are placeholder examples, not IDs.")
 (defun my/org-id-files ()
   "Every .org file under the brain, minus `my/org-id-scan-exclude'.
 `.org.gpg' files are not matched, so Private/ needs no passphrase."
-  (let ((root (or my/org-id-scan-root org-roam-directory)))
+  (let ((root (or my/org-id-scan-root (bound-and-true-p org-roam-directory) my/brain-dir)))
     (cl-remove-if (lambda (f) (cl-some (lambda (re) (string-match-p re f))
                                         my/org-id-scan-exclude))
                   (directory-files-recursively root "\\.org\\'"))))
@@ -265,7 +266,7 @@ get a NEW id and run `my/org-id-regenerate-here'."
   (let* ((split (my/org-id--duplicates))
          (live (car split))
          (archive (cdr split))
-         (root (or my/org-id-scan-root org-roam-directory))
+         (root (or my/org-id-scan-root (bound-and-true-p org-roam-directory) my/brain-dir))
          (buf (get-buffer-create "*org-id duplicates*")))
     (with-current-buffer buf
       (let ((inhibit-read-only t))
