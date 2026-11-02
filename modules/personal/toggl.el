@@ -11,33 +11,31 @@
   :config
   (require 'org-toggl)
   (require 'json)
-  (require 'url)
 
   (defvar toggl-projects nil
     "A list of (ProjectName . ProjectID) used for completion.")
 
   (defun rsr/update-toggl-projects ()
-    "Fetch active projects from Toggl and update `toggl-projects`."
+    "Fetch active projects from Toggl and update `toggl-projects'.
+Asynchronous, through org-toggl's `request' helper, so a slow or dead
+network never blocks Emacs; failures are reported in the echo area."
     (interactive)
-    (let* ((auth (base64-encode-string (concat toggl-auth-token ":api_token") t))
-           (url "https://api.track.toggl.com/api/v9/me?with_related_data=true")
-           (url-request-extra-headers `(("Authorization" . ,(concat "Basic " auth))
-                                        ("Content-Type" . "application/json"))))
-      (message "Fetching active Toggl projects...")
-      (with-current-buffer (url-retrieve-synchronously url)
-        (goto-char (point-min))
-        (re-search-forward "^$" nil 'move)
-        (let* ((full-data (json-read))
-               (projects-vector (alist-get 'projects full-data)))
-          (kill-buffer (current-buffer))
-          (setq toggl-projects
-                (delq nil
-                      (mapcar (lambda (item)
-                                (if (not (eq (alist-get 'active item) :json-false))
-                                    (cons (alist-get 'name item) (alist-get 'id item))
-                                  nil))
-                              (append projects-vector nil))))
-          (message "Synced %d active projects." (length toggl-projects))))))
+    (message "Fetching active Toggl projects...")
+    (toggl-request-get
+     "me?with_related_data=true"
+     nil
+     (cl-function
+      (lambda (&key data &allow-other-keys)
+        (setq toggl-projects
+              (delq nil
+                    (mapcar (lambda (item)
+                              (unless (eq (alist-get 'active item) :json-false)
+                                (cons (alist-get 'name item) (alist-get 'id item))))
+                            (append (alist-get 'projects data) nil))))
+        (message "Synced %d active projects." (length toggl-projects))))
+     (cl-function
+      (lambda (&key error-thrown &allow-other-keys)
+        (message "Fetching Toggl projects failed: %s" error-thrown)))))
 
   ;; Fetch projects after 5s of idle — avoids blocking startup
   (run-with-idle-timer 5 nil #'rsr/update-toggl-projects)
