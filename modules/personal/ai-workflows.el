@@ -85,15 +85,8 @@ Uses the currently active gptel backend/model."
   (interactive)
   (unless (derived-mode-p 'org-mode)
     (user-error "Must be in an org-mode buffer"))
-  ;; Clear any existing compiled notes before re-running
-  (save-excursion
-    (goto-char (point-min))
-    (when (re-search-forward "^\\* Compiled Notes:?\n" nil t)
-      (let ((start (point))
-            (end (if (re-search-forward "^\\* " nil t)
-                     (line-beginning-position)
-                   (point-max))))
-        (delete-region start end))))
+  ;; gptel-request is not autoloaded, so a fresh session needs the load.
+  (require 'gptel)
   ;; Extract and split raw notes
   (let* ((raw-bounds
           (save-excursion
@@ -107,6 +100,17 @@ Uses the currently active gptel backend/model."
                     (car raw-bounds) (cdr raw-bounds))))
     (when (null sections)
       (user-error "* Raw Notes is empty — add your session notes first"))
+    ;; Clear any existing compiled notes before re-running.  Only now, after
+    ;; Raw Notes has validated, so a user-error above leaves them intact.
+    ;; SECTIONS are strings, so the deletion can't shift them.
+    (save-excursion
+      (goto-char (point-min))
+      (when (re-search-forward "^\\* Compiled Notes:?\n" nil t)
+        (let ((start (point))
+              (end (if (re-search-forward "^\\* " nil t)
+                       (line-beginning-position)
+                     (point-max))))
+          (delete-region start end))))
     (save-excursion
       (goto-char (point-min))
       (org-entry-put nil "COMPILE_STATE" "compiling"))
