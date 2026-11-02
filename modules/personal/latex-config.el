@@ -36,5 +36,8 @@ front-end ourselves rather than relying on helm-bibtex/ivy-bibtex."
 (with-eval-after-load 'latex
   (define-key LaTeX-mode-map (kbd "C-c ]") #'rsr/latex-insert-citation))
 
+;; Keep \label{} names taken from #+NAME / CUSTOM_ID in LaTeX export.
+(setq org-latex-prefer-user-labels t)
+
 (provide 'latex-config)
 ;;; latex-config.el ends here

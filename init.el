@@ -175,5 +175,3 @@
 (unless (server-running-p)
   (server-start))
 
-(put 'narrow-to-region 'disabled nil)
- (setq org-latex-prefer-user-labels t)
