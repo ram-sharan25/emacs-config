@@ -534,7 +534,6 @@ for the template."
       '((daily today)
         (800 1000 1200 1400 1600 1800 2000)
         " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))
-(setq org-agenda-hide-tags-regexp ".")
 (setq org-agenda-sticky t)                ;; keep agenda buffer alive after closing
 (setq org-agenda-window-setup 'current-window) ;; open agenda in current window
 

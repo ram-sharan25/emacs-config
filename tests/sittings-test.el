@@ -77,5 +77,50 @@
      (should (equal (my/habit--measure (list :measure (concat "file=" file)) "2026-11-02")
                     (list 1 90 '((90 "Read"))))))))
 
+(ert-deftest sittings-hide-tags-regexp-keeps-only-deep ()
+  (dolist (tg '("build" "work" "hub" "deeper" "deepwork" "d" "de" "dee"))
+    (should (string-match-p org-agenda-hide-tags-regexp tg)))
+  (should-not (string-match-p org-agenda-hide-tags-regexp "deep")))
+
+(defun sittings-test--day-agenda (content)
+  "Day agenda text, log mode on, for a temp agenda file holding CONTENT."
+  (sittings-test--with-temp-org-file
+   content
+   (lambda (file)
+     (let ((org-agenda-files (list file))
+           (org-agenda-sticky nil)
+           (org-agenda-start-with-log-mode '(closed clock state)))
+       (org-agenda-list nil nil 'day)
+       (prog1 (with-current-buffer org-agenda-buffer-name
+                (buffer-substring-no-properties (point-min) (point-max)))
+         (kill-buffer org-agenda-buffer-name))))))
+
+(defun sittings-test--clocked (heading tag start end duration)
+  "One task clocked today from START to END (HH:MM) => DURATION, TAG or nil."
+  (let ((day (format-time-string "%Y-%m-%d %a")))
+    (format "** TODO %s%s\n:LOGBOOK:\nCLOCK: [%s %s]--[%s %s] =>  %s\n:END:\n"
+            heading (if tag (concat " " tag) "") day start day end duration)))
+
+(ert-deftest sittings-day-agenda-shows-deep-tag-only ()
+  (let ((text (sittings-test--day-agenda
+               (concat "#+FILETAGS: :build:\n* Tasks [/]\n"
+                       (sittings-test--clocked "Trace one request through Flask" ":deep:" "10:00" "11:30" "1:30")
+                       (sittings-test--clocked "Answer two emails" nil "14:00" "14:30" "0:30")))))
+    (should (string-match-p "Clocked: +(1:30) TODO Trace one request through Flask +:deep:" text))
+    (should (string-match-p "Clocked: +(0:30) TODO Answer two emails *$" text))
+    (should-not (string-match-p ":build:" text))))
+
+(ert-deftest sittings-day-agenda-two-deep-sittings ()
+  (let ((text (sittings-test--day-agenda
+               (concat "#+FILETAGS: :build:\n* Tasks [/]\n"
+                       (sittings-test--clocked "Trace one request through Flask" ":deep:" "10:00" "11:30" "1:30")
+                       (sittings-test--clocked "Answer two emails" nil "13:00" "13:30" "0:30")
+                       (sittings-test--clocked "Reimplement the routing commit" ":deep:" "15:00" "16:30" "1:30")))))
+    (should (= 3 (length (seq-filter (lambda (l) (string-match-p "Clocked:" l))
+                                     (split-string text "\n")))))
+    (should (= 2 (length (seq-filter (lambda (l) (string-match-p "Clocked:.*:deep:" l))
+                                     (split-string text "\n")))))
+    (should-not (string-match-p "[Dd]eep hours\\|sessions" text))))
+
 (provide 'sittings-test)
 ;;; sittings-test.el ends here

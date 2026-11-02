@@ -16,6 +16,8 @@
 ;;  - `my/habit-note' appends the day's note event.
 ;;  - The day agenda is the snapshot: log mode is on by default and shows
 ;;    the habit events from the log like closed tasks.
+;;  - The day agenda hides every tag but a sitting's `deep', so a clocked
+;;    line reads "Clocked: (1:30) Heading :deep:" for a deep sitting.
 ;;  - `my/habits-log-merge-conflicts' folds Syncthing .sync-conflict-* copies
 ;;    of a log file back into it, line-identity union per day.
 
@@ -436,6 +438,19 @@ without it, the files come from `my/habit-measure-files-function'."
 ;; handed back as log items.  RET on one jumps to the line in the log.
 
 (setq org-agenda-start-with-log-mode '(closed clock state))
+
+;; A sitting is one task clocked by its state change; its depth is a
+;; `deep' tag set when it was carved (Plans/Brain/working-sessions).  The
+;; agenda hides every tag except that one, so a clocked line reads
+;; "Clocked: (1:30) Heading :deep:" for a deep sitting and shows no tag
+;; for a shallow one.  The regexp matches every tag that is not exactly
+;; "deep"; `org-agenda-fix-displayed-tags' hides a tag when it matches.
+(setq org-agenda-hide-tags-regexp
+      (rx bos (or (not (any "d"))
+                  (seq "d" (or eos (not (any "e"))))
+                  (seq "de" (or eos (not (any "e"))))
+                  (seq "dee" (or eos (not (any "p"))))
+                  (seq "deep" anything))))
 
 (defun my/habit--agenda-log-items (date)
   "Agenda log items for the habit events on DATE, a gregorian (M D Y) list."
