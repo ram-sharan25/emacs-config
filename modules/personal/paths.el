@@ -49,8 +49,8 @@
 (defconst my/library-dir (expand-file-name "Library/" my/root-dir)
   "Static resources directory (Books, Music, PDFs).")
 
-(defconst my/ai-engineering-dir (expand-file-name "Resources/AI-engineering/" my/library-dir)
-  "Directory for my AI engineering resources")
+(defconst my/ai-engineering-dir (expand-file-name "Resources/" my/library-dir)
+  "Directory for my AI engineering resources (video courses, one folder each).")
 
 
 

@@ -413,9 +413,8 @@ thought tags, and font-lock does not colour them either."
 
 (defun my/org-timer-on-clock-in ()
   "Auto-start custom timer on clock-in if :TIMER_MINUTES: is set."
-  (unless (bound-and-true-p my/mobile-sync-in-progress)
-    (when (org-entry-get (point) "TIMER_MINUTES")
-      (my/org-start-custom-timer))))
+  (when (org-entry-get (point) "TIMER_MINUTES")
+    (my/org-start-custom-timer)))
 
 (defun my/org-cancel-timer-on-clock-out ()
   "Cancel the custom timer and notification on clock-out."
