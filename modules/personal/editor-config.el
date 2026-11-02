@@ -65,8 +65,8 @@
   (setq backup-directory-alist `((".*" . ,backups-dir))))
 
 ;; also save the real file automatically (VS Code style)
+(setq auto-save-visited-interval 2)  ;; seconds of idle before saving; set before the mode creates its timer
 (auto-save-visited-mode 1)
-(setq auto-save-visited-interval 2)  ;; seconds of idle before saving
 (setq backup-by-copying t)           ;; safer: copy instead of rename (no rename races)
 
 ;; exclude backup files (file~, file.tsx~, etc.) from all completions
