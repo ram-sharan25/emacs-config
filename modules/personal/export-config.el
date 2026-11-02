@@ -31,20 +31,19 @@
     (setq base-name (replace-regexp-in-string " " "_" base-name))
     base-name))
 
-(defadvice org-export-output-file-name (around my/centralized-export-output activate)
-  "Force all exports to `my/export-output-dir` and use Title-based filenames."
-  (let* ((extension (ad-get-arg 0))
-         (subtreep (ad-get-arg 1))
-         (pub-dir (ad-get-arg 2))
-         ;; Determine new filename base
-         (new-base (my/get-export-filename (buffer-name) subtreep))
-         ;; Force output directory
-         (final-dir my/export-output-dir))
+(defun my/centralized-export-output (orig extension &optional subtreep pub-dir)
+  "Send exports to `my/export-output-dir' with Title-based filenames.
+When PUB-DIR is given (org-publish passes its project's directory), defer
+to ORIG so publishing projects write where they are configured to."
+  (if pub-dir
+      (funcall orig extension subtreep pub-dir)
+    (let ((new-base (my/get-export-filename (buffer-name) subtreep))
+          (final-dir my/export-output-dir))
+      (unless (file-directory-p final-dir)
+        (make-directory final-dir t))
+      (expand-file-name (concat new-base extension) final-dir))))
 
-    (unless (file-directory-p final-dir)
-      (make-directory final-dir t))
-
-    (setq ad-return-value (expand-file-name (concat new-base extension) final-dir))))
+(advice-add 'org-export-output-file-name :around #'my/centralized-export-output)
 
 ;; Image handling for HTML export (Relative to the new output dir)
 (defun bp/org-html--format-image-relative (original-function source attribute info)

@@ -142,7 +142,7 @@
   (defun rsr/gptel-show-context ()
     "Show current gptel context in a temporary buffer."
     (interactive)
-    (let ((context gptel-context--alist))
+    (let ((context gptel-context))
       (if context
           (with-output-to-temp-buffer "*gptel-context*"
             (princ "Current gptel context:\n\n")

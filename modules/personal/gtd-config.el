@@ -592,7 +592,7 @@ See also `org-save-all-org-buffers'"
         (with-current-buffer buffer
           (widen)
           (goto-char pos)
-          (org-show-context 'agenda)
+          (org-fold-show-context 'agenda)
           (org-entry-put nil "Effort" effort)
           (setq newhead (org-get-heading)))
         (org-agenda-change-all-lines newhead hdmarker)))))
@@ -690,7 +690,7 @@ Highlighted tasks appear at the top of the agenda as the daily focus."
 
 (add-hook 'org-after-todo-state-change-hook 'my/org-clock-on-state-change)
 (setq org-archive-location (concat my/archive-dir "%s_archive.org::"))  ; gtd/ files; project and hub files override with #+ARCHIVE: ::* Archive (D5)
-(setq org-confirm-elisp-link-function nil) ;; don't confirm elisp links
+(setq org-link-elisp-confirm-function nil) ;; don't confirm elisp links
 
 (defun my/org-agenda-add-effort-suffix (original-fn &rest args)
   "Advice to append Effort property to the agenda line."
