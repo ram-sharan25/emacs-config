@@ -60,9 +60,6 @@
 
 (advice-add 'org-html--format-image :around #'bp/org-html--format-image-relative)
 
-(setq backup-directory-alist '(("." . "/Users/rrimal/.emacs.d/backupfiles/")))
-
-
 ;; Disable export of drawers (like :THOUGHTS:, :PROPERTIES:, :LOGBOOK:)
 (setq org-export-with-drawers nil)
 
