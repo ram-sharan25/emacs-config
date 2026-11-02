@@ -122,5 +122,22 @@
                                      (split-string text "\n")))))
     (should-not (string-match-p "[Dd]eep hours\\|sessions" text))))
 
+(ert-deftest sittings-toggl-tags-carry-deep ()
+  (sittings-test--with-org (concat "#+FILETAGS: :build:\n#+CATEGORY: flask\n"
+                                   sittings-test--carved)
+    (org-next-visible-heading 1)
+    (should (equal (rsr/toggl-tags-at-point) '("build" "deep" "flask")))))
+
+(ert-deftest sittings-toggl-tags-shallow-and-hub ()
+  (sittings-test--with-org "#+FILETAGS: :build:\n#+CATEGORY: flask\n* TODO Answer two emails\n"
+    (org-next-visible-heading 1)
+    (should (equal (rsr/toggl-tags-at-point) '("build" "flask"))))
+  (sittings-test--with-org "#+FILETAGS: :hub:\n#+CATEGORY: Craft\n* TODO Answer two emails\n"
+    (org-next-visible-heading 1)
+    (should (equal (rsr/toggl-tags-at-point) nil)))
+  (sittings-test--with-org "#+FILETAGS: :hub:\n#+CATEGORY: Craft\n* TODO Reimplement the routing commit :deep:\n"
+    (org-next-visible-heading 1)
+    (should (equal (rsr/toggl-tags-at-point) '("deep")))))
+
 (provide 'sittings-test)
 ;;; sittings-test.el ends here

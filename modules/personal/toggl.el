@@ -1,5 +1,21 @@
 ;;; toggl.el --- Toggl configuration -*- lexical-binding: t; -*-
 
+(require 'paths)
+
+(defun rsr/toggl-tags-at-point ()
+  "Toggl tags for the Org entry at point.
+The entry's tags with inherited ones (the kind tags from #+FILETAGS, D4),
+minus the hubs' note-kind tag \"hub\", then the category (= the project
+file name, D5) made Toggl-safe, unless the category is an Area.  A
+sitting's `deep' tag rides along here, so Toggl can split deep from
+shallow time (Plans/Brain/working-sessions)."
+  (let* ((org-tags (remove "hub" (org-get-tags)))
+         (category (org-get-category))
+         (project-tag (when (and category (not (member category my/area-names)))
+                        (replace-regexp-in-string "[^a-zA-Z0-9-_]" "_"
+                                                  (replace-regexp-in-string " " "_" category)))))
+    (append org-tags (when project-tag (list project-tag)))))
+
 (use-package org-toggl
   :if (bound-and-true-p my/toggl-auth-token)
   :ensure nil
@@ -66,17 +82,12 @@ network never blocks Emacs; failures are reported in the echo area."
     "Start Toggl timer on org-clock-in.
 Maps the inherited AREA property (a #+PROPERTY: line in every project file
 and hub, D3) to the Toggl project, and the inherited kind tags (#+FILETAGS,
-D4) plus the category (= project file name, D5) to Toggl tags.  The hub
-files' note-kind FILETAGS tag \"hub\" is not a kind and is dropped."
+D4) plus the category (= project file name, D5) to Toggl tags.  Tags come
+from `rsr/toggl-tags-at-point'."
     (when (derived-mode-p 'org-mode)
       (let* ((heading      (org-get-heading t t t t))
              (prop-area    (org-entry-get (point) "AREA" t))
-             (prop-project (org-get-category))
-             (org-tags     (remove "hub" (org-get-tags)))
-             (project-tag  (when (and prop-project (not (member prop-project my/area-names)))
-                             (replace-regexp-in-string "[^a-zA-Z0-9-_]" "_"
-                                                       (replace-regexp-in-string " " "_" prop-project))))
-             (final-tags   (append org-tags (when project-tag (list project-tag))))
+             (final-tags   (rsr/toggl-tags-at-point))
              (is-activity  (org-entry-get (point) "ACTIVITY_TYPE")))
         (let* ((raw-input       (if is-activity
                                     ""
