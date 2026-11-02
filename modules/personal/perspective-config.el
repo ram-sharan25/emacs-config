@@ -15,8 +15,13 @@
   :ensure t
   :demand t
   :after (perspective projectile)
-  :bind (:map projectile-mode-map
-         ("C-c p p" . projectile-persp-switch-project)))
+  ;; Bind into `projectile-command-map', not "C-c p p" in `projectile-mode-map':
+  ;; this file loads before projectile-config.el, whose `:bind' of "C-c p" to
+  ;; `projectile-command-map' replaces any prefix keymap already under "C-c p",
+  ;; and the "p" bound here with it.  Inside the command map the key survives
+  ;; whichever module loads first, and the same "p" works under s-p.
+  :bind (:map projectile-command-map
+         ("p" . projectile-persp-switch-project)))
 
 ;;; --- Commands ---
 
