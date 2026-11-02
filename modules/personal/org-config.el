@@ -429,13 +429,19 @@ thought tags, and font-lock does not colour them either."
 ;;; Keybindings
 
 ;; C-c . / C-c ! always open date+time picker — RET inserts current date+time
+(defun rsr/org-time-stamp-with-time ()
+  "Insert an active timestamp, always prompting with a time."
+  (interactive)
+  (org-time-stamp '(4)))
+
+(defun rsr/org-time-stamp-inactive-with-time ()
+  "Insert an inactive timestamp, always prompting with a time."
+  (interactive)
+  (org-time-stamp-inactive '(4)))
+
 (with-eval-after-load 'org
-  (define-key org-mode-map (kbd "C-c .") (lambda ()
-    (interactive)
-    (org-time-stamp '(4))))
-  (define-key org-mode-map (kbd "C-c !") (lambda ()
-    (interactive)
-    (org-time-stamp-inactive '(4)))))
+  (define-key org-mode-map (kbd "C-c .") #'rsr/org-time-stamp-with-time)
+  (define-key org-mode-map (kbd "C-c !") #'rsr/org-time-stamp-inactive-with-time))
 
 ;;; Font
 ;;
