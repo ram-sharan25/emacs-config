@@ -1,3 +1,5 @@
+;;; leetcodeStory.el --- LeetCode problem notes -*- lexical-binding: t; -*-
+
 (require 'paths)
 (require 'org-id)
 

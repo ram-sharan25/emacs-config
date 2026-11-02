@@ -1,4 +1,4 @@
-
+;;; init.el --- Emacs configuration entry point -*- lexical-binding: t; -*-
 
 ;;; Package Setup
 

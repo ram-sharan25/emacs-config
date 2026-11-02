@@ -1,3 +1,5 @@
+;;; mpv-notes.el --- Video notes with mpv -*- lexical-binding: t; -*-
+
 (use-package smartrep
   :ensure t
   :after org-mpv-notes)

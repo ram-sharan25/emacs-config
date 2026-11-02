@@ -1,3 +1,5 @@
+;;; export-config.el --- Org export output, filenames and images -*- lexical-binding: t; -*-
+
 ;; *** Exports to 'Brain/output' directory
 
 (require 'paths)
