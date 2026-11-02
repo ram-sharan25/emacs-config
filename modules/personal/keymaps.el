@@ -139,6 +139,11 @@ devlog.el."
   "b" #'rsr/org-timeblock-split-view
   "c" #'calc
   "d" #'dictionary-search
+  "I" #'my/org-clock-in-deep
+  "k" #'my/habit-skip
+  "n" #'my/habit-note
+  "h" #'my/day-snapshot
+  "M" #'my/habits-log-merge-conflicts
   "m" 'mind-state-map)
 
 ;;; --- C-c + letter ---
