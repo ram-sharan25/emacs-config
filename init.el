@@ -38,10 +38,23 @@
   (dolist (directory (list "/opt/homebrew/bin"))
     (when (file-directory-p directory)
       (add-to-list 'exec-path directory)
-      (setenv "PATH" (concat directory path-separator (getenv "PATH"))))))
+      (unless (member directory (split-string (or (getenv "PATH") "") path-separator))
+        (setenv "PATH" (concat directory path-separator (getenv "PATH")))))))
 
 (my/add-local-exec-paths)
 (add-to-list 'load-path (expand-file-name "modules/personal"    user-emacs-directory))
+
+;;; Shell PATH
+;;
+;; Before any module loads, so load-time `executable-find' calls see the
+;; login shell's PATH rather than the bare one a GUI app starts with.
+
+(use-package exec-path-from-shell
+  :config
+  (when (memq window-system '(mac ns x))
+    (setq exec-path-from-shell-variables '("PATH" "MANPATH"))
+    (exec-path-from-shell-initialize)
+    (my/add-local-exec-paths)))
 
 ;;; Global Prefix
 
@@ -80,15 +93,6 @@
 ;; reloading leaves the old map (and removed keys) in place.
 (load (expand-file-name "modules/personal/keymaps.el" user-emacs-directory))
 (load-directory (expand-file-name "modules/personal"    user-emacs-directory))
-
-;;; Shell PATH
-
-(use-package exec-path-from-shell
-  :config
-  (when (memq window-system '(mac ns x))
-    (setq exec-path-from-shell-variables '("PATH" "MANPATH"))
-    (exec-path-from-shell-initialize)
-    (my/add-local-exec-paths)))
 
 ;;; Appearance
 
