@@ -94,12 +94,29 @@ lines are placeholder examples, not IDs.")
 (setq org-id-extra-files 'my/org-id-extra-files)
 (advice-add 'org-id-update-id-locations :before #'my/org-id--refresh-extra-files)
 
+;; org-id prints one "Duplicate ID" line per duplicate, without the file.
+;; The brain keeps ~70 harmless ones inside Archives/ (old copies of the same
+;; heading), so a rescan runs silently and ends with one summary line that
+;; counts duplicates touching live notes separately; details come from
+;; `my/org-id-find-duplicates'.
+(defun my/org-id--quiet-update (orig &optional files silent)
+  "Run ORIG silently, then report a one-line duplicate summary."
+  (if silent
+      (funcall orig files silent)
+    (prog1 (funcall orig files t)
+      (let ((split (my/org-id--duplicates)))
+        (message "org-id: %d IDs in %d files; %d duplicates, %d outside Archives%s"
+                 (hash-table-count org-id-locations) (length org-id-files)
+                 (+ (length (car split)) (length (cdr split)))
+                 (length (car split))
+                 (if (car split) " (M-x my/org-id-find-duplicates)" ""))))))
+
+(advice-add 'org-id-update-id-locations :around #'my/org-id--quiet-update)
+
 (defun my/org-id-rescan ()
   "Rebuild `org-id-locations' from every .org file in the brain."
   (interactive)
-  (org-id-update-id-locations nil t)
-  (message "org-id: %d IDs in %d files"
-           (hash-table-count org-id-locations) (length org-id-files)))
+  (org-id-update-id-locations))
 
 ;;;; 3a. Duplicate-ID guard on paste ---------------------------------------
 
@@ -221,33 +238,62 @@ with plain `yank' (`org-yank-adjusted-subtrees' nil), dedupe the region."
       (maphash (lambda (id locs) (push (cons id (nreverse locs)) out)) table)
       out)))
 
+(defun my/org-id--archive-location-p (loc)
+  "Non-nil if LOC (FILE . LINE) lies under the brain's Archives/."
+  (string-match-p "/Archives/" (car loc)))
+
+(defun my/org-id--duplicates ()
+  "Duplicate IDs as (LIVE . ARCHIVE-ONLY), each an alist like
+`my/org-id--collect-locations'.  LIVE holds every ID with at least one
+location outside Archives/."
+  (let (live archive)
+    (dolist (e (my/org-id--collect-locations))
+      (when (> (length (cdr e)) 1)
+        (if (cl-every #'my/org-id--archive-location-p (cdr e))
+            (push e archive)
+          (push e live))))
+    (cons live archive)))
+
 (defun my/org-id-find-duplicates ()
   "List every ID that occurs more than once across the brain.
 Opens a buffer with one section per ID; each location is a link.
+Duplicates that touch a live note come first; those only inside
+Archives/ (old copies of the same heading, harmless) are listed last.
 In that buffer, RET follows a link; put point in the entry that must
 get a NEW id and run `my/org-id-regenerate-here'."
   (interactive)
-  (let* ((dups (cl-remove-if-not (lambda (e) (> (length (cdr e)) 1))
-                                 (my/org-id--collect-locations)))
+  (let* ((split (my/org-id--duplicates))
+         (live (car split))
+         (archive (cdr split))
+         (root (or my/org-id-scan-root org-roam-directory))
          (buf (get-buffer-create "*org-id duplicates*")))
     (with-current-buffer buf
       (let ((inhibit-read-only t))
         (erase-buffer)
         (org-mode)
-        (insert (format "#+TITLE: %d duplicate ID%s\n\n" (length dups)
-                        (if (= 1 (length dups)) "" "s")))
-        (dolist (e (cl-sort dups #'string< :key (lambda (x) (caadr x))))
-          (insert (format "* %s\n" (car e)))
-          (dolist (loc (cdr e))
-            (insert (format "- [[file:%s::%d][%s:%d]]\n"
-                            (car loc) (cdr loc)
-                            (file-relative-name (car loc) (or my/org-id-scan-root org-roam-directory))
-                            (cdr loc)))))
+        (insert (format "#+TITLE: %d duplicate ID%s (%d outside Archives)\n\n"
+                        (+ (length live) (length archive))
+                        (if (= 1 (+ (length live) (length archive))) "" "s")
+                        (length live)))
+        (dolist (group (list (cons "Live notes" live)
+                             (cons "Archives only" archive)))
+          (insert (format "* %s (%d)\n" (car group) (length (cdr group))))
+          (dolist (e (cl-sort (copy-sequence (cdr group)) #'string<
+                              :key (lambda (x) (caadr x))))
+            (insert (format "** %s\n" (car e)))
+            (dolist (loc (cdr e))
+              (insert (format "- [[file:%s::%d][%s:%d]]\n"
+                              (car loc) (cdr loc)
+                              (file-relative-name (car loc) root)
+                              (cdr loc))))))
         (goto-char (point-min))
         (view-mode 1)))
     (pop-to-buffer buf)
-    (message "%d duplicate ID%s" (length dups) (if (= 1 (length dups)) "" "s"))
-    dups))
+    (message "%d duplicate ID%s, %d outside Archives"
+             (+ (length live) (length archive))
+             (if (= 1 (+ (length live) (length archive))) "" "s")
+             (length live))
+    (append live archive)))
 
 (defun my/org-id-regenerate-here ()
   "Give the entry at point a fresh ID and register it.
