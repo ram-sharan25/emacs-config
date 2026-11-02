@@ -71,6 +71,9 @@
 (defconst my/rituals-file (expand-file-name "rituals.org" my/gtd-dir)
   "Recurring habits and rituals.")
 
+(defconst my/rests-file (expand-file-name "rests.org" my/gtd-dir)
+  "Rest blocks placed on the day's time block (rests.el); not habits.")
+
 (defconst my/discarded-file (expand-file-name "discarded.org" my/gtd-dir)
   "Discarded/cancelled tasks.")
 

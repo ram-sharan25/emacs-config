@@ -38,8 +38,8 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 
 * C-c t  Time and tools
 | i   | clock in             | c | calc              |
-| I   | clock in (deep)      | d | dictionary        |
-| o   | clock out            | b | timeblock view    |
+| o   | clock out            | d | dictionary        |
+| r   | add a rest for today | b | timeblock view    |
 | g   | go to active clock   | k | skip habit today  |
 | n   | habit note           | M | merge habit-log conflicts |
 | m … | mind-state (below)   |   |                   |
@@ -158,6 +158,7 @@ Both views; the list has the same keys minus block navigation.
 | f / b | next / previous day       | d | set duration                |
 | RET   | go to the task            | t | change TODO state           |
 | +     | new task into the inbox   | i / o | clock in / out          |
+| R     | add a rest for this day, then =s= and =d= in the list (= =C-c t r=) | | |
 | P     | push the block to Google Calendar (= =C-c g p=) |   |         |
 | T     | toggle grid / list        | m / u | mark / unmark block     |
 | v / V | scale / span              | g | redraw                      |

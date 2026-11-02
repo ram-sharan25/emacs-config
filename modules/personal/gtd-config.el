@@ -349,7 +349,8 @@ for the template."
 (setq org-agenda-files (append (list my/inbox-file
                                      my/waiting-file
                                      my/someday-file
-                                     my/rituals-file)
+                                     my/rituals-file
+                                     my/rests-file)
                                (mapcar (lambda (c) (plist-get c :file)) my/gcal-calendars)
                                (mapcar (lambda (a) (expand-file-name a my/areas-dir))
                                        my/area-names)))
