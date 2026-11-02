@@ -19,6 +19,8 @@
 ;;   C-c m      multiple cursors
 ;;   C-c w      workspaces (perspective-config.el)
 ;;   C-c t      time and tools
+;;   C-c k/v    org buffers only: src block (leetcodeStory.el), video notes
+;;              (mpv-notes.el)
 ;;   M-g        goto (built in)        M-s    search (built in)
 ;;   C-x w      windows (built in)     C-x v  version control (built in)
 ;;

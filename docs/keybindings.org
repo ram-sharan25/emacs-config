@@ -11,9 +11,9 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | C-c c   | capture                    | C-c o  | open                     |
 | C-c f   | format buffer              | C-c p  | projectile               |
 | C-c g   | Google calendar            | C-c r  | research / papers        |
-| C-c h   | hide/show (prog modes)     |        |                          |
+| C-c h   | hide/show (prog modes)     | C-c k  | src block (org only)     |
 | C-c i   | AI and agents              | C-c t  | time and tools           |
-| C-c j   | Linear issues              |        |                          |
+| C-c j   | Linear issues              | C-c v  | video notes (org only)   |
 | C-c l/L | store link / to clipboard  | C-c w  | workspaces (perspective) |
 | C-c m   | multiple cursors           | M-g    | goto                     |
 | M-s     | search                     | C-x w  | windows                  |
@@ -38,8 +38,10 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 
 * C-c t  Time and tools
 | i   | clock in             | c | calc              |
-| o   | clock out            | d | dictionary        |
-| g   | go to active clock   | b | timeblock view    |
+| I   | clock in (deep)      | d | dictionary        |
+| o   | clock out            | b | timeblock view    |
+| g   | go to active clock   | k | skip habit today  |
+| n   | habit note           | M | merge habit-log conflicts |
 | m … | mind-state (below)   |   |                   |
 
 ** C-c t m  Mind-state
@@ -137,6 +139,20 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | C-c C-j   | go to heading        | C-c C-o | open link               |
 | s-r       | paste image (org-download) |   |                         |
 
+** Org keys added by this config
+| C-c .   | active timestamp, always with time   |
+| C-c !   | inactive timestamp, always with time |
+| C-c ]   | insert citation (completing-read)    |
+| C-c 0   | insert indented TODO item            |
+| C-c k   | insert src block with header args    |
+| C-c v … | video notes (org-mpv-notes, repeatable; =C-c v o= open video) |
+
+* Agenda keys added by this config
+| j | process inbox item (effort, schedule, refile) | V | show/hide DELAYED  |
+| H | toggle highlight                              | K | skip habit today   |
+| E | effort budget of visible tasks                |   |                    |
+| D | schedule a deep-work block                    |   |                    |
+
 * Goto (M-g) and search (M-s)
 | M-g i     | imenu (consult)          | M-s l | lines (consult)   |
 | M-g . / , | last change (repeat . ,) | M-s r | ripgrep (consult) |
@@ -148,8 +164,22 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | C-x b   | buffers (consult)    | C-x o   | ace-window         |
 | C-x M-f | recent files         | C-x w t | toggle split       |
 | M-y     | yank ring            | C-x v p | git blame popup    |
-| C-.     | embark act           | C-x t   | treemacs           |
+| C-.     | embark act           | C-x t … | treemacs (below)   |
 | C-;     | embark dwim          | C-/     | comment / uncomment|
+
+* C-x t  Treemacs
+These four replace tab-bar's =C-x t t/1/f/d=; the rest of =C-x t= is still
+tab-bar.
+| t | toggle tree for this project | f | reveal current file |
+| 1 | treemacs only window         | d | open a directory    |
+
+* M-m  Legacy leader (temporary)
+The old keys, kept while the =C-c= layout is learned.
+| M-m a … | = C-c i (AI)          | M-m r f/i/F/c | roam find / insert / by ref / capture |
+| M-m n … | = C-c i n (NotebookLM) | M-m r g/r     | roam graph / buffer                   |
+| M-m t … | = C-c t (time/tools)  | M-m r e/a/t   | roam add ref / alias / tag            |
+| M-m m … | = C-c m (multi-cursor) | M-m r s       | search brain                         |
+| M-m g m | git message popup     | M-m r p/n/C   | paper / paper note / compile notes    |
 
 * C-x o  Window actions (ace-window)
 Press =C-x o=, then a window's letter to jump there, or an action key first
