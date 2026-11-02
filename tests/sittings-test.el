@@ -47,5 +47,13 @@
     ;; heading, drawer (5 lines), :LOGBOOK:, CLOCK, :END: — nothing else
     (should (= 9 (count-lines (point-min) (point-max))))))
 
+(ert-deftest sittings-no-deep-clock-key ()
+  (unless (fboundp 'rsr/global-prefix-map)
+    (define-prefix-command 'rsr/global-prefix-map))
+  (load "keymaps")
+  (should-not (keymap-lookup rsr/time-map "I"))
+  (should-not (keymap-lookup (current-global-map) "C-c t I"))
+  (should (eq (keymap-lookup rsr/time-map "k") #'my/habit-skip)))
+
 (provide 'sittings-test)
 ;;; sittings-test.el ends here
