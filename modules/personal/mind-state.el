@@ -4,6 +4,7 @@
 
 (require 'org-capture)
 (require 'paths)
+(require 'gtd-config)   ; journal--ensure-daily-heading
 
 ;;; --- Configuration ---
 
@@ -79,17 +80,6 @@
          (hi (max lo (min mind-state-max-interval (* avg 2)))))
     (* (+ lo (random (1+ (- hi lo)))) 60)))
 
-(defun mind-state--ensure-daily-heading ()
-  "Create today's top-level heading in journal if it doesn't exist."
-  (goto-char (point-min))
-  (let* ((heading (format-time-string "%Y-%m-%d %A"))
-         (regex (format "^\\* %s$" heading)))
-    (unless (re-search-forward regex nil t)
-      (goto-char (point-max))
-      (unless (bolp) (insert "\n"))
-      (insert (format "\n* %s\n" heading)))
-    (end-of-line)))
-
 ;;; --- Core Prompt ---
 
 (defun mind-state--prompt-user ()
@@ -106,7 +96,7 @@
                             (concat " | " notes)))))
       (with-current-buffer (find-file-noselect my/journal-file)
         (save-excursion
-          (mind-state--ensure-daily-heading)
+          (journal--ensure-daily-heading)
           (goto-char (point-min))
           (when (re-search-forward (format-time-string "^\\* %Y-%m-%d %A$") nil t)
             (forward-line 1)
@@ -175,7 +165,7 @@ hours instead, so a long-running Emacs keeps prompting on later days."
                           (concat " | " notes)))))
     (with-current-buffer (find-file-noselect my/journal-file)
       (save-excursion
-        (mind-state--ensure-daily-heading)
+        (journal--ensure-daily-heading)
         (goto-char (point-min))
         (when (re-search-forward (format-time-string "^\\* %Y-%m-%d %A$") nil t)
           (forward-line 1)

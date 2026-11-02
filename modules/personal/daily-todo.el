@@ -14,14 +14,7 @@
   "Open journal file and jump to today's heading, creating it if needed."
   (interactive)
   (find-file my/journal-file)
-  (goto-char (point-min))
-  (let* ((heading (format-time-string "%Y-%m-%d %A"))
-         (regex (format "^\\* %s$" heading)))
-    (unless (re-search-forward regex nil t)
-      (goto-char (point-max))
-      (unless (bolp) (insert "\n"))
-      (insert (format "\n* %s\n" heading)))
-    (end-of-line)))
+  (journal--ensure-daily-heading))
 
 (defun my/open-project-file ()
   "Pick a project file under Areas/<Area>/ via completion and open it."
