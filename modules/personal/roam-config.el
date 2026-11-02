@@ -49,7 +49,8 @@
   (setq org-roam-file-extensions '("org"))
   (setq org-roam-list-files-commands '(fd find))
 
-  (add-hook 'after-init-hook #'org-roam-db-autosync-mode)
+  ;; org-roam loads lazily, after `after-init-hook' has run, so enable here.
+  (org-roam-db-autosync-mode 1)
 
   (setq org-roam-capture-templates
         '(("z" "Zettel" plain
