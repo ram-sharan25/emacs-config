@@ -22,8 +22,8 @@ headings, in this order, and leave out any that would be empty:
 
 READING THE NOTES:
 - The task's own Context heading holds the author's thinking, planning and
-  gathered context. Devlog holds the work steps. Both are the author's notes.
-- Under Devlog, each "- Session [date time]" line starts a work session, and
+  gathered context. Logs holds the work steps. Both are the author's notes.
+- Under Logs, each "- Session [date time]" line starts a work session, and
   the "- [date time] ..." entries nested under it belong to it. Entries are in
   time order and later ones supersede earlier ones. Some entries may be flat
   (not nested) or time-only ("- [HH:MM] ..."); read them the same way.

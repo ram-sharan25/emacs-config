@@ -40,7 +40,7 @@
 (defvar-keymap rsr/ai-map
   :doc "AI and agent commands (C-c i).
 Filled by gptel-config.el, terminal-config.el, ai-sessions-config.el and
-devlog.el."
+logs.el."
   :prefix 'rsr/ai-map
   "n" 'rsr/nlm-map)
 
@@ -53,7 +53,7 @@ devlog.el."
   "q" #'my/capture-project
   "n" #'my/capture-note
   "j" #'my/capture-journal
-  "d" #'my/capture-devlog
+  "d" #'my/capture-log
   "m" #'my/capture-monthly-review
   "w" #'my/capture-weekly-review
   "r" #'my/capture-resource
@@ -139,6 +139,7 @@ devlog.el."
   "o" #'org-clock-out
   "g" #'org-clock-goto
   "b" #'rsr/org-timeblock-split-view
+  "r" #'my/rest-block
   "c" #'calc
   "d" #'dictionary-search
   "k" #'my/habit-skip

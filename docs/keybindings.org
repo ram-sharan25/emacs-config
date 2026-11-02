@@ -21,7 +21,7 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 
 * C-c c  Capture
 | c | org-capture (menu) | j | journal          |
-| i | inbox              | d | devlog           |
+| i | inbox              | d | log line         |
 | s | study              | m | monthly review   |
 | q | project            | w | weekly review    |
 | n | note               |   |                  |
@@ -52,7 +52,7 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 * C-c i  AI and agents
 | i | Claude in tmux        | d | agent dashboard     |
 | p | Pi in tmux            | r | send region to agent|
-| w | planning workflow …   | o | devlog overview     |
+| w | planning workflow …   | o | logs overview     |
 | n | NotebookLM …          | l | back to the last agent |
 
 ** gptel

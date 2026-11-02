@@ -4,7 +4,7 @@
 (require 'paths)
 (require 'org-capture)
 (require 'org-id)
-(require 'devlog)
+(require 'logs)
 
 (defun my/get-area-files ()
   "Every project file and hub under Areas/, recursively (agenda and refile set).
@@ -285,9 +285,9 @@ for the template."
          "* [[%:link][%:description]]\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n%?"
          :empty-lines 1)
 
-        ("d" "Devlog line" plain (function rsr/devlog-capture-target)
-         ,rsr/devlog-capture-template :empty-lines 0
-         :hook rsr/devlog-capture-show-devlog)
+        ("d" "Log line" plain (function rsr/logs-capture-target)
+         ,rsr/logs-capture-template :empty-lines 0
+         :hook rsr/logs-capture-show-logs)
 
         ("j" "Journal" plain
          (file+function ,my/journal-file journal--ensure-daily-heading)
@@ -705,7 +705,7 @@ Highlighted tasks appear at the top of the agenda as the daily focus."
 (defun my/capture-project ()      "Capture new project."       (interactive) (org-capture nil "q"))
 (defun my/capture-note ()         "Capture fleeting note."     (interactive) (org-capture nil "u"))
 (defun my/capture-journal ()      "Capture journal entry."     (interactive) (org-capture nil "j"))
-(defun my/capture-devlog ()       "Capture a devlog line."     (interactive) (org-capture nil "d"))
+(defun my/capture-log ()       "Capture a log line."     (interactive) (org-capture nil "d"))
 (defun my/capture-monthly-review () "Capture a fresh monthly review." (interactive) (org-capture nil "m"))
 (defun my/capture-weekly-review () "Capture a fresh weekly review." (interactive) (org-capture nil "w"))
 (defun my/capture-resource ()     "Capture resource."          (interactive) (org-capture nil "t"))
