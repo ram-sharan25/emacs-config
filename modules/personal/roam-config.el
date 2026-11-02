@@ -132,13 +132,7 @@ fleeting note itself. Falls back to current position otherwise."
 
 (use-package org-ref
   :ensure t
-  :defer t
-  :config
-  (setq org-ref-default-bibliography (list (concat my/resources-dir "Zotero/zotero_ref.bib"))
-        org-ref-pdf-directory my/zotero-storage
-        org-ref-notes-directory my/resources-dir
-        ;; open PDF when clicking a citation
-        org-ref-open-pdf-function #'org-ref-open-pdf-at-point))
+  :defer t)
 
 (use-package bibtex-completion
   :defer t
