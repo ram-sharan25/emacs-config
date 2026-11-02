@@ -42,7 +42,6 @@
 
 (my/add-local-exec-paths)
 (add-to-list 'load-path (expand-file-name "modules/personal"    user-emacs-directory))
-(add-to-list 'load-path (expand-file-name "modules/git-modules" user-emacs-directory))
 
 ;;; Global Prefix
 
@@ -81,7 +80,6 @@
 ;; reloading leaves the old map (and removed keys) in place.
 (load (expand-file-name "modules/personal/keymaps.el" user-emacs-directory))
 (load-directory (expand-file-name "modules/personal"    user-emacs-directory))
-(load-directory (expand-file-name "modules/git-modules" user-emacs-directory))
 
 ;;; Shell PATH
 
