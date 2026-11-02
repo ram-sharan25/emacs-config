@@ -188,21 +188,45 @@ notes under the heading; events pulled from Google keep theirs."
     (my/gcal-user-command #'org-gcal-post-at-point)
     (message "Pushing to %s: %s" cal-id (org-get-heading t t t t))))
 
+(declare-function org-timeblock-selected-block-marker "org-timeblock")
+(declare-function org-timeblock-redraw-buffers "org-timeblock")
+
+(defun my/gcal--entry-marker-at-point ()
+  "Marker of the Org entry at point.
+Works in Org buffers, the agenda, the timeblock grid and its list."
+  (cond ((derived-mode-p 'org-agenda-mode)
+         (or (org-get-at-bol 'org-hd-marker)
+             (user-error "No Org entry on this line")))
+        ((derived-mode-p 'org-mode) (point-marker))
+        ((derived-mode-p 'org-timeblock-mode)
+         (or (org-timeblock-selected-block-marker)
+             (user-error "No block selected; move onto one with n or p")))
+        ((derived-mode-p 'org-timeblock-list-mode)
+         (or (get-text-property (line-beginning-position) 'marker)
+             (user-error "No Org entry on this line")))
+        (t (user-error "Not in an Org, agenda or timeblock buffer"))))
+
 (defun my/gcal-push-at-point ()
   "Put the entry at point on Google Calendar, in place.
-Works in Org buffers and in the agenda.  Asks which calendar the first
-time; later pushes update the same event."
+Works in Org buffers, the agenda and the timeblock views (also on P
+there).  Asks which calendar the first time; later pushes update the
+same event.  A timeblock view is redrawn, since the push may have added
+an end time."
   (interactive)
-  (let ((marker (cond ((derived-mode-p 'org-agenda-mode)
-                       (or (org-get-at-bol 'org-hd-marker)
-                           (user-error "No Org entry on this line")))
-                      ((derived-mode-p 'org-mode) (point-marker))
-                      (t (user-error "Not in an Org or agenda buffer")))))
+  (let ((marker (my/gcal--entry-marker-at-point))
+        (timeblock (derived-mode-p 'org-timeblock-mode 'org-timeblock-list-mode)))
     (with-current-buffer (marker-buffer marker)
       (save-excursion
         (goto-char marker)
         (org-back-to-heading t)
-        (my/gcal--push-heading)))))
+        (my/gcal--push-heading)))
+    (when timeblock
+      (org-timeblock-redraw-buffers))))
+
+;; P in the timeblock grid and list: push the block at point.
+(with-eval-after-load 'org-timeblock
+  (keymap-set org-timeblock-mode-map "P" #'my/gcal-push-at-point)
+  (keymap-set org-timeblock-list-mode-map "P" #'my/gcal-push-at-point))
 
 (defun my/gcal-push-event ()
   "Create a new event on a chosen calendar and push it.
