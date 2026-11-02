@@ -583,7 +583,7 @@ Prevents #file.org# lockfile issues."
   (interactive)
   (let* ((completion-ignore-case t)
          (effort (completing-read "Effort: "
-                                  '("0:10" "0:30" "1:00" "2:00" "3:00" "4:00"))))
+                                  '("0:10" "0:30" "1:00" "1:30" "2:00" "3:00" "4:00"))))
     (org-agenda-check-no-diary)
     (let* ((hdmarker (or (org-get-at-bol 'org-hd-marker)
                          (org-agenda-error)))
@@ -606,17 +606,6 @@ Prevents #file.org# lockfile issues."
   (call-interactively 'my/org-agenda-set-effort)
   (call-interactively 'org-agenda-schedule)
   (org-agenda-refile nil nil t))
-
-;;; Deep Work
-
-(defun my/schedule-deep-work-block ()
-  "Schedule a timed deep work block for the task at point in the agenda.
-Prompts for a time range and schedules today with that window."
-  (interactive)
-  (let ((time (read-string "Deep work block (HH:MM-HH:MM): " "09:00-11:00")))
-    (org-agenda-schedule nil (concat (format-time-string "%Y-%m-%d") " " time))
-    (message "Deep work block scheduled: %s" time)))
-
 
 ;;; Daily Highlight
 
@@ -730,7 +719,6 @@ Highlighted tasks appear at the top of the agenda as the daily focus."
   (define-key org-agenda-mode-map "j" 'my/org-agenda-process-inbox-item)
   (define-key org-agenda-mode-map "H" 'my/org-agenda-toggle-highlight)
   (define-key org-agenda-mode-map "E" 'my/org-day-effort-budget)
-  (define-key org-agenda-mode-map "D" 'my/schedule-deep-work-block)
   (define-key org-agenda-mode-map "V" 'my/agenda-toggle-delayed))
 
 ;;; --- Reschedule / Deadline change logging ---
