@@ -2,8 +2,6 @@
 
 ;;; Code:
 
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-
 (use-package zerodark-theme
   :ensure t)
 
@@ -43,7 +41,7 @@
  '(org-upcoming-deadline      ((t (:foreground "#dfaf8f" :weight bold))))               ;; In 3d. — orange
  '(org-warning                ((t (:foreground "#cc9393" :weight bold))))               ;; 2d ago / past deadline — red
 
- ;; magit diff — clearer green/red against zenburn background
+ ;; magit diff — clearer green/red than the theme's defaults
  '(magit-diff-added             ((t (:background "#2d4f2d" :foreground "#9fc99f"))))
  '(magit-diff-removed           ((t (:background "#4f2d2d" :foreground "#cc9393"))))
  '(magit-diff-added-highlight   ((t (:background "#3a6b3a" :foreground "#c3e8c3"))))
