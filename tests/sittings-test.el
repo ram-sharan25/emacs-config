@@ -55,5 +55,27 @@
   (should-not (keymap-lookup (current-global-map) "C-c t I"))
   (should (eq (keymap-lookup rsr/time-map "k") #'my/habit-skip)))
 
+(defun sittings-test--with-temp-org-file (content fn)
+  "Call FN with the path of a temp .org file holding CONTENT; clean up after."
+  (let ((file (make-temp-file "sittings-" nil ".org" content)))
+    (unwind-protect
+        (funcall fn file)
+      (when (get-file-buffer file) (kill-buffer (get-file-buffer file)))
+      (delete-file file))))
+
+(ert-deftest sittings-clock-intervals-have-no-mode ()
+  (sittings-test--with-temp-org-file
+   "* TODO Read\n:LOGBOOK:\nCLOCK: [2026-11-02 Mon 10:00]--[2026-11-02 Mon 11:30] =>  1:30\n:END:\n"
+   (lambda (file)
+     (should (equal (my/habit--clock-intervals file "2026-11-02")
+                    '((90 "Read")))))))
+
+(ert-deftest sittings-measure-file-spec-sums-intervals ()
+  (sittings-test--with-temp-org-file
+   "* TODO Read\n:LOGBOOK:\nCLOCK: [2026-11-02 Mon 10:00]--[2026-11-02 Mon 11:30] =>  1:30\n:END:\n"
+   (lambda (file)
+     (should (equal (my/habit--measure (list :measure (concat "file=" file)) "2026-11-02")
+                    (list 1 90 '((90 "Read"))))))))
+
 (provide 'sittings-test)
 ;;; sittings-test.el ends here

@@ -393,7 +393,7 @@ Works in an org buffer and in the agenda.  NOTE goes under the event line."
 
 (defun my/habit--clock-intervals (file date-iso)
   "Closed CLOCK intervals in FILE that start on DATE-ISO.
-Each is (minutes mode heading)."
+Each is (minutes heading)."
   (when (file-exists-p file)
     (with-current-buffer (find-file-noselect file)
       (org-with-wide-buffer
@@ -404,28 +404,23 @@ Each is (minutes mode heading)."
          (while (re-search-forward re nil t)
            (let ((mins (+ (* 60 (string-to-number (match-string 1)))
                           (string-to-number (match-string 2))))
-                 (mode (save-excursion
-                         (forward-line 1)
-                         (when (looking-at "^[ \t]*- mode: \\(.*\\)$")
-                           (string-trim (match-string 1)))))
                  (heading (save-excursion
                             (ignore-errors (org-back-to-heading t)
                                            (org-get-heading t t t t)))))
-             (push (list mins mode heading) res)))
+             (push (list mins heading) res)))
          (nreverse res))))))
 
 (defun my/habit--measure (row date-iso)
-  "Evaluate measurement ROW for DATE-ISO: (sessions minutes details)."
+  "Evaluate measurement ROW for DATE-ISO: (sessions minutes intervals).
+The :measure spec names the files as file=<path>, relative to `my/brain-dir';
+without it, the files come from `my/habit-measure-files-function'."
   (let* ((spec (or (plist-get row :measure) ""))
          (files (cond ((string-match "file=\\(\\S-+\\)" spec)
                        (list (expand-file-name (match-string 1 spec) my/brain-dir)))
                       (t (funcall my/habit-measure-files-function))))
-         (tag (and (string-match "tag=\\(\\S-+\\)" spec) (match-string 1 spec)))
          (intervals (apply #'append
                            (mapcar (lambda (f) (my/habit--clock-intervals f date-iso))
                                    files))))
-    (when tag
-      (setq intervals (seq-filter (lambda (i) (equal (nth 1 i) tag)) intervals)))
     (list (length intervals)
           (apply #'+ (mapcar #'car intervals))
           intervals)))
