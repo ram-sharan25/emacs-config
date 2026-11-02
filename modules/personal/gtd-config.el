@@ -368,8 +368,30 @@ for the template."
 (advice-add 'org-habit-insert-consistency-graphs :override #'ignore)
 
 (setq org-todo-keywords
-      '((sequence "TODO(t)" "IN-PROGRESS(p)" "HOLD(h)" "WAITING(w)" "|" "DONE(d)"
-      "CANCELED(c)"  "DELAYED(f)" )))
+      '((sequence "TODO(t)" "IN-PROGRESS(p)" "HOLD(h)" "WAITING(w)" "DELAYED(f)"
+                  "|" "DONE(d)" "CANCELED(c)")))
+
+;; DELAYED is an open state (it counts in [/] cookies and is never "done"),
+;; but it stays out of every agenda view until `my/agenda-toggle-delayed'
+;; turns it on.  The skip is global, so it covers the day agenda as well as
+;; the todo blocks that list DELAYED below.
+(defvar my/agenda-show-delayed nil
+  "Non-nil shows DELAYED entries in agenda views.")
+
+(defun my/agenda-skip-delayed ()
+  "Skip DELAYED entries unless `my/agenda-show-delayed' is non-nil."
+  (unless my/agenda-show-delayed
+    (org-agenda-skip-entry-if 'todo '("DELAYED"))))
+
+(setq org-agenda-skip-function-global #'my/agenda-skip-delayed)
+
+(defun my/agenda-toggle-delayed ()
+  "Show or hide DELAYED entries in agenda views, then refresh the agenda."
+  (interactive)
+  (setq my/agenda-show-delayed (not my/agenda-show-delayed))
+  (when (derived-mode-p 'org-agenda-mode)
+    (org-agenda-redo-all))
+  (message "DELAYED tasks %s" (if my/agenda-show-delayed "shown" "hidden")))
 
 (setq org-tag-alist nil)
 
@@ -431,7 +453,7 @@ for the template."
           (todo "TODO|WAITING|HOLD"
                 ((org-agenda-overriding-header "Waiting")
                  (org-agenda-files (list my/waiting-file))))
-          (todo "TODO|HOLD|WAITING"
+          (todo "TODO|HOLD|WAITING|DELAYED"
                 ((org-agenda-overriding-header "Projects & Areas (Backlog)")
                  (org-agenda-files (my/get-area-files))
                  (org-super-agenda-groups '((:auto-category t)))
@@ -466,7 +488,7 @@ for the template."
                    (org-agenda-skip-function
                     '(org-agenda-skip-entry-if 'todo '("DONE" "CANCELED")))))
           ;; everything still open — exclude rituals
-          (todo "TODO|HOLD|WAITING"
+          (todo "TODO|HOLD|WAITING|DELAYED"
                 ((org-agenda-overriding-header "Open Tasks — schedule for next week")
                  (org-agenda-files (seq-remove (lambda (f) (equal f my/rituals-file))
                                                (org-agenda-files)))
@@ -498,7 +520,7 @@ for the template."
          nil)
 
         ("p" "Projects"
-         ((todo "TODO|IN-PROGRESS|HOLD|WAITING"
+         ((todo "TODO|IN-PROGRESS|HOLD|WAITING|DELAYED"
                 ((org-agenda-overriding-header "Projects")
                  (org-agenda-files (my/get-project-files))
                  (org-super-agenda-groups '((:auto-category t)))
@@ -704,6 +726,7 @@ Highlighted tasks appear at the top of the agenda as the daily focus."
 (define-key org-agenda-mode-map "H" 'my/org-agenda-toggle-highlight)
 (define-key org-agenda-mode-map "E" 'my/org-day-effort-budget)
 (define-key org-agenda-mode-map "D" 'my/schedule-deep-work-block)
+(define-key org-agenda-mode-map "V" 'my/agenda-toggle-delayed)
 
 ;;; --- Reschedule / Deadline change logging ---
 
