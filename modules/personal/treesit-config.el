@@ -56,7 +56,9 @@
                       ('css-ts-mode        'css)
                       ('bash-ts-mode       'bash)
                       ('html-ts-mode       'html))))
-    (when (treesit-language-available-p lang)
+    ;; The grammar can be present while the mode is not: Emacs 29 ships no
+    ;; html-ts-mode, and remapping to a missing function breaks find-file.
+    (when (and (treesit-language-available-p lang) (fboundp ts-mode))
       (add-to-list 'major-mode-remap-alist pair))))
 
 ;; .tsx went to web-mode, which parses JSX with regexes.  tsx-ts-mode parses
@@ -70,13 +72,13 @@
 (when (treesit-language-available-p 'javascript)
   (add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-ts-mode)))
 
-;; The ts-modes are separate major modes, so the lsp hooks attached to the
-;; regex modes do not fire for them.
+;; The ts-modes are separate major modes, so lsp hooks attached to the regex
+;; modes do not fire for them.  Python and JS hook their *-base-mode in
+;; python-config.el and webdev-config.el, which covers both variants; the
+;; modes below have no shared base with their regex counterpart.
 (with-eval-after-load 'lsp-mode
   (dolist (hook '(typescript-ts-mode-hook
                   tsx-ts-mode-hook
-                  js-ts-mode-hook
-                  python-ts-mode-hook
                   yaml-ts-mode-hook
                   css-ts-mode-hook))
     (add-hook hook #'lsp-deferred)))

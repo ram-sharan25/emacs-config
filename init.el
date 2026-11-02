@@ -129,13 +129,18 @@
 
 (setq-default indent-tabs-mode nil)
 (setq-default fill-column 80)
+;; The *-base-mode hooks run for both the regex mode and its tree-sitter
+;; counterpart (python-mode / python-ts-mode, js-mode / js-ts-mode, ...).
+;; treesit-config.el remaps to the ts-modes, so a hook on the regex mode
+;; alone never fires.
 (dolist (hook '(emacs-lisp-mode-hook
-               python-mode-hook
-               js-mode-hook
+               python-base-mode-hook
+               js-base-mode-hook
                typescript-mode-hook
-               css-mode-hook
+               typescript-ts-base-mode-hook
+               css-base-mode-hook
                html-mode-hook
-               sh-mode-hook
+               sh-base-mode-hook
                c-mode-hook
                c++-mode-hook
                java-mode-hook

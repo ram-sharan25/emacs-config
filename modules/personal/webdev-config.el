@@ -3,7 +3,8 @@
 ;;; Code:
 
 ;;; JavaScript (.js)
-(add-hook 'js-mode-hook #'lsp-deferred)
+;; js-base-mode-hook covers js-mode and js-ts-mode (see treesit-config.el).
+(add-hook 'js-base-mode-hook #'lsp-deferred)
 (setq js-indent-level 2)
 
 ;;; TypeScript (.ts)

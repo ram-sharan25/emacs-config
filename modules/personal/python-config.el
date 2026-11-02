@@ -3,7 +3,9 @@
 ;;; Code:
 
 ;;; Python — pylsp
-(add-hook 'python-mode-hook #'lsp-deferred)
+;; python-base-mode-hook covers python-mode and python-ts-mode; files open
+;; in the ts-mode (treesit-config.el), so a hook on python-mode never fires.
+(add-hook 'python-base-mode-hook #'lsp-deferred)
 
 ;;; C / C++ — ccls (brew install ccls)
 (use-package ccls
