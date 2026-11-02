@@ -16,29 +16,30 @@
 
 (add-to-list 'load-path
              (expand-file-name "~/Stillness/Development/customize-agents/emacs/agent-sessions"))
-(require 'agent-sessions)
-(require 'agent-workflow)
+(if (not (and (require 'agent-sessions nil t)
+              (require 'agent-workflow nil t)))
+    (display-warning 'ai-sessions-config
+                     "agent-sessions not found on load-path; the agent dashboard (C-c i d/l/r/w) is unavailable.")
+  (setq rsr/agent-sessions-terminal 'tmux)
+  ;; The database defaults to ~/.emacs.d/agent-sessions.db (gitignored).
 
-(setq rsr/agent-sessions-terminal 'tmux)
-;; The database defaults to ~/.emacs.d/agent-sessions.db (gitignored).
+  (keymap-set rsr/ai-map "d" #'rsr/agent-sessions-list)          ; C-c i d
+  (keymap-set rsr/ai-map "l" #'rsr/agent-sessions-visit-last-agent) ; C-c i l
+  (keymap-set rsr/ai-map "r" #'rsr/agent-sessions-send-region)   ; C-c i r
+  (keymap-set rsr/ai-map "w" rsr/agent-workflow-map)              ; C-c i w
 
-(keymap-set rsr/ai-map "d" #'rsr/agent-sessions-list)          ; C-c i d
-(keymap-set rsr/ai-map "l" #'rsr/agent-sessions-visit-last-agent) ; C-c i l
-(keymap-set rsr/ai-map "r" #'rsr/agent-sessions-send-region)   ; C-c i r
-(keymap-set rsr/ai-map "w" rsr/agent-workflow-map)              ; C-c i w
+  (with-eval-after-load 'which-key
+    (which-key-add-key-based-replacements
+      "C-c i w" "workflow" "C-c i w c" "child..."
+      "M-m a w" "workflow" "M-m a w c" "child..."))
 
-(with-eval-after-load 'which-key
-  (which-key-add-key-based-replacements
-    "C-c i w" "workflow" "C-c i w c" "child..."
-    "M-m a w" "workflow" "M-m a w c" "child..."))
+  (with-eval-after-load 'ghostel
+    (define-key ghostel-mode-map (kbd "C-c C-l") #'rsr/agent-session-insert-org-link))
 
-(with-eval-after-load 'ghostel
-  (define-key ghostel-mode-map (kbd "C-c C-l") #'rsr/agent-session-insert-org-link))
+  (add-to-list 'project-switch-commands '(rsr/agent-session-switch-or-new "Agent Session"))
 
-(add-to-list 'project-switch-commands '(rsr/agent-session-switch-or-new "Agent Session"))
-
-;; Advice on the terminal packages, focus hook, Org link type, C-x p a, server.
-(rsr/agent-session-setup)
+  ;; Advice on the terminal packages, focus hook, Org link type, C-x p a, server.
+  (rsr/agent-session-setup))
 
 (provide 'ai-sessions-config)
 ;;; ai-sessions-config.el ends here
