@@ -94,6 +94,7 @@
 
 (defun mind-state--prompt-user ()
   "Prompt user for current mind-state and log it to journal."
+  (mind-state--reset-daily-counter)
   (when (mind-state--should-prompt-p)
     (let* ((state (completing-read "Mind-state: " mind-state-options nil nil))
            (state (if (string-empty-p state)
@@ -121,14 +122,26 @@
 ;;; --- Timer Management ---
 
 (defun mind-state--schedule-next-prompt ()
-  "Schedule the next mind-state prompt."
+  "Schedule the next mind-state prompt.
+Once today's target is reached, wake at the start of tomorrow's active
+hours instead, so a long-running Emacs keeps prompting on later days."
+  (mind-state--reset-daily-counter)
   (when mind-state-timer
     (cancel-timer mind-state-timer))
-  (when (< mind-state-prompts-today mind-state-target-prompts)
-    (let ((interval (mind-state--calculate-next-interval)))
+  (if (< mind-state-prompts-today mind-state-target-prompts)
+      (let ((interval (mind-state--calculate-next-interval)))
+        (setq mind-state-timer
+              (run-at-time interval nil #'mind-state--prompt-user))
+        (message "Next mind-state check in ~%d minutes" (/ interval 60)))
+    (let ((now (decode-time)))
       (setq mind-state-timer
-            (run-at-time interval nil #'mind-state--prompt-user))
-      (message "Next mind-state check in ~%d minutes" (/ interval 60)))))
+            (run-at-time (encode-time
+                          (list 0 0 (car mind-state-active-hours)
+                                (1+ (decoded-time-day now))
+                                (decoded-time-month now)
+                                (decoded-time-year now)
+                                nil -1 nil))
+                         nil #'mind-state--prompt-user)))))
 
 ;;; --- Public Commands ---
 
