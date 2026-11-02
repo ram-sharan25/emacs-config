@@ -564,14 +564,18 @@ See also `org-save-all-org-buffers'"
                              t))))
   (message "Saving org-agenda-files buffers... done"))
 
-(advice-add 'org-refile :after
-            (lambda (&rest _)
-              (gtd-save-org-buffers)))
+(defun my/save-org-buffers-after-refile (&rest _)
+  "Save agenda-file buffers once a refile has moved an entry between them."
+  (gtd-save-org-buffers))
 
-;; save all org buffers before agenda opens — prevents #file.org# lockfile issues
-(advice-add 'org-agenda :before
-            (lambda (&rest _)
-              (org-save-all-org-buffers)))
+(advice-add 'org-refile :after #'my/save-org-buffers-after-refile)
+
+(defun my/save-org-buffers-before-agenda (&rest _)
+  "Save all org buffers before the agenda opens.
+Prevents #file.org# lockfile issues."
+  (org-save-all-org-buffers))
+
+(advice-add 'org-agenda :before #'my/save-org-buffers-before-agenda)
 
 ;;; Inbox Processing
 
