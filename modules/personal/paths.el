@@ -173,5 +173,28 @@ so a repository created anywhere under these is found without registering it.")
 (defconst my/zotero-storage "~/Zotero/storage/"
   "Zotero PDF storage directory.")
 
+;;; Secrets
+
+(defconst my/secrets-file (expand-file-name "secrets.el.gpg" user-emacs-directory)
+  "Encrypted elisp holding API keys and tokens (see docs/secrets.org).")
+
+(defvar my/secrets-loaded-p nil
+  "Non-nil once `my/load-secrets' has loaded `my/secrets-file'.")
+
+(defun my/load-secrets ()
+  "Load `my/secrets-file' once; return non-nil if it is loaded.
+Decrypting prompts for the passphrase, so callers load it on first need
+(gcal.el at startup, Linear and Forge on their first request).  A failure
+is reported in the echo area rather than signalled."
+  (or my/secrets-loaded-p
+      (condition-case err
+          (progn
+            (require 'epa-file)         ; pinentry mode: gcal.el, per OS
+            (load my/secrets-file)
+            (setq my/secrets-loaded-p t))
+        (error (message "Failed to load %s: %s" my/secrets-file
+                        (error-message-string err))
+               nil))))
+
 (provide 'paths)
 ;;; paths.el ends here

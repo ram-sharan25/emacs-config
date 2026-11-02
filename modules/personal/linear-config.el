@@ -14,15 +14,13 @@
 (require 'linear-emacs)
 (setq linear-emacs-org-file-path my/linear-org-file)
 
-;; The key lives in ~/.emacs.d/secrets.el.gpg as `my/linear-key'.  gcal.el
+;; The key lives in `my/secrets-file' as `my/linear-key'.  gcal.el
 ;; usually loads that file at startup already; otherwise decrypt it on the
 ;; first Linear request rather than at startup, so launching never prompts.
 (defun rsr/linear-load-key (&rest _)
   (unless linear-emacs-api-key
     (unless (or (boundp 'my/linear-key) (fboundp 'my/linear-key))
-      (require 'epa-file)
-      (setq epg-pinentry-mode 'loopback)
-      (load "~/.emacs.d/secrets.el.gpg"))
+      (my/load-secrets))
     (setq linear-emacs-api-key (if (functionp 'my/linear-key)
                                    (my/linear-key)
                                  my/linear-key))))
