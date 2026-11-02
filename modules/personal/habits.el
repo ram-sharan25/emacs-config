@@ -16,8 +16,8 @@
 ;;  - `my/habit-note' appends the day's note event.
 ;;  - `my/org-clock-in-deep' clocks a task in deep mode: the Toggl entry gets
 ;;    the tag "deep" and a "- mode: deep" line sits under the CLOCK line.
-;;  - `my/day-snapshot' shows one day: habits with their status, the
-;;    measurement rows from "* Measurements" in rituals.org, clocked time.
+;;  - The day agenda is the snapshot: log mode is on by default and shows
+;;    the habit events from the log like closed tasks.
 ;;  - `my/habits-log-merge-conflicts' folds Syncthing .sync-conflict-* copies
 ;;    of a log file back into it, line-identity union per day.
 
@@ -212,6 +212,7 @@ Each is a plist (:date :time :kind :id :title :rest :notes)."
          ((and day (not (string< day from)) (not (string< to day))
                (looking-at my/habit-event-re))
           (let ((ev (list :date day
+                          :marker (copy-marker (line-beginning-position))
                           :time (match-string-no-properties 1)
                           :kind (match-string-no-properties 2)
                           :id (match-string-no-properties 3)
@@ -475,14 +476,57 @@ Each is (minutes mode heading)."
           (apply #'+ (mapcar #'car intervals))
           intervals)))
 
-;;;; The day snapshot
+;;;; The day in the agenda
+
+;; The day agenda (`C-c a a') is the snapshot.  Log mode is on by default,
+;; so clocked and closed tasks show on the time grid, and so do habit events:
+;; log mode only knows CLOSED, CLOCK and State lines in agenda files, and a
+;; finished habit leaves none in rituals.org (the repeater drops CLOSED,
+;; `org-log-repeat' is nil, the CLOCK line moved to the log).  So when log
+;; mode scans rituals.org, the day's lines are read from the habits log and
+;; handed back as log items.  RET on one jumps to the line in the log.
+
+(setq org-agenda-start-with-log-mode '(closed clock state))
+
+(defun my/habit--agenda-log-items (date)
+  "Agenda log items for the habit events on DATE, a gregorian (M D Y) list."
+  (let* ((time (encode-time 0 0 0 (nth 1 date) (nth 0 date) (nth 2 date)))
+         (items nil))
+    (dolist (ev (my/habit-events-between time time))
+      (let* ((marker (plist-get ev :marker))
+             (kind (plist-get ev :kind))
+             (title (or (plist-get ev :title) "Day note"))
+             (dur (my/habit--event-duration ev))
+             (extra (pcase kind
+                      ("done" (if dur (format "Done:      (%s) " (my/habit--minutes-string dur))
+                                "Done:       "))
+                      ("skip" "Skipped:    ")
+                      (_ "Note:       ")))
+             ;; A full <timestamp> puts the item on the time grid at HH:MM.
+             (stamp (format-time-string (concat "<%Y-%m-%d %a " (plist-get ev :time) ">") time))
+             (txt (org-agenda-format-item extra title 1 "rituals" nil stamp)))
+        (push (org-add-props txt nil
+                'org-marker marker 'org-hd-marker marker
+                'face (if (equal kind "skip") 'org-agenda-dimmed-todo-face 'org-agenda-done)
+                'type "closed" 'date date 'priority 100000 'level 1
+                'undone-face 'org-warning 'done-face 'org-agenda-done)
+              items)))
+    (nreverse items)))
+
+(defun my/habit--agenda-progress-advice (orig &rest args)
+  "Append the log's habit events when log mode scans rituals.org."
+  (let ((items (apply orig args)))
+    (if (and (my/habit--in-rituals-p) (boundp 'date) (listp date))
+        (append items (my/habit--agenda-log-items date))
+      items)))
+
+(advice-add 'org-agenda-get-progress :around #'my/habit--agenda-progress-advice)
 
 (defun my/habit--status (def events time)
-  "Status string for DEF on the day of TIME given that day's EVENTS."
+  "Status of DEF on the day of TIME given that day's EVENTS:
+done, skip, pending, missed, or nil when not due that day."
   (let* ((id (plist-get def :id))
          (mine (seq-filter (lambda (e) (equal (plist-get e :id) id)) events))
-         (done (seq-find (lambda (e) (equal (plist-get e :kind) "done")) mine))
-         (skip (seq-find (lambda (e) (equal (plist-get e :kind) "skip")) mine))
          (due (my/habit--due-p def time))
          (today-p (equal (my/habit--iso time) (my/habit--iso (current-time))))
          (past-p (string< (my/habit--iso time) (my/habit--iso (current-time))))
@@ -491,89 +535,12 @@ Each is (minutes mode heading)."
                        (my/habit--parse-hhmm (match-string 1 (plist-get def :window)))))
          (now-min (let ((d (decode-time))) (+ (* 60 (nth 2 d)) (nth 1 d)))))
     (cond
-     (done (format "done %s%s" (plist-get done :time)
-                   (let ((m (my/habit--event-duration done)))
-                     (if m (format "  %s" (my/habit--minutes-string m)) ""))))
-     (skip (format "skip %s%s" (plist-get skip :time)
-                   (if (string-empty-p (plist-get skip :notes)) ""
-                     (format "  (%s)" (car (split-string (plist-get skip :notes) "\n"))))))
-     ((eq due 'window)
-      (let* ((range (my/habit--period-range def time))
-             (n (if (string-match "\\`\\([0-9]+\\)/" (or (plist-get def :freq) "1/1"))
-                    (string-to-number (match-string 1 (plist-get def :freq)))
-                  1))
-             (evs (my/habit-events-between (car range) (cdr range)))
-             (k (length (seq-filter (lambda (e) (and (equal (plist-get e :id) id)
-                                                     (equal (plist-get e :kind) "done")))
-                                    evs))))
-        (format "%d/%d this %s" k n
-                (if (>= (string-to-number
-                         (if (string-match "/\\([0-9]+\\)" (plist-get def :freq))
-                             (match-string 1 (plist-get def :freq)) "7"))
-                        28)
-                    "month" "week"))))
-     ((not due) "-")
-     (past-p "missed")
-     ((and today-p win-end (> win-end 180) (> now-min win-end)) "missed")
-     (t "pending"))))
-
-(defun my/day-snapshot (&optional time)
-  "Show the snapshot of one day: habits, measurements and clocked time.
-Interactively, a prefix argument asks for the date; otherwise today."
-  (interactive (list (if current-prefix-arg
-                         (org-read-date nil t nil "Day: ")
-                       (current-time))))
-  (let* ((time (my/habit--day-start time))
-         (date (my/habit--iso time))
-         (defs (seq-filter (lambda (d) (my/habit--active-p d date))
-                           (my/habit--definitions)))
-         (events (my/habit-events-between time time))
-         (note (seq-find (lambda (e) (equal (plist-get e :kind) "note")) events))
-         (files (funcall my/habit-measure-files-function))
-         (all-clock (apply #'append
-                           (mapcar (lambda (f) (my/habit--clock-intervals f date)) files)))
-         (buf (get-buffer-create (format "*Day %s*" date))))
-    (with-current-buffer buf
-      (let ((inhibit-read-only t))
-        (erase-buffer)
-        (org-mode)
-        (insert (format "#+TITLE: %s\n\n" (format-time-string "%A %Y-%m-%d" time)))
-        (insert "* Habits\n")
-        (dolist (role '("anchor" "aim"))
-          (let ((group (seq-filter (lambda (d) (equal (plist-get d :role) role)) defs)))
-            (when group
-              (insert (format "** %s\n" (capitalize role)))
-              (dolist (d group)
-                (insert (format "- %-28s %-11s %-6s %s\n"
-                                (plist-get d :title)
-                                (or (plist-get d :window) "")
-                                (or (plist-get d :track) "")
-                                (my/habit--status d events time)))))))
-        (let ((other (seq-remove (lambda (d) (member (plist-get d :role) '("anchor" "aim"))) defs)))
-          (when other
-            (insert "** Unclassified\n")
-            (dolist (d other)
-              (insert (format "- %-28s %s\n" (plist-get d :title)
-                              (my/habit--status d events time))))))
-        (insert "\n* Measurements\n")
-        (dolist (row (my/habit--measures))
-          (pcase-let ((`(,n ,mins ,_) (my/habit--measure row date)))
-            (insert (format "- %-16s %d session%s, %s   floor: %s\n"
-                            (plist-get row :title) n (if (= n 1) "" "s")
-                            (my/habit--minutes-string mins)
-                            (or (plist-get row :floor) "")))))
-        (insert (format "\n* Clocked\n- %s in %d intervals across agenda files\n"
-                        (my/habit--minutes-string (apply #'+ (mapcar #'car all-clock)))
-                        (length all-clock)))
-        (dolist (i (seq-filter (lambda (i) (>= (car i) 30)) all-clock))
-          (insert (format "  - %s %s%s\n" (my/habit--minutes-string (car i))
-                          (or (nth 2 i) "?")
-                          (if (nth 1 i) (format "  [%s]" (nth 1 i)) ""))))
-        (insert "\n* Note\n")
-        (insert (if note (format "%s\n" (plist-get note :notes)) "(none yet: C-c t n)\n"))
-        (goto-char (point-min))
-        (view-mode 1)))
-    (pop-to-buffer buf)))
+     ((seq-find (lambda (e) (equal (plist-get e :kind) "done")) mine) 'done)
+     ((seq-find (lambda (e) (equal (plist-get e :kind) "skip")) mine) 'skip)
+     ((not (eq due t)) nil)
+     (past-p 'missed)
+     ((and today-p win-end (> win-end 180) (> now-min win-end)) 'missed)
+     (t 'pending))))
 
 ;;;; Syncthing conflict copies
 
@@ -625,8 +592,7 @@ re-sorted by time.  Merged conflict copies move to Archives/sync-conflicts/."
 ;;;; Keys in the agenda (C-c t keys are in keymaps.el)
 
 (with-eval-after-load 'org-agenda
-  (define-key org-agenda-mode-map "K" #'my/habit-skip)
-  (define-key org-agenda-mode-map "Y" #'my/day-snapshot))
+  (define-key org-agenda-mode-map "K" #'my/habit-skip))
 
 (provide 'habits)
 ;;; habits.el ends here
