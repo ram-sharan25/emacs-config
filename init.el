@@ -60,12 +60,16 @@
 
 (defun load-directory (directory)
   "Load .el files in DIRECTORY except explicitly disabled local modules."
-  (dolist (file (directory-files directory t "\\.el$"))
-    (if (member (file-name-base file) rsr/local-disabled-modules)
-        (display-warning 'local-config
-                         (format "Module %s is disabled locally; install its dependencies and update local.el."
-                                 (file-name-base file)))
-      (load (file-name-sans-extension file)))))
+  ;; Skip .#lock, #autosave# and flycheck_ temp files left beside a module
+  ;; being edited; loading one of those can abort startup.
+  (dolist (file (directory-files directory t "\\`[^.#].*\\.el\\'"))
+    (cond
+     ((string-prefix-p "flycheck_" (file-name-nondirectory file)))
+     ((member (file-name-base file) rsr/local-disabled-modules)
+      (display-warning 'local-config
+                       (format "Module %s is disabled locally; install its dependencies and update local.el."
+                               (file-name-base file))))
+     (t (load (file-name-sans-extension file))))))
 
 ;; Refresh foundational path constants before loading modules.  This explicit
 ;; load also makes reloading init.el pick up newly added paths in a live session,
