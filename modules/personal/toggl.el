@@ -96,7 +96,8 @@ files' note-kind FILETAGS tag \"hub\" is not a kind and is dropped."
 
   :hook
   (org-clock-in  . rsr/toggl-clock-in-hook)
-  (org-clock-out . org-toggl-clock-out))
+  (org-clock-out . org-toggl-clock-out)
+  (org-clock-cancel . org-toggl-clock-cancel))
 
 (provide 'toggl)
 ;;; toggl.el ends here
