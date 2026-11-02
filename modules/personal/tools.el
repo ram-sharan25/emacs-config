@@ -190,12 +190,13 @@ Records today as watched to suppress daily reminders."
 ;; so we can skip encryption (which would encrypt mid-edit every 2 sec).
 (defvar rsr/auto-save-visited-in-progress nil)
 
-(with-eval-after-load 'files
-  (when (fboundp 'auto-save-visited--save-some-buffers)
-    (advice-add 'auto-save-visited--save-some-buffers :around
-                (lambda (fn &rest args)
-                  (let ((rsr/auto-save-visited-in-progress t))
-                    (apply fn args))))))
+(define-advice save-some-buffers (:around (fn &rest args) rsr/mark-auto-save-visited)
+  "Set `rsr/auto-save-visited-in-progress' when called from `auto-save--timer'.
+`auto-save-visited-mode' (Emacs 29/30) runs `save-some-buffers' from its
+idle timer with the literal argument `:no-prompt'; interactive and
+library callers pass nil, t or a prefix argument instead."
+  (let ((rsr/auto-save-visited-in-progress (eq (car args) :no-prompt)))
+    (apply fn args)))
 
 (defun rsr/org-crypt-maybe-encrypt ()
   "Encrypt :crypt: headings on explicit save only, not auto-save-visited."
