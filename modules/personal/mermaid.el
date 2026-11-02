@@ -5,8 +5,8 @@
   :ensure t
   :demand t)
 
-;; Use the specific chrome version installed via puppeteer
-(setq ob-mermaid-cli-path "/opt/homebrew/bin/mmdc")
+;; Mermaid CLI from PATH (Homebrew's on this Mac).
+(setq ob-mermaid-cli-path (or (executable-find "mmdc") "mmdc"))
 
 ;; Default to dark theme with transparent background for dark Emacs themes
 (setf (alist-get :theme org-babel-default-header-args:mermaid) "dark")

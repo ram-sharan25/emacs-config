@@ -2,6 +2,7 @@
 
 ;;; Code:
 
+(require 'paths)
 (require 'ox-html)
 (use-package htmlize :ensure t)
 (require 'htmlize)
@@ -11,7 +12,7 @@
 (setq htmlize-css-name-prefix "org-")
 
 (defvar rsr/portfolio-root
-  (expand-file-name "~/Stillness/Development/learning-logs")
+  (expand-file-name "learning-logs" my/development-dir)
   "Root directory of Astro portfolio.")
 
 (defconst rsr/--collections '("learnings" "blog" "thoughts")

@@ -659,7 +659,8 @@ Highlighted tasks appear at the top of the agenda as the daily focus."
 
 
 (use-package org-timeblock
-  :load-path "~/.emacs.d/modules/git-modules/org-timeblock/"
+  :load-path (lambda () (expand-file-name "modules/git-modules/org-timeblock/"
+                                          user-emacs-directory))
   :config
   (setq org-timeblock-span 1)
   (setq org-timeblock-day-start-hour 6)

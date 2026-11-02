@@ -373,7 +373,8 @@ thought tags, and font-lock does not colour them either."
 ;; Auto-starts on clock-in, cancels on clock-out.
 ;; Plays alarm sound (afplay on macOS) or falls back to beep.
 
-(defcustom my/timer-sound-file "/Users/rrimal/.emacs.d/data/alarm_sound.mp3"
+(defcustom my/timer-sound-file
+  (expand-file-name "data/alarm_sound.mp3" user-emacs-directory)
   "Sound file to play for timer notifications. nil uses system beep."
   :type '(choice (const :tag "None" nil) (file :tag "Sound File"))
   :group 'org)

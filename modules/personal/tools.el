@@ -144,7 +144,7 @@ If QUERY is nil the script uses its built-in theme list."
                        (my/video-mark-watched)
                        (message "Now watching: %s" title)
                        (let ((proc (start-process "mpv-video" nil
-                                                  "/opt/homebrew/bin/mpv" url
+                                                  "mpv" url
                                                   "--geometry=900x506"
                                                   "--really-quiet")))
                          (set-process-sentinel

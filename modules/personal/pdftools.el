@@ -1,8 +1,10 @@
 ;;; pdftools.el --- PDF viewing and annotation -*- lexical-binding: t; -*-
 
 ;; PDF Tools configuration
-(defconst my/pdf-tools-epdfinfo-program "/opt/homebrew/bin/epdfinfo"
-  "Canonical epdfinfo executable used by PDF Tools.")
+(defconst my/pdf-tools-epdfinfo-program
+  (or (executable-find "epdfinfo") "/opt/homebrew/bin/epdfinfo")
+  "Canonical epdfinfo executable used by PDF Tools.
+Found on PATH; the Homebrew path is only the name reported when it is missing.")
 
 (defconst my/pdf-tools-auto-mode-alist-entry
   '("\\.[pP][dD][fF]\\'" . my/pdf-tools-load)
