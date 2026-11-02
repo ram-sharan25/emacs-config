@@ -11,7 +11,7 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | C-c c   | capture                    | C-c o  | open                     |
 | C-c f   | format buffer              | C-c p  | projectile               |
 | C-c g   | Google calendar            | C-c r  | research / papers        |
-| C-c h   | hide/show (prog modes)     | C-c s  | sync                     |
+| C-c h   | hide/show (prog modes)     |        |                          |
 | C-c i   | AI and agents              | C-c t  | time and tools           |
 | C-c j   | Linear issues              |        |                          |
 | C-c l/L | store link / to clipboard  | C-c w  | workspaces (perspective) |
@@ -113,9 +113,6 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | p | push heading | o | open calendar |
 | s | sync         | r | re-auth       |
 | e | push event   |   |               |
-
-* C-c s  Sync
-| e | export mobile agenda | s | sync from mobile JSON |
 
 * C-c m  Multiple cursors (keep tapping n / p)
 | n | mark next     | 0 | insert numbers |

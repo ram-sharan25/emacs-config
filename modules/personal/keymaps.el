@@ -16,7 +16,7 @@
 ;;   C-c h      hide/show (prog modes) C-c p  projectile (projectile-config.el)
 ;;   C-c i      AI and agents          C-c r  research / papers
 ;;   C-c j      Linear issues (linear-config.el)
-;;   C-c m      multiple cursors       C-c s  sync
+;;   C-c m      multiple cursors
 ;;   C-c w      workspaces (perspective-config.el)
 ;;   C-c t      time and tools
 ;;   M-g        goto (built in)        M-s    search (built in)
@@ -271,9 +271,9 @@ devlog.el."
     "C-c c" "capture"     "C-c g" "gcal"        "C-c i" "AI"
     "C-c i n" "NotebookLM" "C-c j" "Linear"      "C-c m" "multi-cursor"
     "C-c n" "notes"
-    "C-c o" "open"        "C-c r" "research"    "C-c s" "sync"
+    "C-c o" "open"        "C-c r" "research"
     "C-c t" "time/tools"  "C-c t m" "mind-state" "C-c w" "workspaces"
-    "M-m" "legacy leader" "M-m a" "AI" "M-m n" "NotebookLM" "M-m s" "sync"
+    "M-m" "legacy leader" "M-m a" "AI" "M-m n" "NotebookLM"
     "M-m t" "time/tools" "M-m m" "multi-cursor" "M-m r" "legacy roam"
     "M-m g" "legacy git"))
 
