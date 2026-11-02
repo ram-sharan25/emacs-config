@@ -737,7 +737,6 @@ Highlighted tasks appear at the top of the agenda as the daily focus."
 
 (setq org-log-reschedule 'time)   ;; log old date in LOGBOOK when rescheduled
 (setq org-log-redeadline 'time)   ;; log old date in LOGBOOK when deadline changes
-(setq org-log-into-drawer t)      ;; keep LOGBOOK entries in drawer (not inline)
 
 (provide 'gtd-config)
 ;;; gtd-config.el ends here
