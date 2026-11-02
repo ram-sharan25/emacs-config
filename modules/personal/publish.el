@@ -201,7 +201,7 @@ With prefix arg, publish as draft."
       (when (looking-at "---")
         (forward-line 1)
         (while (not (or (eobp) (looking-at "---")))
-          (when (looking-at "^\\([a-z_]+\\): *\"?\\([^\"\\n]*\\)\"?$")
+          (when (looking-at "^\\([a-z_]+\\): *\"?\\([^\"\n]*\\)\"?$")
             (push (cons (match-string 1) (match-string 2)) result))
           (forward-line 1)))
       result)))
