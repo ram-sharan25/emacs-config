@@ -446,27 +446,43 @@ thought tags, and font-lock does not colour them either."
 
 ;;; Font
 ;;
-;; Org uses Menlo 16pt rather than the Fira Code used for code.  Prose and
-;; headings read better at that size, and org's scaled heading faces look
-;; heavy in a narrow coding font.
+;; Org uses JetBrains Mono 16pt rather than the Fira Code used for code.
+;; Prose and headings read better at that size, and org's scaled heading
+;; faces look heavy in a narrow coding font.
 ;;
-;; Menlo, not Monaco: macOS ships Monaco in Regular only, so *bold* and
-;; /italic/ emphasis had no face to render with and showed as plain text.
-;; Menlo is Monaco's descendant and ships Bold, Italic and Bold Italic.
+;; The choice is driven by two constraints that only JetBrains Mono meets
+;; among the fonts on this machine:
+;;
+;; - Bold and italic must exist as real cuts.  macOS ships Monaco in Regular
+;;   only, so *bold* and /italic/ emphasis showed as plain text; Fira Code
+;;   has bold but no italic.  JetBrains Mono ships Bold, Italic and Bold
+;;   Italic.
+;;
+;; - The descent must be shallow.  Emacs paints a face background over the
+;;   glyph's whole ascent + descent box, so a font that spends much of that
+;;   box below the baseline leaves a coloured band hanging under every line.
+;;   As Emacs measures them at 16pt (`font-info'), Menlo is 7px descent of a
+;;   19px box (37%); Monaco, Fira Code and JetBrains Mono are all 5px of
+;;   20-21px (24-25%).  Menlo was what TODO keywords and hl-line hung under
+;;   before this.
+;;
+;; `line-spacing' is nil here, not the global 0.175: that variable adds its
+;; pixels *below* the glyphs in the line's face (see init.el), which was the
+;; other half of the hanging band.  JetBrains Mono's 21px box already gives
+;; org looser lines than Fira Code's 20px without it.
 ;;
 ;; `buffer-face-mode' rather than a global face, so it applies only to org
-;; buffers.  The `line-height' balancing in init.el is a no-op here: Emacs
-;; never shrinks a line below the font's own box, and Menlo 16pt is already
-;; taller than the 18px that property asks for.
+;; buffers.
 
 (defun rsr/org-font ()
-  "Use Menlo 16pt in this org buffer."
-  (setq-local buffer-face-mode-face '(:family "Menlo" :height 160))
+  "Use JetBrains Mono 16pt in this org buffer, with no extra line spacing."
+  (setq-local buffer-face-mode-face '(:family "JetBrains Mono" :height 160))
+  (setq-local line-spacing nil)
   (buffer-face-mode 1))
 
 ;; `org-agenda-mode' is a standalone major mode, not derived from `org-mode',
 ;; so it needs its own hook or the agenda renders in the code font while every
-;; .org file is Menlo.
+;; .org file is JetBrains Mono.
 (add-hook 'org-mode-hook        #'rsr/org-font)
 (add-hook 'org-agenda-mode-hook #'rsr/org-font)
 
