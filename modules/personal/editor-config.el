@@ -71,8 +71,6 @@
 
 ;; exclude backup files (file~, file.tsx~, etc.) from all completions
 (add-to-list 'completion-ignored-extensions "~")  ;; covers file.tsx~ file.el~ etc.
-(with-eval-after-load 'ivy
-  (add-to-list 'ivy-ignore-buffers "~$"))          ;; ivy buffer list
 (with-eval-after-load 'projectile
   (add-to-list 'projectile-globally-ignored-file-suffixes "~")
   (add-to-list 'projectile-globally-ignored-directories
