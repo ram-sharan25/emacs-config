@@ -271,7 +271,7 @@ Then manually split and display the PDF buffer where you want it."
 
 		    (when highlighted-text
 		      (insert (if compact
-				  (format ": "%s" " highlighted-text)
+				  (format ": \"%s\" " highlighted-text)
 				(concat "\n\n#+begin_quote\n"
 					highlighted-text
 					"\n#+end_quote"))))
