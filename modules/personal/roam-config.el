@@ -8,11 +8,23 @@
 ;; See Plans/Brain/.../2026-11-01-brain-roam-id-links/findings.md.
 (require 'brain-roam-ids)
 
-;; Prefer ID links over file+headline links in `org-store-link' (C-c l).
-;; Set at top level, not inside the org-roam :config block below — org-roam
-;; is :bind-deferred, so C-c l would ignore heading IDs until org-roam had
-;; already been lazy-loaded once in the session.
+;; Prefer ID links over file+headline links in `org-store-link' (C-c l), but
+;; only for files in the Brain.  Plans and every other external directory use
+;; ordinary file links and must not gain IDs as a side effect of storing a link.
+;; Keep this at top level: org-roam is lazy-loaded, while C-c l is always live.
 (setq org-id-link-to-org-use-id t)
+
+(defun my/org-store-link-scope-ids-to-brain (orig &rest args)
+  "Call ORIG with ID links enabled only for files inside `my/brain-dir'."
+  (let ((org-id-link-to-org-use-id
+         (and buffer-file-name
+              (file-in-directory-p (expand-file-name buffer-file-name)
+                                   (file-name-as-directory
+                                    (expand-file-name my/brain-dir)))
+              t)))
+    (apply orig args)))
+
+(advice-add 'org-store-link :around #'my/org-store-link-scope-ids-to-brain)
 
 ;;; --- Org-roam ---
 
