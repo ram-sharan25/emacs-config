@@ -6,13 +6,14 @@
 ;; file) under the year/month/day tree that habits.el's `my/habit--goto-day'
 ;; builds, so the file reads like the habits log:
 ;;
-;;   **** HH:MM kind state [[id:TASK][Title]] note :auto:
+;;   **** HH:MM kind value [[id:TASK][Title]] note :auto:
 ;;
-;; kind is written by the code, one of start, break or check: start is the
-;; first line I logged in this clock-in, break a later line in the same
-;; clock-in, check not clocked in or the random prompt.  Random check lines
-;; never decide start versus break (`mind-state--logged-since-p' looks only
-;; at start and break lines).
+;; kind is written by the code: start is the first mind-state line logged in
+;; this clock-in, break a later mind-state line, check not clocked in or the
+;; random prompt, and interrupt a dedicated interruption line.  VALUE is the
+;; state for start/break/check and the cause for interrupt.  Random check and
+;; interruption lines never decide start versus break
+;; (`mind-state--logged-since-p' looks only at start and break lines).
 ;;
 ;; state is one of nine words:
 ;;   absorbed steady stuck tense scattered restless fresh tired flat
@@ -32,11 +33,15 @@
 ;; is simply rescheduled.  Its lines end with :auto: and count towards the
 ;; daily target; manual lines do neither.
 ;;
-;; How to log: C-c t m l (`mind-state-manual-log'), pick the word, RET,
-;; type the note or nothing, RET.  Each choice shows its meaning in
-;; brackets, "scattered (pulled outward)"; the bracket is display only and
-;; the file gets the bare word.  The first prompt accepts only the nine
-;; words, so a typo does not submit; the note is free text.
+;; How to log state: C-c t m l (`mind-state-manual-log'), pick the word, RET,
+;; type the note or nothing, RET.  Each choice shows its meaning in brackets,
+;; "scattered (pulled outward)"; the bracket is display only and the file gets
+;; the bare word.  How to log an interruption: C-c t x
+;; (`mind-state-log-interruption'), pick slack, coworker, phone, pitstop, walk
+;; or other, then add an optional note; other requires a note.  The timestamp is
+;; the interruption's start by default; C-u C-c t x logs after returning and
+;; adds :after:.  Both commands use the clocked task's existing link when
+;; available.
 ;;
 ;; Not here: no report or count (the raw file is read by hand first), no
 ;; journal entry, no ID creation, no new key, no prompt on clock-in or
@@ -74,8 +79,12 @@ The random prompt is silent while the clock runs in a task carrying it.")
     ("flat"      . "capacity there, no want"))
   "Short meaning per word, shown in brackets as a completion annotation.")
 
+(defconst mind-state-interruption-causes
+  '("slack" "coworker" "phone" "pitstop" "walk" "other")
+  "Closed vocabulary used by `mind-state-log-interruption'.")
+
 (defconst mind-state-event-re
-  (concat "^\\*\\*\\*\\* \\([0-9][0-9]:[0-9][0-9]\\) \\(start\\|break\\|check\\) \\([a-z]+\\)"
+  (concat "^\\*\\*\\*\\* \\([0-9][0-9]:[0-9][0-9]\\) \\(start\\|break\\|check\\|interrupt\\) \\([a-z]+\\)"
           "\\(?: \\[\\[id:\\([^]]+\\)\\]\\[\\([^]]*\\)\\]\\]\\)?\\(.*\\)$")
   "One event line.  Groups: 1 time, 2 kind, 3 state, 4 task id, 5 title, 6 rest.")
 
@@ -105,9 +114,10 @@ The link is present when ID is non-nil, NOTE when it has non-blank text, and
       (with-current-buffer buf
         (insert (format-time-string "#+TITLE: Mind-state log %Y\n" time)
                 "#+STARTUP: overview\n"
-                "# One line per event: HH:MM kind state [[id:TASK][Title]] note :auto:\n"
-                "# kind: start = the first line I logged in this clock-in; break = a later line in the same clock-in; check = not clocked in, or the random prompt.\n"
-                "# state: absorbed steady stuck tense scattered restless fresh tired flat.  :auto: marks the random prompt's lines.\n"
+                "# One line per event: HH:MM kind value [[id:TASK][Title]] note :auto:\n"
+                "# kind: start = first state in this clock-in; break = later state; check = not clocked in or random; interrupt = interruption cause.\n"
+                "# state: absorbed steady stuck tense scattered restless fresh tired flat.  interruption: slack coworker phone pitstop walk other.\n"
+                "# :auto: marks the random prompt's lines.\n"
                 "# Not an agenda file, not a roam file.  Design: modules/personal/mind-state.el in ~/.emacs.d.\n\n"
                 (format-time-string "* %Y\n" time))
         (save-buffer)))
@@ -142,6 +152,20 @@ prompt, RET there closes.  NOTE is trimmed and may be \"\"."
     (while (not (member word mind-state-words))
       (setq word (completing-read "Mind-state: " mind-state-words nil t)))
     (cons word (string-trim (read-string "Note (optional): ")))))
+
+(defun mind-state--read-interruption ()
+  "Ask for an interruption cause and note; return (CAUSE . NOTE).
+The cause must be in `mind-state-interruption-causes'.  A note is optional
+except for `other', which keeps prompting until the cause is described."
+  (let* ((cause (completing-read "Interruption: "
+                                 mind-state-interruption-causes nil t))
+         (prompt (if (equal cause "other")
+                     "What interrupted you: "
+                   "Note (optional): "))
+         (note (string-trim (read-string prompt))))
+    (while (and (equal cause "other") (string-empty-p note))
+      (setq note (string-trim (read-string "Describe the interruption: "))))
+    (cons cause note)))
 
 ;;; --- The clock ---
 
@@ -297,6 +321,20 @@ AUTO non-nil marks a line the random prompt produced (kind \"check\", tag
     (message "Mind-state: %s" line)
     line))
 
+(defun mind-state--log-interruption (cause note after)
+  "Append an interrupt line for CAUSE and NOTE now and return it.
+When AFTER is non-nil, append :after: to mark a retrospective log."
+  (let* ((time (mind-state--now))
+         (ctx (mind-state--clock-context))
+         (line (concat (mind-state--format-line
+                        time "interrupt" cause
+                        (plist-get ctx :id) (plist-get ctx :title)
+                        note nil)
+                       (when after " :after:"))))
+    (mind-state--append-line time line)
+    (message "Interruption: %s" line)
+    line))
+
 (defun mind-state--prompt-user ()
   "Ask for the current state when the guards allow and log it with :auto:.
 Always schedules the next prompt afterwards, also when the user quits."
@@ -359,6 +397,14 @@ check line.  Does not count towards the day's random-prompt target."
   (pcase (mind-state--read-event)
     (`(,word . ,note) (mind-state--log-event word note nil))))
 
+(defun mind-state-log-interruption (after)
+  "Log an interruption with the current task link.
+With prefix argument AFTER, mark the line :after: because it was logged on
+return; otherwise its timestamp is assumed to be the interruption's start."
+  (interactive "P")
+  (pcase (mind-state--read-interruption)
+    (`(,cause . ,note) (mind-state--log-interruption cause note after))))
+
 (defun mind-state-status ()
   "Show current mind-state tracking status."
   (interactive)
@@ -392,7 +438,7 @@ check line.  Does not count towards the day's random-prompt target."
 (add-hook 'emacs-startup-hook #'mind-state--auto-start)
 
 ;;; Keybindings
-;; C-c t m s / q / l / ? / c: `mind-state-map' in keymaps.el.
+;; C-c t m s / q / l / ? / c and C-c t x: keymaps.el.
 
 (provide 'mind-state)
 ;;; mind-state.el ends here

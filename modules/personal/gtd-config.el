@@ -25,6 +25,62 @@ Skips autosaves (#x#), lockfiles (.#x) and dotfiles."
   (let ((hubs (my/get-area-hub-files)))
     (seq-remove (lambda (f) (member f hubs)) (my/get-area-files))))
 
+(defun my/project-file-agenda-info (file)
+  "Return FILE's project title, area and navigation marker for the project index."
+  (with-current-buffer (find-file-noselect file)
+    (org-with-wide-buffer
+     (goto-char (point-min))
+     (let* ((case-fold-search t)
+            (title (if (re-search-forward "^#\\+title:[ \t]*\\(.+\\)$" nil t)
+                       (string-trim (match-string-no-properties 1))
+                     (file-name-base file)))
+            (area (car (split-string (file-relative-name file my/areas-dir) "/" t)))
+            (marker
+             (progn
+               (goto-char (point-min))
+               (if (re-search-forward "^\\*+[ \t]+Outcome\\(?:[ \t]+.*\\)?$" nil t)
+                   (progn (beginning-of-line) (point-marker))
+                 (goto-char (point-min))
+                 (point-marker)))))
+       (list :file file :title title :area area :marker marker)))))
+
+(defun my/org-agenda-projects (&optional _match)
+  "Show every active project file once, grouped by area.
+RET and the standard agenda navigation commands visit the project's Outcome
+heading, or the start of the file when it has no Outcome heading."
+  (interactive)
+  (org-agenda-prepare "Projects")
+  (setq org-agenda-type 'projects
+        org-agenda-redo-command '(my/org-agenda-projects))
+  (let* ((inhibit-read-only t)
+         (projects (mapcar #'my/project-file-agenda-info (my/get-project-files)))
+         (known-areas my/area-names)
+         (other-areas
+          (sort (seq-difference (delete-dups (mapcar (lambda (p) (plist-get p :area)) projects))
+                                known-areas #'equal)
+                #'string-lessp)))
+    (insert (propertize "Current Projects\n" 'face 'org-agenda-structure))
+    (dolist (area (append known-areas other-areas))
+      (let ((area-projects
+             (sort (seq-filter (lambda (p) (equal area (plist-get p :area))) projects)
+                   (lambda (a b)
+                     (string-lessp (plist-get a :title) (plist-get b :title))))))
+        (when area-projects
+          (insert "\n" (propertize area 'face 'org-agenda-structure) "\n")
+          (dolist (project area-projects)
+            (let ((beg (point))
+                  (marker (plist-get project :marker))
+                  (title (plist-get project :title)))
+              (insert "  " title "\n")
+              (add-text-properties
+               beg (point)
+               `(org-marker ,marker org-hd-marker ,marker org-category ,title
+                            mouse-face highlight help-echo "RET: open project")))))))
+    (org-agenda-finalize)
+    (goto-char (point-min))
+    (setq buffer-read-only t)
+    (org-agenda-fit-window-to-buffer)))
+
 (defvar my/resource-capture-title nil "Temporary storage for resource title during capture.")
 (defvar my/resource-capture-author nil "Temporary storage for resource author during capture.")
 (defvar my/resource-capture-type nil "Temporary storage for resource type during capture.")

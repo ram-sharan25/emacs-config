@@ -20,6 +20,11 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | M-s     | search                     | C-x w  | windows                  |
 | C-x v   | version control            | C-x n  | narrow                   |
 
+* C-c a  Org agenda
+| o | GTD dashboard        | a | day agenda    |
+| p | project task agenda  | w | weekly review |
+| h | habits & rituals     |   |               |
+
 * C-c c  Capture
 | c | org-capture (menu) | j | journal          |
 | i | inbox              | d | log line         |
@@ -33,9 +38,11 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 * C-c o  Open
 | t | agent tmux terminal | n | fleeting notes     |
 | j | journal             | a | area hub           |
-| p | project file        | l | leetcode folder    |
+| p | current projects    | l | leetcode folder    |
 | y | job applications    | v | random video       |
 | k | this cheat sheet    |   |                    |
+
+In =C-c o p=, =RET= opens the selected project's =Outcome= heading.
 
 * C-c t  Time and tools
 | i   | clock in             | c | calc              |
@@ -43,7 +50,7 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | r   | add a rest for today | b | timeblock view    |
 | g   | go to active clock   | k | skip habit today  |
 | n   | habit note           | M | merge habit-log conflicts |
-| m … | mind-state (below)   |   |                   |
+| x   | log interruption     | m … | mind-state (below) |
 
 ** C-c t m  Mind-state
 | s | start tracking | ? | status    |

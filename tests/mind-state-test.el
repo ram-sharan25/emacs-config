@@ -69,6 +69,10 @@ pushed onto the variable named by CALLS."
     (should (stringp (cdr (assoc w mind-state-word-meanings)))))
   (should (= 9 (length mind-state-word-meanings))))
 
+(ert-deftest mind-state-interruption-causes-include-walk ()
+  (should (equal mind-state-interruption-causes
+                 '("slack" "coworker" "phone" "pitstop" "walk" "other"))))
+
 (ert-deftest mind-state-settings-defaults ()
   (should (equal mind-state-log-dir my/trackers-dir))
   (should (equal mind-state-deep-tag "deep")))
@@ -85,7 +89,12 @@ pushed onto the variable named by CALLS."
   (let ((line "**** 09:30 check tired"))
     (should (string-match mind-state-event-re line))
     (should-not (match-string 4 line))
-    (should (equal (match-string 6 line) ""))))
+    (should (equal (match-string 6 line) "")))
+  (let ((line "**** 10:05 interrupt pitstop [[id:AB12][Write the parser]] coffee"))
+    (should (string-match mind-state-event-re line))
+    (should (equal (match-string 2 line) "interrupt"))
+    (should (equal (match-string 3 line) "pitstop"))
+    (should (equal (match-string 4 line) "AB12"))))
 
 (ert-deftest mind-state-format-line-minimal ()
   (should (equal (mind-state--format-line mind-state-test--time "check" "tired")
@@ -123,7 +132,7 @@ pushed onto the variable named by CALLS."
     (mind-state--append-line mind-state-test--time "**** 09:30 check tired")
     (let ((text (mind-state-test--file-text mind-state-test--time)))
       (should (string-prefix-p "#+TITLE: Mind-state log 2026\n#+STARTUP: overview\n" text))
-      (should (string-match-p "^# One line per event: HH:MM kind state \\[\\[id:TASK\\]\\[Title\\]\\] note :auto:$" text))
+      (should (string-match-p "^# One line per event: HH:MM kind value \\[\\[id:TASK\\]\\[Title\\]\\] note :auto:$" text))
       (should (string-suffix-p
                "\n* 2026\n** 2026-11 November\n*** 2026-11-02 Monday\n**** 09:30 check tired\n"
                text)))))
@@ -185,6 +194,32 @@ pushed onto the variable named by CALLS."
               ((symbol-function 'read-string) (lambda (&rest _) "")))
       (mind-state--read-event))
     (should (equal seen '(:annotation-function mind-state--annotate)))))
+
+(ert-deftest mind-state-read-interruption-asks-cause-then-note ()
+  (let (completion-args note-prompt)
+    (cl-letf (((symbol-function 'completing-read)
+               (lambda (&rest args) (setq completion-args args) "slack"))
+              ((symbol-function 'read-string)
+               (lambda (prompt &rest _) (setq note-prompt prompt) " channel ping ")))
+      (should (equal (mind-state--read-interruption) '("slack" . "channel ping"))))
+    (should (equal (nth 0 completion-args) "Interruption: "))
+    (should (equal (nth 1 completion-args) mind-state-interruption-causes))
+    (should (eq (nth 3 completion-args) t))
+    (should (equal note-prompt "Note (optional): "))))
+
+(ert-deftest mind-state-read-interruption-other-requires-note ()
+  (let ((notes '("" "  " "delivery at door")) prompts)
+    (cl-letf (((symbol-function 'completing-read) (lambda (&rest _) "other"))
+              ((symbol-function 'read-string)
+               (lambda (prompt &rest _)
+                 (push prompt prompts)
+                 (pop notes))))
+      (should (equal (mind-state--read-interruption)
+                     '("other" . "delivery at door"))))
+    (should (equal (reverse prompts)
+                   '("What interrupted you: "
+                     "Describe the interruption: "
+                     "Describe the interruption: ")))))
 
 (ert-deftest mind-state-clocked-deep-p-own-tag ()
   (mind-state-test--with-clock "* TODO Sitting :deep:\n"
@@ -357,6 +392,34 @@ pushed onto the variable named by CALLS."
         (should (equal (mind-state--lines-for-day mind-state-test--time)
                        '("**** 09:30 check tired")))))))
 
+(ert-deftest mind-state-log-interruption-with-clock-links-task ()
+  (mind-state-test--with-log-dir
+    (mind-state-test--at mind-state-test--time
+      (mind-state-test--with-clock "* TODO Write the parser\n:PROPERTIES:\n:ID: AB12\n:END:\n"
+        (cl-letf (((symbol-function 'mind-state--read-interruption)
+                   (lambda () '("pitstop" . "coffee"))))
+          (mind-state-log-interruption nil))
+        (should (equal (mind-state--lines-for-day mind-state-test--time)
+                       '("**** 09:30 interrupt pitstop [[id:AB12][Write the parser]] coffee")))))))
+
+(ert-deftest mind-state-log-interruption-without-clock-has-no-link ()
+  (mind-state-test--with-log-dir
+    (mind-state-test--at mind-state-test--time
+      (cl-letf (((symbol-function 'mind-state--read-interruption)
+                 (lambda () '("coworker" . "question"))))
+        (mind-state-log-interruption nil))
+      (should (equal (mind-state--lines-for-day mind-state-test--time)
+                     '("**** 09:30 interrupt coworker question"))))))
+
+(ert-deftest mind-state-log-interruption-after-is-marked ()
+  (mind-state-test--with-log-dir
+    (mind-state-test--at mind-state-test--time
+      (cl-letf (((symbol-function 'mind-state--read-interruption)
+                 (lambda () '("phone" . "family call"))))
+        (mind-state-log-interruption t))
+      (should (equal (mind-state--lines-for-day mind-state-test--time)
+                     '("**** 09:30 interrupt phone family call :after:"))))))
+
 (ert-deftest mind-state-prompt-user-shallow-task-logs-check-auto ()
   (mind-state-test--with-log-dir
     (mind-state-test--at mind-state-test--time
@@ -411,8 +474,9 @@ pushed onto the variable named by CALLS."
   (let ((src (with-temp-buffer
                (insert-file-contents (locate-library "mind-state.el"))
                (buffer-string))))
-    (should (string-match-p "^;;   \\*\\*\\*\\* HH:MM kind state \\[\\[id:TASK\\]\\[Title\\]\\] note :auto:$" src))
+    (should (string-match-p "^;;   \\*\\*\\*\\* HH:MM kind value \\[\\[id:TASK\\]\\[Title\\]\\] note :auto:$" src))
     (should (string-match-p "^;; .*start\\b.*break\\b.*check\\b" src))
+    (should (string-match-p "^;; .*interrupt" src))
     (should (string-match-p "^;; .*absorbed.*steady.*stuck.*tense.*scattered.*restless.*fresh.*tired.*flat" src))
     (should (string-match-p "^;; .*deep" src))))
 

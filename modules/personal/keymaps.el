@@ -103,7 +103,7 @@ Filled by terminal-config.el, ai-sessions-config.el and logs.el."
   "k" #'rsr/open-keybindings-cheatsheet
   "t" #'rsr/agent-tmux-terminal
   "j" #'my/open-journal-file
-  "p" #'my/open-project-file
+  "p" #'my/org-agenda-projects
   "y" #'my/open-job-applications-file
   "n" #'my/open-notes-file
   "a" #'my/open-area-file
@@ -149,6 +149,7 @@ Filled by terminal-config.el, ai-sessions-config.el and logs.el."
   "k" #'my/habit-skip
   "n" #'my/habit-note
   "M" #'my/habits-log-merge-conflicts
+  "x" #'mind-state-log-interruption
   "m" 'mind-state-map)
 
 ;;; --- C-c + letter ---
