@@ -60,9 +60,11 @@
 ;;             bound in keymaps.el
 ;;   C-c i i   new window running the default agent (C-u: alternate)
 ;;   C-c i p   new window running pi in the session
+;;   C-c i g   new window running Antigravity CLI in the session
 
-(keymap-set rsr/ai-map "i" #'rsr/agent-tmux-default)   ; C-c i i, see keymaps.el
-(keymap-set rsr/ai-map "p" #'rsr/agent-tmux-pi)       ; C-c i p
+(keymap-set rsr/ai-map "i" #'rsr/agent-tmux-default)       ; C-c i i, see keymaps.el
+(keymap-set rsr/ai-map "p" #'rsr/agent-tmux-pi)            ; C-c i p
+(keymap-set rsr/ai-map "g" #'rsr/agent-tmux-antigravity)   ; C-c i g
 
 (provide 'terminal-config)
 ;;; terminal-config.el ends here

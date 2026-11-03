@@ -50,10 +50,11 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | l | manual log     |   |           |
 
 * C-c i  AI and agents
-| i | Claude in tmux        | d | agent dashboard     |
-| p | Pi in tmux            | r | send region to agent|
-| w | planning workflow …   | o | logs overview     |
-| n | NotebookLM …          | l | back to the last agent |
+| i | Claude in tmux        | d | agent dashboard       |
+| p | Pi in tmux            | g | Antigravity in tmux    |
+| r | send region to agent  | w | planning workflow …    |
+| o | logs overview         | n | NotebookLM …           |
+| l | back to the last agent |   |                        |
 
 ** gptel
 | a | quick chat      | f | add file           |
