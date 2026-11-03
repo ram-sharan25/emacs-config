@@ -15,6 +15,16 @@
 
 ;;; Code:
 
+(defun rsr/agent-sessions-org-agenda (&optional arg)
+  "Run `org-agenda' from the normal window beside the agent dashboard."
+  (interactive "P")
+  (when (window-parameter nil 'window-side)
+    (let ((window (or (get-mru-window nil nil t)
+                      (window-main-window))))
+      (when (window-live-p window)
+        (select-window window))))
+  (org-agenda arg))
+
 (add-to-list 'load-path
              (expand-file-name "~/Stillness/Development/customize-agents/main/emacs/agent-sessions"))
 (if (not (and (require 'agent-sessions nil t)
@@ -28,6 +38,11 @@
   (keymap-set rsr/ai-map "l" #'rsr/agent-sessions-visit-last-agent) ; C-c i l
   (keymap-set rsr/ai-map "r" #'rsr/agent-sessions-send-region)   ; C-c i r
   (keymap-set rsr/ai-map "w" #'rsr/agent-workflow-menu)           ; C-c i w
+
+  ;; Org's agenda dispatcher cannot run while a dedicated side window is
+  ;; selected.  Keep `C-c a' intact, but start it in the window beside us.
+  (define-key rsr/agent-sessions-mode-map [remap org-agenda]
+              #'rsr/agent-sessions-org-agenda)
 
   (with-eval-after-load 'ghostel
     (define-key ghostel-mode-map (kbd "C-c C-l") #'rsr/agent-session-insert-org-link))
