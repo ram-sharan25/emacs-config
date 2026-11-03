@@ -57,12 +57,15 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | o | logs overview         | n | NotebookLM …           |
 | l | back to the last agent |   |                        |
 
-** C-c i w  Planning workflow (C-u = Pi; =c= prefix = child session; =y= bring in)
+** C-c i w  Planning workflow menu
+=-a= cycles the agent (shown in the menu, kept until changed); =-c= opens the
+stage as a child of the current session (dashboard =c= opens the menu with it on).
 | r | clarify requirements  | R | review requirements    |
 | p | plan                  | P | review plan            |
 | i | implement             | I | review implementation  |
 | w | issue workflow        | e | explore                |
-| x | bug fix               |   |                        |
+| x | bug fix               | y | bring in               |
+| a | annotate              |   |                        |
 
 ** C-c i n  NotebookLM
 | n | open            | l | list notebooks   |
@@ -93,7 +96,7 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | R   | restore               | g       | refresh                       |
 | s   | toggle sort           | f / F   | folder view / folder action   |
 | +   | new terminal          | o       | workflow open menu            |
-| c   | child workflow …      | y       | bring in                      |
+| c   | workflow menu, child  | y       | bring in                      |
 | S   | fixed order on/off    | C-c C-o | clear manual order            |
 
 * C-c j  Linear

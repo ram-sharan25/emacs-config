@@ -5,9 +5,10 @@
 ;; and agent hooks report through.  The package lives in the customize-agents
 ;; repo and is loaded from there.  Every agent runs in a tmux window
 ;; (agent-sessions-tmux.el); C-c o t is bound in keymaps.el, C-c i i /
-;; C-c i p in terminal-config.el.  C-c i w is the planning workflow
-;; (agent-workflow.el): lowercase opens a stage, uppercase its review, `c'
-;; the same keys as a child of the current session, `y' bring in; C-u selects the alternate agent.  `rsr/ai-map' is defined in keymaps.el.
+;; C-c i p in terminal-config.el.  C-c i w is the planning workflow menu
+;; (agent-workflow.el): lowercase opens a stage, uppercase its review, `-a'
+;; cycles the agent (kept until changed), `-c' opens a child of the current
+;; session, `y' bring in.  `rsr/ai-map' is defined in keymaps.el.
 ;; C-c i l goes back to the last agent viewed (again to toggle).
 ;; Hook wiring into ~/.claude, ~/.codex and Pi is one-time:
 ;;   M-x rsr/agent-sessions-install
@@ -26,12 +27,7 @@
   (keymap-set rsr/ai-map "d" #'rsr/agent-sessions-list)          ; C-c i d
   (keymap-set rsr/ai-map "l" #'rsr/agent-sessions-visit-last-agent) ; C-c i l
   (keymap-set rsr/ai-map "r" #'rsr/agent-sessions-send-region)   ; C-c i r
-  (keymap-set rsr/ai-map "w" rsr/agent-workflow-map)              ; C-c i w
-
-  (with-eval-after-load 'which-key
-    (which-key-add-key-based-replacements
-      "C-c i w" "workflow" "C-c i w c" "child..."
-      "M-m a w" "workflow" "M-m a w c" "child..."))
+  (keymap-set rsr/ai-map "w" #'rsr/agent-workflow-menu)           ; C-c i w
 
   (with-eval-after-load 'ghostel
     (define-key ghostel-mode-map (kbd "C-c C-l") #'rsr/agent-session-insert-org-link))
