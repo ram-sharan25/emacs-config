@@ -8,6 +8,7 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | Prefix  | Area                       | Prefix | Area                     |
 |---------+----------------------------+--------+--------------------------|
 | C-c a   | Org agenda                 | C-c n  | notes (org-roam)         |
+| C-c b   | gptel (local models)       |        |                          |
 | C-c c   | capture                    | C-c o  | open                     |
 | C-c f   | format buffer              | C-c p  | projectile               |
 | C-c g   | Google calendar            | C-c r  | research / papers        |
@@ -56,14 +57,6 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | o | logs overview         | n | NotebookLM …           |
 | l | back to the last agent |   |                        |
 
-** gptel
-| a | quick chat      | f | add file           |
-| A | dedicated chat  | F | add buffer         |
-| s | send            | + | add context        |
-| c | coding session  | - | clear context      |
-| q | abort           | = | show context       |
-| m | menu            |   |                    |
-
 ** C-c i w  Planning workflow (C-u = Pi; =c= prefix = child session; =y= bring in)
 | r | clarify requirements  | R | review requirements    |
 | p | plan                  | P | review plan            |
@@ -80,6 +73,14 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | A | prefill region  | G | list artifacts   |
 | y | capture answer  | d | download         |
 | x | clear           |   |                  |
+
+* C-c b  gptel (local models)
+| a | quick chat      | f | add file           |
+| A | dedicated chat  | F | add buffer         |
+| s | send            | + | add context        |
+| c | coding session  | - | clear context      |
+| q | abort           | = | show context       |
+| m | menu            |   |                    |
 
 * Agent dashboard (=C-c i d=)
 | RET | jump to session       | N / P   | next / prev needing attention |

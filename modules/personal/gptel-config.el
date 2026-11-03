@@ -6,7 +6,7 @@
 
 (use-package gptel
   :ensure t
-  :bind (:map rsr/ai-map          ; C-c i, see keymaps.el
+  :bind (:map rsr/gptel-map       ; C-c b, see keymaps.el
               ;; Core
               ("a" . rsr/gptel-quick-chat)
               ("A" . rsr/gptel-dedicated-chat)

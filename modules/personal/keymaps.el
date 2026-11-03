@@ -15,6 +15,7 @@
 ;;   C-c g      Google calendar        C-c o  open
 ;;   C-c h      hide/show (prog modes) C-c p  projectile (projectile-config.el)
 ;;   C-c i      AI and agents          C-c r  research / papers
+;;   C-c b      gptel, local models
 ;;   C-c j      Linear issues (linear-config.el)
 ;;   C-c m      multiple cursors
 ;;   C-c w      workspaces (perspective-config.el)
@@ -39,10 +40,13 @@
 
 (defvar-keymap rsr/ai-map
   :doc "AI and agent commands (C-c i).
-Filled by gptel-config.el, terminal-config.el, ai-sessions-config.el and
-logs.el."
+Filled by terminal-config.el, ai-sessions-config.el and logs.el."
   :prefix 'rsr/ai-map
   "n" 'rsr/nlm-map)
+
+(defvar-keymap rsr/gptel-map
+  :doc "gptel on local models (C-c b); filled by gptel-config.el."
+  :prefix 'rsr/gptel-map)
 
 (defvar-keymap rsr/capture-map
   :doc "Capture (C-c c)."
@@ -150,6 +154,7 @@ logs.el."
 ;;; --- C-c + letter ---
 
 (keymap-global-set "C-c a" #'org-agenda)
+(keymap-global-set "C-c b" 'rsr/gptel-map)
 (keymap-global-set "C-c c" 'rsr/capture-map)
 (keymap-global-set "C-c f" #'apheleia-format-buffer)
 (keymap-global-set "C-c g" 'my/gcal-map)
@@ -273,7 +278,7 @@ logs.el."
     "C-c c" "capture"     "C-c g" "gcal"        "C-c i" "AI"
     "C-c i n" "NotebookLM" "C-c j" "Linear"      "C-c m" "multi-cursor"
     "C-c n" "notes"
-    "C-c o" "open"        "C-c r" "research"
+    "C-c o" "open"        "C-c b" "gptel"       "C-c r" "research"
     "C-c t" "time/tools"  "C-c t m" "mind-state" "C-c w" "workspaces"
     "M-m" "legacy leader" "M-m a" "AI" "M-m n" "NotebookLM"
     "M-m t" "time/tools" "M-m m" "multi-cursor" "M-m r" "legacy roam"

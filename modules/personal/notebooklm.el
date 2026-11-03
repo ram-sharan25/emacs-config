@@ -270,7 +270,7 @@ HEADING is used as the org heading for this management block."
 (defun rsr/nlm-send ()
   "Send the current question to NotebookLM.
 
-Works from anywhere (mirrors C-c i s / gptel-send):
+Works from anywhere (mirrors C-c b s / gptel-send):
 - Called outside the chat buffer → switches to it, ready to type.
 - Called inside the chat buffer → extracts and sends the question.
 Response streams in under a new '** NLM [timestamp]' org heading."
@@ -502,7 +502,7 @@ and inserts it at point, trimmed."
 
 ;;; ─── Keybindings ─────────────────────────────────────────────────────────────
 ;;
-;; Mirrored from gptel (C-c i …) so muscle memory transfers:
+;; Mirrored from gptel (C-c b …) so muscle memory transfers:
 ;;
 ;;   gptel       notebooklm    action
 ;;   ───────     ──────────    ──────────────────────────────────────
