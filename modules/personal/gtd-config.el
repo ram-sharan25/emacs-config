@@ -256,15 +256,22 @@ for the template."
 
 ;;; Capture Templates
 
+(defun my/capture-src-line (link)
+  "Return a \"- src:\" line for LINK, or \"\" when LINK is empty.
+Captures made away from a linkable place (an agent chat, say) get no
+empty \"- src:\" line, which would also end up as a pushed event's
+description."
+  (if (string-empty-p (string-trim link)) "" (format "- src: %s\n" link)))
+
 (setq org-capture-templates
       `(("i" "Inbox" entry
          (file my/inbox-file)
-         "* TODO %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n- src: %a\n"
+         "* TODO %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n%(my/capture-src-line \"%a\")"
          :empty-lines 1)
 
         ("s" "Study Task" entry
          (file my/inbox-file)
-         "* TODO %^{Read|Watch|Listen}: %^{Source}   :study:\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n- src: %a\n- res: \n- [ ] Resource note: paper/book → =C-c r n= | other → =C-c c r= (paste link in -res:)\n- [ ] Consume: video → =C-c v o= + =C-c v= | article → =C-c c n= | paper → =C-c r p= + =M-i=\n- [ ] Extract Zettels → =C-c n c → z= (same session)\n- [ ] Link Zettels to * Key Concepts in resource → =C-c n i=\n%?"
+         "* TODO %^{Read|Watch|Listen}: %^{Source}   :study:\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n%(my/capture-src-line \"%a\")- res: \n- [ ] Resource note: paper/book → =C-c r n= | other → =C-c c r= (paste link in -res:)\n- [ ] Consume: video → =C-c v o= + =C-c v= | article → =C-c c n= | paper → =C-c r p= + =M-i=\n- [ ] Extract Zettels → =C-c n c → z= (same session)\n- [ ] Link Zettels to * Key Concepts in resource → =C-c n i=\n%?"
          :empty-lines 1)
 
         ;; One file per project under Areas/<Area>/ (D5). The :ID: drawer comes
@@ -272,12 +279,12 @@ for the template."
         ;; credited to it (D16 R3).
         ("q" "New Project" plain
          (file (lambda () (my/new-project-file)))
-         ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+TITLE: %(symbol-value 'my/new-project-title)\n#+PROPERTY: AREA %(symbol-value 'my/new-project-area)\n#+FILETAGS: %(my/new-project-filetags)\n#+ARCHIVE: ::* Archive\n\n* Outcome\n%?\n\n* Tasks [/]\n:PROPERTIES:\n:COOKIE_DATA: todo recursive\n:END:\n\n* Log\n\n* Notes\n- src: %a\n\n* Retro\n\n* Archive                                                            :ARCHIVE:\n"
+         ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+TITLE: %(symbol-value 'my/new-project-title)\n#+PROPERTY: AREA %(symbol-value 'my/new-project-area)\n#+FILETAGS: %(my/new-project-filetags)\n#+ARCHIVE: ::* Archive\n\n* Outcome\n%?\n\n* Tasks [/]\n:PROPERTIES:\n:COOKIE_DATA: todo recursive\n:END:\n\n* Log\n\n* Notes\n%(my/capture-src-line \"%a\")\n* Retro\n\n* Archive                                                            :ARCHIVE:\n"
          :unnarrowed t)
 
         ("u" "Fleeting Note" entry
          (file ,my/rough-notes-file)
-         "* %^{Title}\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n:THOUGHTS:\n- %? \n:END:\n- src: %a\n"
+         "* %^{Title}\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n:THOUGHTS:\n- %? \n:END:\n%(my/capture-src-line \"%a\")"
          :empty-lines 1)
 
         ("W" "Web Capture" entry
