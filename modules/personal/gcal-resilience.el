@@ -53,6 +53,9 @@
   "Property marking an entry whose last write may or may not have reached Google.
 Its value is \"OP CALENDAR-ID EVENT-ID TIME\".")
 
+(defvar my/gcal-sync-hash-property "GCAL_SYNC_HASH"
+  "Org property holding the last Google-synchronized event payload hash.")
+
 (cl-defstruct (my/gcal-run (:constructor my/gcal-run-create) (:copier nil))
   kind started timer requests pending failed-accounts pushed)
 
@@ -280,8 +283,62 @@ its own chains, so their later steps show up only there)."
 (defvar org-gcal-drawer-name)
 (defvar org-gcal-managed-property)
 (defvar org-gcal-auto-archive)
+(defvar org-gcal-default-transparency)
 (declare-function org-gcal--sync-calendar "org-gcal")
 (declare-function org-gcal--notify "org-gcal")
+(declare-function org-gcal--get-time-and-desc "org-gcal")
+(declare-function org-gcal--headline "org-gcal")
+(declare-function org-gcal--source-from-link-string "org-gcal")
+
+(defun my/gcal--plain-string (value)
+  "Return VALUE without text properties, leaving non-strings unchanged."
+  (if (stringp value) (substring-no-properties value) value))
+
+(defun my/gcal--entry-sync-hash ()
+  "Hash the Google Calendar payload represented by the entry at point."
+  (save-excursion
+    (org-back-to-heading t)
+    (let* ((time-desc (org-gcal--get-time-and-desc))
+           (recurrence (org-entry-get nil "recurrence"))
+           (source-link
+            (or (org-entry-get nil "link")
+                (car (org-entry-get-multivalued-property nil "ROAM_REFS"))))
+           (source (and source-link
+                        (ignore-errors
+                          (org-gcal--source-from-link-string source-link))))
+           (payload
+            (list :summary (my/gcal--plain-string (org-gcal--headline))
+                  :start (unless recurrence
+                           (my/gcal--plain-string (plist-get time-desc :start)))
+                  :end (unless recurrence
+                         (my/gcal--plain-string (plist-get time-desc :end)))
+                  :description (my/gcal--plain-string (plist-get time-desc :desc))
+                  :location (my/gcal--plain-string (org-entry-get nil "LOCATION"))
+                  :source (if source
+                              (list (my/gcal--plain-string (plist-get source :url))
+                                    (my/gcal--plain-string (plist-get source :title)))
+                            (my/gcal--plain-string source-link))
+                  :transparency
+                  (my/gcal--plain-string
+                   (or (org-entry-get nil "TRANSPARENCY")
+                       org-gcal-default-transparency)))))
+      (secure-hash 'sha256 (prin1-to-string payload)))))
+
+(defun my/gcal--entry-sync-unchanged-p (&optional marker)
+  "Non-nil when MARKER's event payload matches its last synchronized hash.
+With nil MARKER, inspect the entry at point."
+  (if marker
+      (org-with-point-at marker
+        (my/gcal--entry-sync-unchanged-p))
+    (save-excursion
+      (org-back-to-heading t)
+      (let ((stored (org-entry-get nil my/gcal-sync-hash-property)))
+        (and stored (equal stored (my/gcal--entry-sync-hash)))))))
+
+(defun my/gcal--remember-sync-hash (&rest _)
+  "Record the entry's current payload after org-gcal updates it."
+  (org-back-to-heading t)
+  (org-entry-put nil my/gcal-sync-hash-property (my/gcal--entry-sync-hash)))
 
 (defun my/gcal--fetch-calendar (run calendar skip-export silent up down)
   "Fetch CALENDAR, a (ID . FILE) cons, reporting its failure without stopping RUN."
@@ -336,7 +393,9 @@ its own chains, so their later steps show up only there)."
       (lambda ()
         ;; The fetch phase already pushed entries Google returned; a second
         ;; write of the same event moments later draws rateLimitExceeded.
-        (unless (member (org-gcal--get-id marker) (my/gcal-run-pushed run))
+        ;; Entries whose synchronized payload hash still matches need no write.
+        (unless (or (member (org-gcal--get-id marker) (my/gcal-run-pushed run))
+                    (my/gcal--entry-sync-unchanged-p marker))
           (org-with-point-at marker
             (org-gcal-post-at-point nil skip-export (org-gcal--sync-get-update-existing)))))
       (lambda (err)
@@ -586,8 +645,17 @@ The token was refreshed before the run, so a 401 means Google rejected it."
            (signal (car err) (cdr err)))))))))
 
 (defun my/gcal--post-advice (orig &rest args)
-  "Around `org-gcal-post-at-point'.  Called as a command, it is the user's."
+  "Around `org-gcal-post-at-point'.  Called as a command, it is the user's.
+Automatic syncs fetch rather than PATCH an unchanged synchronized entry."
   (let ((my/gcal--user-op (or my/gcal--user-op (called-interactively-p 'any))))
+    (when (and my/gcal--run
+               (not my/gcal--user-op)
+               (my/gcal--entry-sync-unchanged-p))
+      ;; SKIP-EXPORT is the second optional argument.  Keep the GET/import so
+      ;; a server-side change still reaches this machine without issuing PATCH.
+      (setq args (append args nil))
+      (while (< (length args) 2) (setq args (append args '(nil))))
+      (setf (nth 1 args) t))
     (my/gcal--single-op "push" orig args)))
 
 (defun my/gcal--delete-advice (orig &rest args)
@@ -699,7 +767,8 @@ Sending it now would be outside any run, possibly inside a newer one."
            (save-excursion (outline-next-heading) (point)) 'noerror)
       (replace-match "" 'fixedcase))
     (org-entry-delete marker org-gcal-calendar-id-property)
-    (org-entry-delete marker org-gcal-entry-id-property))
+    (org-entry-delete marker org-gcal-entry-id-property)
+    (org-entry-delete marker my/gcal-sync-hash-property))
   ;; This runs inside a sync, so never ask: "ask" keeps the heading.
   (let ((org-gcal-remove-api-cancelled-events
          (and (not (eq org-gcal-remove-api-cancelled-events 'ask))
@@ -791,7 +860,8 @@ Stacked timers would start back-to-back syncs after a busy spell or sleep."
   (advice-add 'org-gcal-post-at-point :around #'my/gcal--post-advice)
   (advice-add 'org-gcal-delete-at-point :around #'my/gcal--delete-advice)
   (advice-add 'org-gcal--post-event :around #'my/gcal--post-event-advice)
-  (advice-add 'org-gcal--delete-event :around #'my/gcal--delete-event-advice))
+  (advice-add 'org-gcal--delete-event :around #'my/gcal--delete-event-advice)
+  (add-hook 'org-gcal-after-update-entry-functions #'my/gcal--remember-sync-hash))
 
 (provide 'gcal-resilience)
 ;;; gcal-resilience.el ends here

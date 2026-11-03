@@ -336,6 +336,27 @@ of (ID ACCOUNT) pairs, each getting an empty Org file."
           (should-not (gcal-test--messages-matching "no-catch"))
           (dolist (e (gcal-test--log)) (should (< (plist-get e :t) end))))))))
 
+(ert-deftest gcal-sync-skips-unchanged-org-managed-entries ()
+  "A synchronized entry is PATCHed again only after its event payload changes."
+  (gcal-test--with-env
+      `(:calendars (("cal1" "acct1"))
+        :events (:cal1 [,(gcal-test--event "m1" "One")]))
+    (let ((file (gcal-test--write-file
+                 "cal1" (gcal-test--managed-entry "One" "cal1" "m1"))))
+      (gcal-test--sync-and-wait)
+      (should (= 1 (length (gcal-test--requests "PATCH" "/events/m1$"))))
+      (with-current-buffer (find-file-noselect file)
+        (goto-char (point-min))
+        (should (org-entry-get nil my/gcal-sync-hash-property)))
+      (gcal-test--sync-and-wait)
+      (should (= 1 (length (gcal-test--requests "PATCH" "/events/m1$"))))
+      (with-current-buffer (find-file-noselect file)
+        (goto-char (point-min))
+        (org-edit-headline "Changed locally")
+        (save-buffer))
+      (gcal-test--sync-and-wait)
+      (should (= 2 (length (gcal-test--requests "PATCH" "/events/m1$")))))))
+
 (ert-deftest gcal-schedule-single-idle-timer ()
   (let ((before (length timer-idle-list)))
     (dotimes (_ 3) (my/gcal-schedule-sync #'ignore 3600))
