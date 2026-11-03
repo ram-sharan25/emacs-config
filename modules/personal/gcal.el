@@ -5,7 +5,7 @@
 ;; Preserve Mac pinentry behavior; use the desktop agent on Linux.
 (setq epg-pinentry-mode (unless (eq system-type 'gnu/linux) 'loopback))
 (require 'paths)
-;; Toggl and gptel read their keys from here too, at load time.
+;; Toggl reads its key from here too, at load time.
 (unless (or noninteractive (featurep 'my-secrets))
   (my/load-secrets))
 

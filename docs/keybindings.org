@@ -62,8 +62,7 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 | s | send            | + | add context        |
 | c | coding session  | - | clear context      |
 | q | abort           | = | show context       |
-| m | menu            | t | toggle model       |
-| T | chat model      | C | coding model       |
+| m | menu            |   |                    |
 
 ** C-c i w  Planning workflow (C-u = Pi; =c= prefix = child session; =y= bring in)
 | r | clarify requirements  | R | review requirements    |

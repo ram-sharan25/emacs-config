@@ -2,9 +2,6 @@
 
 ;;; Code:
 
-(require 'my-secrets nil t)
-(defvar my/gemini-key nil "Gemini API key from the encrypted secrets file.")
-
 ;;; --- GPTel ---
 
 (use-package gptel
@@ -23,12 +20,7 @@
               ("F" . rsr/gptel-add-buffer)
               ("+" . gptel-context-add)
               ("-" . gptel-context-remove-all)
-              ("=" . rsr/gptel-show-context)
-
-              ;; Model switching
-              ("t" . rsr/gptel-toggle-model)
-              ("T" . rsr/gptel-switch-to-chat)
-              ("C" . rsr/gptel-switch-to-coding))
+              ("=" . rsr/gptel-show-context))
   :config
   (require 'gptel-context)
 
@@ -72,13 +64,6 @@
     (setq gptel-backend rsr/gptel-coding-backend
           gptel-model rsr/gptel-coding-model)
     (message "Switched to coding: %s" rsr/gptel-coding-model))
-
-  (defun rsr/gptel-toggle-model ()
-    "Toggle between chat and coding models."
-    (interactive)
-    (if (eq gptel-backend rsr/gptel-coding-backend)
-        (rsr/gptel-switch-to-chat)
-      (rsr/gptel-switch-to-coding)))
 
   ;; Auto-select coding model in prog-mode buffers
   (defun rsr/gptel-auto-select-backend ()
