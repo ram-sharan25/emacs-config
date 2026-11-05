@@ -49,37 +49,41 @@ Skips autosaves (#x#), lockfiles (.#x) and dotfiles."
 RET and the standard agenda navigation commands visit the project's Outcome
 heading, or the start of the file when it has no Outcome heading."
   (interactive)
-  (org-agenda-prepare "Projects")
-  (setq org-agenda-type 'projects
-        org-agenda-redo-command '(my/org-agenda-projects))
-  (let* ((inhibit-read-only t)
-         (projects (mapcar #'my/project-file-agenda-info (my/get-project-files)))
-         (known-areas my/area-names)
-         (other-areas
-          (sort (seq-difference (delete-dups (mapcar (lambda (p) (plist-get p :area)) projects))
-                                known-areas #'equal)
-                #'string-lessp)))
-    (insert (propertize "Current Projects\n" 'face 'org-agenda-structure))
-    (dolist (area (append known-areas other-areas))
-      (let ((area-projects
-             (sort (seq-filter (lambda (p) (equal area (plist-get p :area))) projects)
-                   (lambda (a b)
-                     (string-lessp (plist-get a :title) (plist-get b :title))))))
-        (when area-projects
-          (insert "\n" (propertize area 'face 'org-agenda-structure) "\n")
-          (dolist (project area-projects)
-            (let ((beg (point))
-                  (marker (plist-get project :marker))
-                  (title (plist-get project :title)))
-              (insert "  " title "\n")
-              (add-text-properties
-               beg (point)
-               `(org-marker ,marker org-hd-marker ,marker org-category ,title
-                            mouse-face highlight help-echo "RET: open project")))))))
-    (org-agenda-finalize)
-    (goto-char (point-min))
-    (setq buffer-read-only t)
-    (org-agenda-fit-window-to-buffer)))
+  ;; This is a standalone agenda-style index.  Do not let a sticky agenda
+  ;; short-circuit `org-agenda-prepare' when this command is invoked from one.
+  (let ((org-agenda-sticky nil)
+        (org-agenda-buffer-name "*Org Agenda Projects*"))
+    (org-agenda-prepare "Projects")
+    (setq org-agenda-type 'projects
+          org-agenda-redo-command '(my/org-agenda-projects))
+    (let* ((inhibit-read-only t)
+           (projects (mapcar #'my/project-file-agenda-info (my/get-project-files)))
+           (known-areas my/area-names)
+           (other-areas
+            (sort (seq-difference (delete-dups (mapcar (lambda (p) (plist-get p :area)) projects))
+                                  known-areas #'equal)
+                  #'string-lessp)))
+      (insert (propertize "Current Projects\n" 'face 'org-agenda-structure))
+      (dolist (area (append known-areas other-areas))
+        (let ((area-projects
+               (sort (seq-filter (lambda (p) (equal area (plist-get p :area))) projects)
+                     (lambda (a b)
+                       (string-lessp (plist-get a :title) (plist-get b :title))))))
+          (when area-projects
+            (insert "\n" (propertize area 'face 'org-agenda-structure) "\n")
+            (dolist (project area-projects)
+              (let ((beg (point))
+                    (marker (plist-get project :marker))
+                    (title (plist-get project :title)))
+                (insert "  " title "\n")
+                (add-text-properties
+                 beg (point)
+                 `(org-marker ,marker org-hd-marker ,marker org-category ,title
+                              mouse-face highlight help-echo "RET: open project")))))))
+      (org-agenda-finalize)
+      (goto-char (point-min))
+      (setq buffer-read-only t)
+      (org-agenda-fit-window-to-buffer))))
 
 (defvar my/resource-capture-title nil "Temporary storage for resource title during capture.")
 (defvar my/resource-capture-author nil "Temporary storage for resource author during capture.")
