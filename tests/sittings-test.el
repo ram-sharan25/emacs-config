@@ -122,6 +122,11 @@
                                      (split-string text "\n")))))
     (should-not (string-match-p "[Dd]eep hours\\|sessions" text))))
 
+(ert-deftest sittings-toggl-description-uses-visible-person-name ()
+  (should (equal (rsr/toggl-description
+                  "Email to [[person:D6956324-7D5A-46F][@Carson]]")
+                 "Email to @Carson")))
+
 (ert-deftest sittings-toggl-tags-carry-deep ()
   (sittings-test--with-org (concat "#+FILETAGS: :build:\n#+CATEGORY: flask\n"
                                    sittings-test--carved)
