@@ -88,8 +88,9 @@ from `rsr/toggl-tags-at-point'."
       (let* ((heading      (org-get-heading t t t t))
              (prop-area    (org-entry-get (point) "AREA" t))
              (final-tags   (rsr/toggl-tags-at-point))
-             (is-activity  (org-entry-get (point) "ACTIVITY_TYPE")))
-        (let* ((raw-input       (if is-activity
+             (is-immediate  (or (org-entry-get (point) "ACTIVITY_TYPE")
+                                (org-entry-get (point) "INTERACTION_TYPE"))))
+        (let* ((raw-input       (if is-immediate
                                     ""
                                   (read-string (format "Task (default: %s): " heading))))
                (project-choice  (if prop-area

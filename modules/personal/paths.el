@@ -123,6 +123,14 @@ is used, :id the calendar ID, and :file the Org file events go to.")
   (expand-file-name "Journal/weekly-reviews.org.gpg" my/private-dir)
   "Dated weekly reviews (private, GPG-encrypted).")
 
+(defconst my/people-file
+  (expand-file-name "People/people.org.gpg" my/private-dir)
+  "Encrypted person records used by interaction captures and @ mentions.")
+
+(defconst my/conversations-dir
+  (expand-file-name "Conversations/" my/private-dir)
+  "Encrypted yearly conversation logs.")
+
 (defconst my/monthly-review-template-file
   (expand-file-name "templates/monthly-review.org" user-emacs-directory)
   "Org template used to create monthly reviews.")

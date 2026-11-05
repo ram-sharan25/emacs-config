@@ -25,6 +25,11 @@ for buffers an indirect buffer still uses, such as an open `org-capture'."
     (dolist (buf (buffer-list))
       (when (and (my/private-gpg-buffer-p buf)
                  (not (get-buffer-window buf t))
+                 ;; An encrypted conversation may own the active Org clock.
+                 ;; Keep that buffer alive until clock-out, then close it.
+                 (not (and (boundp 'org-clock-marker)
+                           (markerp org-clock-marker)
+                           (eq (marker-buffer org-clock-marker) buf)))
                  (not (seq-some (lambda (b) (eq (buffer-base-buffer b) buf))
                                 (buffer-list))))
         (with-current-buffer buf
@@ -50,6 +55,9 @@ for buffers an indirect buffer still uses, such as an open `org-capture'."
                                  (my/private-close-hidden-buffers))))))
 
 (add-hook 'window-buffer-change-functions #'my/private-schedule-close)
+(with-eval-after-load 'org-clock
+  (add-hook 'org-clock-out-hook #'my/private-schedule-close)
+  (add-hook 'org-clock-cancel-hook #'my/private-schedule-close))
 
 (provide 'private-files)
 ;;; private-files.el ends here

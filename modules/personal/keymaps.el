@@ -48,21 +48,31 @@ Filled by terminal-config.el, ai-sessions-config.el and logs.el."
   :doc "gptel on local models (C-c b); filled by gptel-config.el."
   :prefix 'rsr/gptel-map)
 
+(defvar-keymap rsr/review-map
+  :doc "Reviews (C-c c R)."
+  :prefix 'rsr/review-map
+  "m" #'my/capture-monthly-review
+  "w" #'my/capture-weekly-review)
+
 (defvar-keymap rsr/capture-map
   :doc "Capture (C-c c)."
   :prefix 'rsr/capture-map
   "c" #'org-capture
   "i" #'my/capture-inbox
   "s" #'my/capture-study
-  "q" #'my/capture-project
+  "p" #'my/capture-project
+  "P" #'my/person-create
   "n" #'my/capture-note
   "j" #'my/capture-journal
   "d" #'my/capture-log
-  "m" #'my/capture-monthly-review
-  "w" #'my/capture-weekly-review
+  "R" 'rsr/review-map
   "r" #'my/capture-resource
   "W" #'my/capture-web
   "t" #'my/capture-activity
+  "m" #'my/capture-meeting
+  "M" #'my/capture-planned-meeting
+  "C" #'my/capture-conversation
+  "I" #'my/person-show-interactions
   "y" #'my/capture-job
   "L" #'my-create-new-leetcode-note)
 

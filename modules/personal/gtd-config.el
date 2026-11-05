@@ -288,7 +288,7 @@ captured review."
   "Return the required weekly-review Org template."
   (my/required-review-template "Weekly" my/weekly-review-template-file))
 
-;;; New-project file target (used by the "q" capture template; D3/D5, brain-roam-id-links patch)
+;;; New-project file target (used by the "p" capture template; D3/D5, brain-roam-id-links patch)
 
 (defvar my/new-project-title nil)
 (defvar my/new-project-area nil)
@@ -337,7 +337,7 @@ description."
         ;; One file per project under Areas/<Area>/ (D5). The :ID: drawer comes
         ;; FIRST so the file is a roam node and links inside its tasks are
         ;; credited to it (D16 R3).
-        ("q" "New Project" plain
+        ("p" "New Project" plain
          (file (lambda () (my/new-project-file)))
          ":PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %U\n:END:\n#+TITLE: %(symbol-value 'my/new-project-title)\n#+PROPERTY: AREA %(symbol-value 'my/new-project-area)\n#+FILETAGS: %(my/new-project-filetags)\n#+ARCHIVE: ::* Archive\n\n* Outcome\n%?\n\n* Tasks [/]\n:PROPERTIES:\n:COOKIE_DATA: todo recursive\n:END:\n\n* Log\n\n* Notes\n%(my/capture-src-line \"%a\")\n* Retro\n\n* Archive                                                            :ARCHIVE:\n"
          :unnarrowed t)
@@ -772,7 +772,7 @@ Highlighted tasks appear at the top of the agenda as the daily focus."
 
 (defun my/capture-inbox ()        "Capture to inbox."          (interactive) (org-capture nil "i"))
 (defun my/capture-study ()        "Capture study task."        (interactive) (org-capture nil "s"))
-(defun my/capture-project ()      "Capture new project."       (interactive) (org-capture nil "q"))
+(defun my/capture-project ()      "Capture new project."       (interactive) (org-capture nil "p"))
 (defun my/capture-note ()         "Capture fleeting note."     (interactive) (org-capture nil "u"))
 (defun my/capture-journal ()      "Capture journal entry."     (interactive) (org-capture nil "j"))
 (defun my/capture-log ()       "Capture a log line."     (interactive) (org-capture nil "d"))

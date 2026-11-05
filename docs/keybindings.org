@@ -28,12 +28,16 @@ to a heading, =q= closes.  Source of truth: =modules/personal/keymaps.el=.
 * C-c c  Capture
 | c | org-capture (menu) | j | journal          |
 | i | inbox              | d | log line         |
-| s | study              | m | monthly review   |
-| q | project            | w | weekly review    |
-| n | note               |   |                  |
+| s | study              | p | project          |
+| P | create person      | I | interactions with person |
+| n | note               | R … | reviews (below) |
 | r | resource           | W | web              |
 | t | activity           | y | job              |
-| L | leetcode note      |   |                  |
+| m | meeting now (=C-u= detailed) | M | planned meeting |
+| C | private conversation (=C-u= detailed) | L | leetcode note |
+
+** C-c c R  Reviews
+| m | monthly review | w | weekly review |
 
 * C-c o  Open
 | t | agent tmux terminal | n | fleeting notes     |
