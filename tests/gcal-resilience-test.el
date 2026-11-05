@@ -336,6 +336,23 @@ of (ID ACCOUNT) pairs, each getting an empty Org file."
           (should-not (gcal-test--messages-matching "no-catch"))
           (dolist (e (gcal-test--log)) (should (< (plist-get e :t) end))))))))
 
+(ert-deftest gcal-sync-skips-completed-and-canceled-org-managed-entries ()
+  "Finished tasks keep their existing calendar blocks without further PATCHes."
+  (let ((org-todo-keywords '((sequence "TODO" "|" "DONE" "CANCELED"))))
+    (gcal-test--with-env
+        `(:calendars (("cal1" "acct1"))
+          :events (:cal1 [,(gcal-test--event "m1" "Active")
+                          ,(gcal-test--event "m2" "Finished")
+                          ,(gcal-test--event "m3" "Dropped")]))
+      (gcal-test--write-file
+       "cal1" (concat (gcal-test--managed-entry "TODO Active" "cal1" "m1")
+                      (gcal-test--managed-entry "DONE Finished" "cal1" "m2")
+                      (gcal-test--managed-entry "CANCELED Dropped" "cal1" "m3")))
+      (gcal-test--sync-and-wait)
+      (should (gcal-test--requests "PATCH" "/events/m1$"))
+      (should-not (gcal-test--requests "PATCH" "/events/m2$"))
+      (should-not (gcal-test--requests "PATCH" "/events/m3$")))))
+
 (ert-deftest gcal-sync-skips-unchanged-org-managed-entries ()
   "A synchronized entry is PATCHed again only after its event payload changes."
   (gcal-test--with-env

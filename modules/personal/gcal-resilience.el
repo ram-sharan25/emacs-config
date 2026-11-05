@@ -360,7 +360,9 @@ With nil MARKER, inspect the entry at point."
           (setf (my/gcal-run-pending run) (delete id (my/gcal-run-pending run))))))))
 
 (defun my/gcal--push-candidates ()
-  "Markers of Org-managed entries in the sync window, as org-gcal's push phase picks them."
+  "Markers of unfinished Org-managed entries in the sync window.
+Completed and canceled tasks remain as historical calendar blocks but are not
+updated by the automatic push phase."
   (let ((re (format "^[ \t]*:%s:[ \t]*$" (regexp-quote org-gcal-drawer-name)))
         (up (org-gcal--up-time))
         (down (org-gcal--down-time))
@@ -377,6 +379,7 @@ With nil MARKER, inspect the entry at point."
                     (start (and start (org-gcal--parse-calendar-time-string start)))
                     (end (and end (org-gcal--parse-calendar-time-string end))))
                (when (and start end
+                          (not (org-entry-is-done-p))
                           (not (time-less-p start up))
                           (not (time-less-p down end))
                           (equal "org" (org-entry-get (point) org-gcal-managed-property)))
@@ -646,11 +649,13 @@ The token was refreshed before the run, so a 401 means Google rejected it."
 
 (defun my/gcal--post-advice (orig &rest args)
   "Around `org-gcal-post-at-point'.  Called as a command, it is the user's.
-Automatic syncs fetch rather than PATCH an unchanged synchronized entry."
+Automatic syncs fetch rather than PATCH completed, canceled, or unchanged
+synchronized entries."
   (let ((my/gcal--user-op (or my/gcal--user-op (called-interactively-p 'any))))
     (when (and my/gcal--run
                (not my/gcal--user-op)
-               (my/gcal--entry-sync-unchanged-p))
+               (or (org-entry-is-done-p)
+                   (my/gcal--entry-sync-unchanged-p)))
       ;; SKIP-EXPORT is the second optional argument.  Keep the GET/import so
       ;; a server-side change still reaches this machine without issuing PATCH.
       (setq args (append args nil))
