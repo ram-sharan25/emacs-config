@@ -500,6 +500,8 @@ description."
   "Return the standard agenda blocks: Day View + In Progress."
   `((agenda ""
             ((org-agenda-span 'day)
+             (org-agenda-sorting-strategy
+              '(time-up habit-down priority-down category-keep))
              (org-deadline-warning-days 7)
              (org-super-agenda-groups
               '((:name "⭐ Daily Highlight" :property "HIGHLIGHT")
