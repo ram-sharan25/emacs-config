@@ -73,6 +73,7 @@ Filled by terminal-config.el, ai-sessions-config.el and logs.el."
   "s" #'my/sync-google-calendar
   "e" #'my/gcal-push-event
   "o" #'my/gcal-open-calendar
+  "n" #'my/nepali-calendar
   "r" #'my/gcal-reauth)
 
 ;; :repeat: after C-c m n, keep tapping n / p.

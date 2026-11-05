@@ -125,7 +125,7 @@ stage as a child of the current session (dashboard =c= opens the menu with it on
 * C-c g  Google calendar
 | p | push heading (Org, agenda, timeblock) | o | open calendar |
 | s | sync         | r | re-auth       |
-| e | push event   |   |               |
+| e | push event   | n | Nepali calendar (n/p month, t today, RET day) |
 
 * C-c m  Multiple cursors (keep tapping n / p)
 | n | mark next     | 0 | insert numbers |
