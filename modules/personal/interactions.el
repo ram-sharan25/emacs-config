@@ -25,6 +25,24 @@
 (defvar my/person--cache nil)
 (defvar my/person--cache-mtime nil)
 
+(defconst my/person-relationship-types
+  '("family" "friend" "coworker" "manager" "mentor" "mentee"
+    "collaborator" "professional" "community" "acquaintance")
+  "Suggested relationship types for private person records.")
+
+(defun my/person--normalize-relationships (relationships)
+  "Return RELATIONSHIPS as a clean list of unique strings."
+  (delete-dups
+   (seq-remove
+    #'string-empty-p
+    (mapcar #'string-trim
+            (cond
+             ((null relationships) nil)
+             ((stringp relationships)
+              (split-string relationships "[ \t]*,[ \t]*" t))
+             ((listp relationships) relationships)
+             (t (list (format "%s" relationships))))))))
+
 (defun my/interaction--file-metadata (file)
   "Return destination metadata for an Area or project FILE."
   (with-temp-buffer
@@ -78,13 +96,45 @@ subtree, preserving the project file's required Tasks hierarchy."
   (my/interaction--goto-tasks
    (plist-get my/interaction--capture-destination :file)))
 
-(defun my/person--file-mtime ()
-  "Modification time of `my/people-file', or nil when it does not exist."
-  (when (file-exists-p my/people-file)
-    (file-attribute-modification-time (file-attributes my/people-file))))
+(defun my/person--index-mtime ()
+  "Modification time of `my/people-index-file', or nil when it does not exist."
+  (when (file-exists-p my/people-index-file)
+    (file-attribute-modification-time (file-attributes my/people-index-file))))
 
-(defun my/person--read-records ()
-  "Read person records from the encrypted people file."
+(defun my/person--read-index ()
+  "Read name, alias and ID records from the plaintext person index."
+  (when (file-exists-p my/people-index-file)
+    (condition-case err
+        (with-temp-buffer
+          (insert-file-contents my/people-index-file)
+          (read (current-buffer)))
+      (error
+       (display-warning 'interactions
+                        (format "Could not read person index: %s"
+                                (error-message-string err)))
+       nil))))
+
+(defun my/person--index-record (record)
+  "Return the non-private fields from person RECORD."
+  (list :id (plist-get record :id)
+        :name (plist-get record :name)
+        :aliases (plist-get record :aliases)))
+
+(defun my/person--write-index (records)
+  "Write the public fields from RECORDS to `my/people-index-file'."
+  (make-directory (file-name-directory my/people-index-file) t)
+  (let ((index (mapcar #'my/person--index-record records)))
+    (with-temp-file my/people-index-file
+      (let ((print-length nil)
+            (print-level nil))
+        (prin1 index (current-buffer))
+        (insert "\n")))
+    (setq my/person--cache index
+          my/person--cache-mtime (my/person--index-mtime))
+    index))
+
+(defun my/person--read-private-records ()
+  "Decrypt and read complete person records from `my/people-file'."
   (when (file-exists-p my/people-file)
     (with-current-buffer (find-file-noselect my/people-file)
       (org-with-wide-buffer
@@ -94,22 +144,48 @@ subtree, preserving the project file's required Tasks hierarchy."
            (beginning-of-line)
            (let ((id (org-entry-get nil "PERSON_ID"))
                  (aliases (org-entry-get nil "ALIASES"))
-                 (relationship (org-entry-get nil "RELATIONSHIP"))
+                 (relationships
+                  (or (org-entry-get nil "RELATIONSHIPS")
+                      (org-entry-get nil "RELATIONSHIP")))
                  (name (org-get-heading t t t t)))
              (when id
                (push (list :id id :name name
                            :aliases (split-string (or aliases "") "[ \t]*,[ \t]*" t)
-                           :relationship relationship)
+                           :relationships
+                           (my/person--normalize-relationships relationships))
                      records)))
            (outline-next-heading))
          (nreverse records))))))
 
+(defun my/person--sync-index-after-save ()
+  "Refresh the name index after saving the private people file."
+  (when (and buffer-file-name
+             (equal (expand-file-name buffer-file-name)
+                    (expand-file-name my/people-file)))
+    (my/person--write-index (or (my/person--read-private-records) nil))))
+
+(defun my/person--enable-index-sync ()
+  "Keep the plaintext person index synchronized for the people file."
+  (when (and buffer-file-name
+             (equal (expand-file-name buffer-file-name)
+                    (expand-file-name my/people-file)))
+    (add-hook 'after-save-hook #'my/person--sync-index-after-save nil t)))
+
+(add-hook 'find-file-hook #'my/person--enable-index-sync)
+
+(defun my/person-rebuild-index ()
+  "Decrypt the private people file once and rebuild its name index."
+  (interactive)
+  (let ((records (or (my/person--read-private-records) nil)))
+    (my/person--write-index records)
+    (message "Indexed %d people" (length records))))
+
 (defun my/person-records (&optional refresh)
-  "Return cached person records, refreshing when the encrypted file changed."
-  (let ((mtime (my/person--file-mtime)))
+  "Return cached person names and IDs without decrypting the private file."
+  (let ((mtime (my/person--index-mtime)))
     (when (or refresh (null my/person--cache)
               (not (equal mtime my/person--cache-mtime)))
-      (setq my/person--cache (or (my/person--read-records) nil)
+      (setq my/person--cache (or (my/person--read-index) nil)
             my/person--cache-mtime mtime))
     my/person--cache))
 
@@ -122,35 +198,38 @@ subtree, preserving the project file's required Tasks hierarchy."
         (insert "#+TITLE: People\n#+STARTUP: overview\n\n")))
     buffer))
 
-(defun my/person--append-record (name &optional relationship aliases)
-  "Create a person named NAME and return the new record."
-  (let ((id (org-id-new)))
+(defun my/person--append-record (name &optional relationships aliases)
+  "Create a person named NAME with RELATIONSHIPS and return the new record."
+  (let ((id (org-id-new))
+        (relationships (my/person--normalize-relationships relationships)))
     (with-current-buffer (my/person--ensure-file-buffer)
       (goto-char (point-max))
       (unless (bolp) (insert "\n"))
       (insert (format "* %s\n:PROPERTIES:\n:PERSON_ID: %s\n" name id))
-      (when relationship
-        (insert (format ":RELATIONSHIP: %s\n" relationship)))
+      (when relationships
+        (insert (format ":RELATIONSHIPS: %s\n"
+                        (mapconcat #'identity relationships ", "))))
       (when aliases
         (insert (format ":ALIASES: %s\n" aliases)))
       (insert ":END:\n\n** Context\n\n** Things to remember\n\n** Open loops\n")
       (save-buffer))
-    (my/person-records t)
-    (seq-find (lambda (record) (equal id (plist-get record :id)))
-              my/person--cache)))
+    (let ((records (or (my/person--read-private-records) nil)))
+      (my/person--write-index records)
+      (seq-find (lambda (record) (equal id (plist-get record :id)))
+                records))))
 
-(defun my/person-create (name relationship aliases)
-  "Create a private person record with NAME, RELATIONSHIP and ALIASES."
+(defun my/person-create (name relationships aliases)
+  "Create a private person record with NAME, RELATIONSHIPS and ALIASES."
   (interactive
    (list (read-string "Name: ")
-         (read-string "Relationship (optional): ")
+         (completing-read-multiple "Relationships: "
+                                   my/person-relationship-types nil nil)
          (read-string "Aliases, comma-separated (optional): ")))
   (when (string-empty-p (string-trim name))
     (user-error "A person needs a name"))
   (let ((record (my/person--append-record
                  (string-trim name)
-                 (unless (string-empty-p (string-trim relationship))
-                   (string-trim relationship))
+                 relationships
                  (unless (string-empty-p (string-trim aliases))
                    (string-trim aliases)))))
     (message "Created private person record for %s" (plist-get record :name))
@@ -195,16 +274,14 @@ subtree, preserving the project file's required Tasks hierarchy."
             (my/person-records t)))
 
 (defun my/person-open (id _)
-  "Open the private person identified by ID."
-  (let ((record (my/person--find-by-id id)))
-    (unless record (user-error "Unknown person id: %s" id))
-    (find-file my/people-file)
-    (goto-char (point-min))
-    (unless (re-search-forward
-             (format "^[ \t]*:PERSON_ID:[ \t]+%s[ \t]*$" (regexp-quote id)) nil t)
-      (user-error "Person record disappeared: %s" id))
-    (org-back-to-heading t)
-    (org-fold-show-context 'link-search)))
+  "Decrypt and open the private person identified by ID."
+  (find-file my/people-file)
+  (goto-char (point-min))
+  (unless (re-search-forward
+           (format "^[ \t]*:PERSON_ID:[ \t]+%s[ \t]*$" (regexp-quote id)) nil t)
+    (user-error "Unknown person id: %s" id))
+  (org-back-to-heading t)
+  (org-fold-show-context 'link-search))
 
 (org-link-set-parameters "person" :follow #'my/person-open
                          :export (lambda (_path description _backend _info)

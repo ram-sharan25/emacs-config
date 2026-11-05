@@ -127,6 +127,12 @@ is used, :id the calendar ID, and :file the Org file events go to.")
   (expand-file-name "People/people.org.gpg" my/private-dir)
   "Encrypted person records used by interaction captures and @ mentions.")
 
+(defconst my/people-index-file
+  (expand-file-name "people-index.eld" my/trackers-dir)
+  "Plain local name and ID index for private person records.
+The Trackers directory is encrypted by git-crypt when committed, but this file
+needs no runtime GPG decryption for @ completion.")
+
 (defconst my/conversations-dir
   (expand-file-name "Conversations/" my/private-dir)
   "Encrypted yearly conversation logs.")

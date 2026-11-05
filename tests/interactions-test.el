@@ -16,6 +16,7 @@
           (my/areas-dir (expand-file-name "Areas/" root))
           (my/private-dir (expand-file-name "Private/" root))
           (my/people-file (expand-file-name "People/people.org" my/private-dir))
+          (my/people-index-file (expand-file-name "Trackers/people-index.eld" root))
           (my/conversations-dir (expand-file-name "Conversations/" my/private-dir))
           (my/area-names '("Impact" "Personal" "Craft"))
           (my/person--cache nil)
@@ -46,14 +47,51 @@
 
 (ert-deftest interaction-person-records-and-links ()
   (interaction-test--with-temp
-    (let ((record (my/person--append-record "Carson" "coworker" "CJ")))
+    (let ((record (my/person--append-record
+                   "Carson" '("coworker" "friend") "CJ")))
       (should (string-match-p "\\`\\[\\[person:[^]]+\\]\\[@Carson\\]\\]\\'"
                               (my/person-link record)))
+      (should (equal '("coworker" "friend")
+                     (plist-get record :relationships)))
       (should (equal "Carson" (plist-get (my/person--matching-record "CJ") :name)))
-      (should (string-match-p "RELATIONSHIP: coworker"
+      (should (string-match-p "RELATIONSHIPS: coworker, friend"
                               (with-temp-buffer
                                 (insert-file-contents my/people-file)
                                 (buffer-string)))))))
+
+(ert-deftest interaction-at-completion-does-not-read-private-file ()
+  (interaction-test--with-temp
+    (my/person--write-index
+     '((:id "person-1" :name "Carson" :aliases ("CJ")
+        :relationships ("coworker"))))
+    (setq my/person--cache nil)
+    (cl-letf (((symbol-function 'my/person--read-private-records)
+               (lambda () (error "Private file should stay closed"))))
+      (with-temp-buffer
+        (org-mode)
+        (insert "Ask @Car")
+        (let ((capf (my/person-completion-at-point)))
+          (should (member "Carson" (nth 2 capf)))
+          (should (member "CJ" (nth 2 capf))))))))
+
+(ert-deftest interaction-person-index-omits-private-details ()
+  (interaction-test--with-temp
+    (my/person--write-index
+     '((:id "person-1" :name "Carson" :aliases ("CJ")
+        :relationships ("coworker"))))
+    (let ((record (car (my/person--read-index))))
+      (should (equal "Carson" (plist-get record :name)))
+      (should-not (plist-member record :relationships)))))
+
+(ert-deftest interaction-person-reader-supports-legacy-relationship-property ()
+  (interaction-test--with-temp
+    (make-directory (file-name-directory my/people-file) t)
+    (with-temp-file my/people-file
+      (insert "* Carson\n:PROPERTIES:\n:PERSON_ID: person-1\n"
+              ":RELATIONSHIP: coworker, friend\n:END:\n"))
+    (let ((record (car (my/person--read-private-records))))
+      (should (equal '("coworker" "friend")
+                     (plist-get record :relationships))))))
 
 (ert-deftest interaction-person-cross-reference-finds-plain-meetings ()
   (interaction-test--with-temp
