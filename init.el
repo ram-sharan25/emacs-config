@@ -109,24 +109,17 @@
 
 ;;; Line spacing
 ;;
-;; A float, not a pixel count: a float is a multiple of the frame's default
-;; line height, so the gap scales with the code font instead of being a pixel
-;; count tuned to one size.
-;;
-;; Known cost, accepted for code: `line-spacing' puts its pixels *below* the
-;; glyphs and paints them with the line's face, so selections, hl-line and
-;; diff bands sit slightly under their text.  Emacs has added the space below
-;; since 21.1 and cannot centre it -- a `line-spacing-vertical-center' patch
-;; went to emacs-devel in 2019 and never landed.  Org buffers opt out with a
-;; buffer-local nil (see `rsr/org-font' in org-config.el): their font has a
-;; taller box already, and the band under TODO keywords was too much there.
+;; None.  JetBrains Mono's own box (about 1.3x its size) already spaces lines,
+;; and `line-spacing' would add its pixels *below* the glyphs in the line's
+;; face, so selections, hl-line and diff bands sit under their text.  Emacs
+;; cannot centre that gap.
 ;;
 ;; The `line-height' text property can add space above instead, and was tried.
 ;; It is per-newline with an absolute pixel value, so a buffer at a different
 ;; font size gets the wrong gap -- smaller fonts get bigger gaps, backwards --
 ;; and it needs a jit-lock hook in every buffer to stay applied.  Not worth the
 ;; machinery; don't reach for it again without remembering why.
-(setq-default line-spacing 0.175)
+(setq-default line-spacing 0)
 
 ;;; Icons
 
