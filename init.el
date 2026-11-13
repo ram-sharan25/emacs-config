@@ -97,10 +97,17 @@
 ;;; Appearance
 
 (global-font-lock-mode 1)
-;; JetBrains Mono at regular weight, the same face as the ghostel terminals
-;; and org buffers, so code reads like the terminal.  Keyword and constant
-;; faces track this weight -- see `rsr/match-keyword-weight' in
-;; theme-config.el -- so changing it here keeps the whole buffer consistent.
+;; JetBrains Mono at regular weight, the same face Ghostty uses.  Among the
+;; fonts here it is the one that meets two constraints:
+;;
+;; - Bold and italic exist as real cuts.  Monaco is Regular only and Fira Code
+;;   has no italic, so *bold* and /italic/ emphasis showed as plain text.
+;; - The descent is shallow.  Emacs paints a face background over the glyph's
+;;   whole ascent + descent box; Menlo spends 37% of it below the baseline and
+;;   left a band hanging under TODO keywords and hl-line.
+;;
+;; Keyword and constant faces track this weight (`rsr/match-keyword-weight' in
+;; theme-config.el), so changing it here keeps the whole buffer consistent.
 ;; The background is a softened version of lsp-ui's navy peek popup, where
 ;; syntax colours stand out more than on zerodark's grey (#282c34).  Fringe
 ;; and terminals inherit it, so this is the one place it is set.

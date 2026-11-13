@@ -61,9 +61,8 @@
  '(magit-diff-hunk-heading           ((t (:background "#3f3f3f" :foreground "#afafaf"))))
  '(magit-diff-hunk-heading-highlight ((t (:background "#4f4f4f" :foreground "#dfdfdf")))))
 
-;; zerodark bolds nine font-lock faces.  Against Fira Code Medium that reads
-;; as heavy -- bold on top of an already-medium cut -- and VS Code's Dark+
-;; bolds none of them.  Normalise them to whatever weight the default face
+;; zerodark bolds nine font-lock faces, which reads as heavy, and VS Code's
+;; Dark+ bolds none of them.  Normalise them to whatever weight the default face
 ;; uses, so they sit level with the identifiers around them.
 ;;
 ;; Match the default rather than hardcoding `normal': most font-lock faces
