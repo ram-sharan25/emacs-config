@@ -137,25 +137,6 @@
 
 (setq-default indent-tabs-mode nil)
 (setq-default fill-column 80)
-;; The *-base-mode hooks run for both the regex mode and its tree-sitter
-;; counterpart (python-mode / python-ts-mode, js-mode / js-ts-mode, ...).
-;; treesit-config.el remaps to the ts-modes, so a hook on the regex mode
-;; alone never fires.
-(dolist (hook '(emacs-lisp-mode-hook
-               python-base-mode-hook
-               js-base-mode-hook
-               typescript-mode-hook
-               typescript-ts-base-mode-hook
-               css-base-mode-hook
-               html-mode-hook
-               sh-base-mode-hook
-               c-mode-hook
-               c++-mode-hook
-               java-mode-hook
-               ruby-mode-hook
-               rust-mode-hook
-               go-mode-hook))
-  (add-hook hook #'display-fill-column-indicator-mode))
 (add-hook 'after-change-major-mode-hook #'turn-on-auto-fill)
 (setq dired-use-ls-dired nil)
 
