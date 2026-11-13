@@ -21,6 +21,10 @@
  '(org-quote            ((t (:inherit org-block :slant italic
                              :foreground "#DEF7E0" :background "#4A5057"))))
 
+ ;; fringe — zerodark paints it grey.  Clear that and inherit the default
+ ;; face's navy background (init.el), or it shows as a stripe beside windows.
+ '(fringe ((t (:background unspecified :inherit default))))
+
  ;; modeline — persp name + git branch + filename colors
  '(doom-modeline-persp-name ((t (:foreground "#9f9f9f"))))
  '(persp-selected-face    ((t (:foreground "#7f9f7f" :weight bold))))

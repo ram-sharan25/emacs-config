@@ -101,7 +101,11 @@
 ;; and org buffers, so code reads like the terminal.  Keyword and constant
 ;; faces track this weight -- see `rsr/match-keyword-weight' in
 ;; theme-config.el -- so changing it here keeps the whole buffer consistent.
-(set-face-attribute 'default nil :family "JetBrains Mono" :height 142 :weight 'regular)
+;; The background is a softened version of lsp-ui's navy peek popup, where
+;; syntax colours stand out more than on zerodark's grey (#282c34).  Fringe
+;; and terminals inherit it, so this is the one place it is set.
+(set-face-attribute 'default nil :family "JetBrains Mono" :height 142 :weight 'regular
+                    :background "#172530")
 
 ;;; Line spacing
 ;;

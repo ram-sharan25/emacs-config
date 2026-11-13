@@ -16,18 +16,10 @@
   ;; ~50k lines of history at ~130 columns (the 5 MB default keeps ~4k).
   (ghostel-max-scrollback (* 60 1024 1024))
   :config
-  ;; Ghostty's built-in colours (its config sets none), so a terminal looks the
-  ;; same in Emacs as in Ghostty: `ghostty +show-config --default'.
-  (set-face-attribute 'ghostel-default nil :foreground "#ffffff" :background "#282c34")
-  ;; Ghostty's own font too: JetBrains Mono at regular weight, rather than the
-  ;; Fira Code Medium of code buffers.  Ghostty bundles JetBrains Mono, Emacs
-  ;; needs it installed (brew install --cask font-jetbrains-mono); until then,
-  ;; Fira Code at regular weight.
-  (set-face-attribute 'ghostel-default nil
-                      :family (if (find-font (font-spec :family "JetBrains Mono"))
-                                  "JetBrains Mono"
-                                "Fira Code")
-                      :weight 'regular)
+  ;; Ghostty's built-in foreground (its config sets none).  Background and
+  ;; font are left unset, so terminals take them from the `default' face,
+  ;; which already uses Ghostty's JetBrains Mono at regular weight.
+  (set-face-attribute 'ghostel-default nil :foreground "#ffffff")
   (cl-loop for (name color) on
            '(black "#1d1f21" red "#cc6666" green "#b5bd68" yellow "#f0c674"
              blue "#81a2be" magenta "#b294bb" cyan "#8abeb7" white "#c5c8c6"
