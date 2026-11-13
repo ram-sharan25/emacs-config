@@ -88,6 +88,11 @@ A new session starts when LAST-SESSION is before CLOCK-START's minute."
   "Move to the end of the clocked task's Logs heading, creating it if needed."
   (unless (org-clocking-p)
     (user-error "Not clocked in: clock into a task first"))
+  ;; Started from code: stash a File.tsx:35 link to the cursor line, on the
+  ;; clipboard and in `org-stored-links', ready for C-y or C-c C-l.
+  (with-current-buffer (org-capture-get :original-buffer)
+    (when (rsr/store-file-line-link)
+      (rsr/copy-last-stored-link)))
   (set-buffer (marker-buffer org-clock-marker))
   (goto-char org-clock-marker)
   (goto-char (rsr/logs--ensure-child rsr/logs-heading))
