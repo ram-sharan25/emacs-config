@@ -83,6 +83,20 @@
 (add-hook 'enable-theme-functions #'rsr/match-keyword-weight)
 (add-hook 'after-make-frame-functions #'rsr/match-keyword-weight)
 
+;; Built-in `line-number' faces inherit `default', which is how line numbers
+;; follow `text-scale-adjust' -- its remap of `default' reaches them through
+;; that inheritance.  zerodark replaces their spec with colours only, dropping
+;; the inherit, so zooming out shrank the code but left full-height numbers
+;; propping every row open.  Restore it; same three hooks, same reason as above.
+(defun rsr/line-numbers-follow-zoom (&rest _)
+  "Make the line-number faces inherit `default' so they scale with zoom."
+  (dolist (face '(line-number line-number-current-line))
+    (set-face-attribute face nil :inherit 'default)))
+
+(add-hook 'after-init-hook #'rsr/line-numbers-follow-zoom)
+(add-hook 'enable-theme-functions #'rsr/line-numbers-follow-zoom)
+(add-hook 'after-make-frame-functions #'rsr/line-numbers-follow-zoom)
+
 (use-package org-bullets
   :ensure t
   :hook (org-mode . org-bullets-mode))
