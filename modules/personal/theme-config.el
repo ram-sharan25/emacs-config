@@ -25,6 +25,14 @@
  ;; face's navy background (init.el), or it shows as a stripe beside windows.
  '(fringe ((t (:background unspecified :inherit default))))
 
+ ;; current line — clear zerodark's faint grey and inherit the minibuffer's
+ ;; `highlight' (#3e4451), so the cursor line looks the same in buffers as in
+ ;; completion lists.  The line number names the colour instead, since
+ ;; `rsr/line-numbers-follow-zoom' owns its :inherit; the band then runs
+ ;; into the gutter.
+ '(hl-line                  ((t (:background unspecified :inherit highlight :extend t))))
+ '(line-number-current-line ((t (:background "#3e4451" :foreground "#61afef" :weight bold))))
+
  ;; modeline — persp name + git branch + filename colors
  '(doom-modeline-persp-name ((t (:foreground "#9f9f9f"))))
  '(persp-selected-face    ((t (:foreground "#7f9f7f" :weight bold))))

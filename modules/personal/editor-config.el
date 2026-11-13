@@ -34,6 +34,11 @@
 (add-hook 'org-mode-hook  #'display-line-numbers-mode)
 (setq-default truncate-lines t)
 
+;; Highlight the cursor line wherever there is text to read.  Not global:
+;; in ghostel the band would cut across the screens of TUIs drawing there.
+(dolist (hook '(prog-mode-hook text-mode-hook conf-mode-hook dired-mode-hook))
+  (add-hook hook #'hl-line-mode))
+
 ;;; --- Code Folding (treesit-fold) ---
 
 ;; Folds by tree-sitter node rather than by brace regex, so nested folds
