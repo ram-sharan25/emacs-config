@@ -17,7 +17,8 @@
   (setq doom-modeline-percent-position nil)
   (setq doom-modeline-minor-modes nil)
   (setq doom-modeline-vcs-max-length 20)
-  (setq doom-modeline-buffer-file-name-style 'truncate-upto-project)
+  ;; Just the file name; the path lives in the window's own buffer.
+  (setq doom-modeline-buffer-file-name-style 'file-name)
   ;; The live analogue clock regenerates an SVG every minute.  The macOS Emacs
   ;; port renders each SVG through WebKit and leaks a WebContent process, which
   ;; eventually exhausts memory and stalls WindowServer.  Keep the normal
