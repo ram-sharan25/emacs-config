@@ -496,6 +496,17 @@ description."
 
 ;;; Custom Agenda Commands
 
+(defun my/agenda-skip-if-in-day-view ()
+  "Skip entries the day view already lists.
+That is anything scheduled today or earlier, or with a deadline inside the
+day view's 7-day warning window.  Future-scheduled tasks stay in the backlog."
+  (let ((today (org-today))
+        (scheduled (org-get-scheduled-time (point)))
+        (deadline (org-get-deadline-time (point))))
+    (when (or (and scheduled (<= (time-to-days scheduled) today))
+              (and deadline (<= (time-to-days deadline) (+ today 7))))
+      (save-excursion (or (outline-next-heading) (point-max))))))
+
 (defun my/gtd-standard-header ()
   "Return the standard agenda blocks: Day View + In Progress."
   `((agenda ""
@@ -527,7 +538,7 @@ description."
                 ((org-agenda-overriding-header "Projects & Areas (Backlog)")
                  (org-agenda-files (my/get-area-files))
                  (org-super-agenda-groups '((:auto-category t)))
-                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled))))
+                 (org-agenda-skip-function #'my/agenda-skip-if-in-day-view)))
           (todo "TODO|HOLD|WAITING"
                 ((org-agenda-overriding-header "Someday/Maybe")
                  (org-agenda-files (list my/someday-file)))))
