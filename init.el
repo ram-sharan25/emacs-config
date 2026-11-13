@@ -140,9 +140,15 @@
 ;; Two frames on two monitors: an open prompt stays on the frame that opened
 ;; it until you go back there.  t (the default) drags it along on every switch.
 (setq minibuffer-follows-selected-frame nil)
-;; Let a prompt open while another is pending (e.g. C-x b in the other frame)
-;; instead of cancelling both.  The depth indicator shows how deep you are.
-(setq enable-recursive-minibuffers t)
+;; One prompt per frame: a prompt may open while another is pending only when
+;; that other one lives in a different frame (C-x b on the second monitor).
+;; Nesting inside the same frame stays refused, as with the default.
+(defun rsr/recursive-minibuffers-across-frames ()
+  "Allow a recursive minibuffer only from a frame without an active one."
+  (setq enable-recursive-minibuffers
+        (let ((mini (active-minibuffer-window)))
+          (and mini (not (eq (window-frame mini) (selected-frame)))))))
+(add-hook 'pre-command-hook #'rsr/recursive-minibuffers-across-frames)
 (minibuffer-depth-indicate-mode 1)
 (add-hook 'after-change-major-mode-hook #'turn-on-auto-fill)
 (setq dired-use-ls-dired nil)
