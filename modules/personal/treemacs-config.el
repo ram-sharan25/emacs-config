@@ -69,10 +69,10 @@ If the current buffer is not part of a project, fall back to plain Treemacs."
             (lambda ()
               (setq-local imenu-create-index-function (lambda () nil))))
 
-  ;; Git integration — deferred for performance
+  ;; Git integration — show status for both files and directories immediately.
   (pcase (executable-find "git")
     (`nil (message "Treemacs: git not found, disabling git integration."))
-    (_ (treemacs-git-mode 'deferred)))
+    (_ (treemacs-git-mode 'extended)))
 
   :bind
   (("C-x t t" . rsr/treemacs-toggle-current-project)
