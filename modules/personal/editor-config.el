@@ -34,16 +34,25 @@
 (add-hook 'org-mode-hook  #'display-line-numbers-mode)
 (setq-default truncate-lines t)
 
-;;; --- Code Folding (hs-minor-mode) ---
+;;; --- Code Folding (treesit-fold) ---
 
-(add-hook 'prog-mode-hook #'hs-minor-mode)
-
-(with-eval-after-load 'hideshow
-  (define-key hs-minor-mode-map (kbd "C-c h t") #'hs-toggle-hiding)
-  (define-key hs-minor-mode-map (kbd "C-c h h") #'hs-hide-block)
-  (define-key hs-minor-mode-map (kbd "C-c h s") #'hs-show-block)
-  (define-key hs-minor-mode-map (kbd "C-c h a") #'hs-hide-all)
-  (define-key hs-minor-mode-map (kbd "C-c h A") #'hs-show-all))
+;; Folds by tree-sitter node rather than by brace regex, so nested folds
+;; survive reopening their parent.  Only buffers with a tree-sitter parser
+;; get it; see treesit-config.el for which modes are remapped.
+(use-package treesit-fold
+  :ensure t
+  :demand t
+  :bind (:map treesit-fold-mode-map
+              ("C-c h t" . treesit-fold-toggle)
+              ("C-c h h" . treesit-fold-close)
+              ("C-c h s" . treesit-fold-open)
+              ("C-c h r" . treesit-fold-open-recursively)
+              ("C-c h a" . treesit-fold-close-all)
+              ("C-c h A" . treesit-fold-open-all))
+  :config
+  (global-treesit-fold-mode 1)
+  ;; Clickable fringe arrows, like VS Code's gutter chevrons.
+  (global-treesit-fold-indicators-mode 1))
 
 ;;; --- Whitespace Cleanup on Save ---
 
