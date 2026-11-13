@@ -101,7 +101,7 @@
 ;; Installed cuts here: regular, medium, semi-bold, bold (no light).  Keyword
 ;; and constant faces track this weight -- see `rsr/match-keyword-weight' in
 ;; theme-config.el -- so changing it here keeps the whole buffer consistent.
-(set-face-attribute 'default nil :family "Fira Code" :height 173 :weight 'medium)
+(set-face-attribute 'default nil :family "Fira Code" :height 142 :weight 'medium)
 
 ;;; Line spacing
 ;;
