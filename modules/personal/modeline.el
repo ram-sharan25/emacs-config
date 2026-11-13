@@ -34,6 +34,14 @@
   (doom-modeline-mode 1)
   :config
   ;; --- custom segments (must be inside :config — doom-modeline must be loaded first) ---
+  ;; doom-modeline looks every vcs icon up in `devicon', but the worktree icon
+  ;; is `nf-cod-worktree'; the lookup errors and the branch never shows in a
+  ;; git worktree.  Pick the set from the icon's prefix.
+  (define-advice doom-modeline-vcs-icon (:override (icon &optional unicode text face) rsr/icon-set)
+    (doom-modeline-icon (if (and icon (string-prefix-p "nf-cod-" icon)) 'codicon 'devicon)
+                        (and doom-modeline-vcs-icon icon)
+                        unicode text :face face))
+
 
   (defun rsr/modeline-org-clock ()
     "Return a short org-clock string: truncated task name + elapsed time."
