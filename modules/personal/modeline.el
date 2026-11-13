@@ -49,9 +49,13 @@
         (propertize (format " ⏱ %s %s " short time)
                     'face '(:foreground "#8ab4c9")))))
 
+  ;; Global, like time and persp-name: shown once, in the selected window,
+  ;; rather than repeated in every window's mode line.
   (doom-modeline-def-segment rsr/clock
     "Org clock: truncated task + elapsed time."
-    (or (rsr/modeline-org-clock) ""))
+    (or (and (doom-modeline--segment-visible 'rsr/clock)
+             (rsr/modeline-org-clock))
+        ""))
 
   ;; --- modeline layouts ---
 
