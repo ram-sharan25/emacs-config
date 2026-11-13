@@ -47,7 +47,21 @@
                       (and (string-match-p
                             "\\`\\(TMUX\\|TERM_PROGRAM\\|GHOSTTY_\\|CLAUDE\\)" k)
                            k)))
-                  process-environment)))
+                  process-environment))
+  ;; Emacs coalesces a trackpad swipe into far fewer wheel events than Ghostty
+  ;; sees, and ghostel forwards each as one press, so tmux (5 lines a press)
+  ;; crawls.  Send every forwarded wheel event several times over.
+  (advice-add 'ghostel--forward-scroll-event :around #'rsr/ghostel-scroll-faster))
+
+(defvar rsr/ghostel-scroll-multiplier 3
+  "Presses sent to the terminal for each wheel event it tracks.")
+
+(defun rsr/ghostel-scroll-faster (orig event button)
+  "Call ORIG for EVENT and BUTTON `rsr/ghostel-scroll-multiplier' times."
+  (when (funcall orig event button)
+    (dotimes (_ (1- rsr/ghostel-scroll-multiplier))
+      (funcall orig event button))
+    t))
 
 ;;; tmux, and agent CLIs inside it
 ;;
