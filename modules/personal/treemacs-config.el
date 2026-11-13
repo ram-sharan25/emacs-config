@@ -46,6 +46,16 @@ If the current buffer is not part of a project, fall back to plain Treemacs."
         treemacs-file-event-delay      500
         treemacs-litter-directories    '("/node_modules" "/.venv" "/.cask"))
 
+  ;; Ignore stale asynchronous updates after their project has been removed
+  ;; from the current perspective's Treemacs workspace.
+  (defun rsr/treemacs-find-file-node-if-project (orig path &optional project)
+    "Call ORIG for PATH only when its Treemacs PROJECT still exists."
+    (when-let ((project (or project (treemacs--find-project-for-path path))))
+      (funcall orig path project)))
+
+  (advice-add 'treemacs-find-file-node
+              :around #'rsr/treemacs-find-file-node-if-project)
+
   ;; Follow mode: highlight the current file in the sidebar as you switch
   ;; buffers.  Previously disabled due to timer errors before Treemacs' DOM
   ;; was ready; re-enabled to test whether newer Treemacs handles it cleanly.
