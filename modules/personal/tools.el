@@ -208,10 +208,19 @@ library callers pass nil, t or a prefix argument instead."
 
 ;; C-c L → store link AND push formatted [[link][desc]] to kill-ring/clipboard.
 ;; Lets you paste org-stored links outside Emacs (e.g. into other apps).
-(defun rsr/org-store-link-to-clipboard ()
-  "Run `org-store-link' and copy the result as [[link][desc]] to kill-ring."
-  (interactive)
-  (call-interactively #'org-store-link)
+;; In a code file the link targets the line number (File.tsx:35), not the
+;; line's text, so it still lands right after the line is edited.
+(defun rsr/store-file-line-link ()
+  "Store a file:PATH::LINE link to point when in a non-Org file buffer.
+Return non-nil when a link was stored."
+  (when (and buffer-file-name (not (derived-mode-p 'org-mode)))
+    (let ((line (line-number-at-pos)))
+      (push (list (format "file:%s::%d" (abbreviate-file-name buffer-file-name) line)
+                  (format "%s:%d" (file-name-nondirectory buffer-file-name) line))
+            org-stored-links))))
+
+(defun rsr/copy-last-stored-link ()
+  "Copy the newest `org-stored-links' entry to the kill-ring as [[link][desc]]."
   (when org-stored-links
     (let* ((entry (car org-stored-links))
            (link  (car entry))
@@ -221,6 +230,14 @@ library callers pass nil, t or a prefix argument instead."
                         (format "[[%s]]" link))))
       (kill-new formatted)
       (message "Stored + copied: %s" formatted))))
+
+(defun rsr/org-store-link-to-clipboard ()
+  "Run `org-store-link' and copy the result as [[link][desc]] to kill-ring.
+In a non-Org file buffer, store a file:PATH::LINE link instead."
+  (interactive)
+  (unless (rsr/store-file-line-link)
+    (call-interactively #'org-store-link))
+  (rsr/copy-last-stored-link))
 
 (provide 'tools)
 ;;; tools.el ends here
