@@ -15,7 +15,7 @@
  '(org-property-value  ((t (:height 0.8))))
 
  ;; src/quote blocks — subtle dark background
- '(org-block            ((t (:background "#2B2B2B" :family "Fira Code" :extend t))))
+ '(org-block            ((t (:background "#2B2B2B" :family "JetBrains Mono" :extend t))))
  '(org-block-begin-line ((t (:inherit org-meta-line :background "#2B2B2B" :extend t))))
  '(org-block-end-line   ((t (:inherit org-meta-line :background "#2B2B2B" :extend t))))
  '(org-quote            ((t (:inherit org-block :slant italic

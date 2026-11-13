@@ -97,11 +97,11 @@
 ;;; Appearance
 
 (global-font-lock-mode 1)
-;; :weight medium is deliberate, not the default match falling through.
-;; Installed cuts here: regular, medium, semi-bold, bold (no light).  Keyword
-;; and constant faces track this weight -- see `rsr/match-keyword-weight' in
+;; JetBrains Mono at regular weight, the same face as the ghostel terminals
+;; and org buffers, so code reads like the terminal.  Keyword and constant
+;; faces track this weight -- see `rsr/match-keyword-weight' in
 ;; theme-config.el -- so changing it here keeps the whole buffer consistent.
-(set-face-attribute 'default nil :family "Fira Code" :height 142 :weight 'medium)
+(set-face-attribute 'default nil :family "JetBrains Mono" :height 142 :weight 'regular)
 
 ;;; Line spacing
 ;;
