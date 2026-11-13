@@ -28,12 +28,9 @@
   (setq org-clock-clocked-in-display nil)
   (setq display-time-default-load-average nil)
   (setq display-time-format "%a %m/%d %I:%M %p")
-  (setq doom-modeline-battery t)
   (display-time-mode 1)
-  (display-battery-mode 1)
   (doom-modeline-mode 1)
   :config
-  ;; --- custom segments (must be inside :config — doom-modeline must be loaded first) ---
   ;; doom-modeline looks every vcs icon up in `devicon', but the worktree icon
   ;; is `nf-cod-worktree'; the lookup errors and the branch never shows in a
   ;; git worktree.  Pick the set from the icon's prefix.
@@ -41,7 +38,6 @@
     (doom-modeline-icon (if (and icon (string-prefix-p "nf-cod-" icon)) 'codicon 'devicon)
                         (and doom-modeline-vcs-icon icon)
                         unicode text :face face))
-
 
   (defun rsr/modeline-org-clock ()
     "Return a short org-clock string: truncated task name + elapsed time."
@@ -65,42 +61,31 @@
              (rsr/modeline-org-clock))
         ""))
 
-  ;; --- modeline layouts ---
+  ;; doom's `major-mode' segment without the text-scale amount it appends.
+  (doom-modeline-def-segment rsr/major-mode
+    "The major mode name."
+    (concat
+     (doom-modeline-spc)
+     (propertize (format-mode-line mode-name)
+                 'face (doom-modeline-face 'doom-modeline-buffer-major-mode)
+                 'mouse-face 'doom-modeline-highlight
+                 'local-map mode-line-major-mode-keymap)
+     (doom-modeline-spc)))
 
-  ;; default
+  ;; Branch, file name; clocked task, workspace, file type, time.
   (doom-modeline-def-modeline 'rsr/default
-    '(vcs buffer-info matches selection-info)
-    '(rsr/clock persp-name major-mode time battery))
-
-  ;; prog — filename only + flymake + lsp
-  (doom-modeline-def-modeline 'rsr/prog
-    '(vcs buffer-info-simple matches selection-info check)
-    '(rsr/clock persp-name lsp major-mode time battery))
-
-  ;; org — word count
-  (doom-modeline-def-modeline 'rsr/org
-    '(vcs buffer-info matches selection-info)
-    '(rsr/clock word-count persp-name major-mode battery time))
-
-  ;; magit / dired / agenda — minimal
-  (doom-modeline-def-modeline 'rsr/minimal
     '(vcs buffer-info-simple)
-    '(rsr/clock major-mode time battery))
+    '(rsr/clock persp-name rsr/major-mode time))
 
-  ;; set default for all buffers
   (doom-modeline-set-modeline 'rsr/default t)
 
-  ;; per-mode hooks
-  (add-hook 'prog-mode-hook
-            (lambda () (doom-modeline-set-modeline 'rsr/prog)))
-  (add-hook 'org-mode-hook
-            (lambda () (doom-modeline-set-modeline 'rsr/org)))
-  (add-hook 'magit-mode-hook
-            (lambda () (doom-modeline-set-modeline 'rsr/minimal)))
-  (add-hook 'dired-mode-hook
-            (lambda () (doom-modeline-set-modeline 'rsr/minimal)))
-  (add-hook 'org-agenda-mode-hook
-            (lambda () (doom-modeline-set-modeline 'rsr/minimal))))
+  ;; `doom-modeline-mode' (in :init) resets every open buffer to its `main'
+  ;; layout; put the open ones back on ours.  Modes in
+  ;; `doom-modeline-mode-alist' (magit, info, pdf...) keep their own.
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (and mode-line-format (not (doom-modeline-auto-set-modeline)))
+        (doom-modeline-set-modeline 'rsr/default)))))
 
 (provide 'modeline)
 ;;; modeline.el ends here
