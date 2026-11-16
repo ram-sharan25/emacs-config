@@ -83,20 +83,33 @@
   (require 'ghub-legacy)
   (advice-add 'code-review--trigger-hooks :after #'rsr/code-review-decorate))
 
+(defface rsr/code-review-comment
+  '((t :background "#2b2a20" :extend t))
+  "Block behind each review comment, a warm tint against the navy diff.")
+
 (defun rsr/code-review-decorate (buff-name &rest _)
-  "Colour the diff lines in BUFF-NAME.
+  "Colour the diff lines in BUFF-NAME and set its comments off as blocks.
 Magit now paints a hunk only when one of its own commands shows it, which
 code-review's buffer never goes through, so its +/- lines stayed plain.
 Paint directly: code-review marks a parent section hidden while showing
 it, and magit's own updater skips hunks under a hidden parent."
   (with-current-buffer buff-name
+    (remove-overlays (point-min) (point-max) 'rsr/code-review-comment t)
     (with-silent-modifications
       (save-excursion
         (magit-map-sections
          (lambda (section)
-           (when (and (magit-hunk-section-p section) (not (oref section painted)))
+           (cond
+            ((and (magit-hunk-section-p section) (not (oref section painted)))
              (goto-char (oref section start))
-             (magit-section-paint section nil))))))))
+             (magit-section-paint section nil))
+            ((or (object-of-class-p section 'code-review-base-comment-section)
+                 (object-of-class-p section 'code-review-comment-section))
+             (let ((ov (make-overlay (oref section start) (oref section end))))
+               (overlay-put ov 'rsr/code-review-comment t)
+               (overlay-put ov 'face 'rsr/code-review-comment)
+               ;; Below hl-line (-50), so the cursor line still shows.
+               (overlay-put ov 'priority -60))))))))))
 
 ;; diff-hl — show git changes in fringe while editing (like VS Code git gutter)
 (use-package diff-hl

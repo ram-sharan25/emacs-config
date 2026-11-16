@@ -44,6 +44,11 @@
  '(doom-modeline-vcs-warning         ((t (:foreground "#dfaf8f" :weight bold)))) ;; orange — modified
  '(doom-modeline-vcs-error           ((t (:foreground "#cc9393" :weight bold)))) ;; red — error
 
+ ;; code-review — comment headings stand out from the diff; outdated ones recede.
+ ;; The comment block behind them is `rsr/code-review-comment' (magit_config.el).
+ '(code-review-recent-comment-heading   ((t (:foreground "#e5c07b" :weight bold :box nil :extend t))))
+ '(code-review-outdated-comment-heading ((t (:foreground "#7f848e" :slant italic :box nil))))
+
  ;; org-agenda — scheduled, deadline, and date colors
  '(org-agenda-date-today      ((t (:foreground "#f0dfaf" :weight bold :underline t)))) ;; today header — yellow
  '(org-agenda-structure       ((t (:foreground "#f0dfaf" :weight bold))))               ;; group headers — yellow
