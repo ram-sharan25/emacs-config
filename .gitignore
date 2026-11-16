@@ -79,3 +79,5 @@ agent-sessions.db*
 #*#
 .tutor/
 forge-database.sqlite
+code-review-db-file.sqlite
+code-review-error.log

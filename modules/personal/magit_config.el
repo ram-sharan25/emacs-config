@@ -64,6 +64,40 @@
     (orgit-topic-store-1 topic)
     t))
 
+;; code-review — a PR's diff with its review threads inline, to read and answer
+;; reviews.  Forge stores none of them (only the PR's conversation comments).
+;; MELPA's build is from 2022 and fails on GitHub's current API, hence the
+;; maintained fork.  Its GitHub token comes from the ghub advice above.
+;; N v r (forge's menu) on a PR line or in a PR buffer.
+(use-package code-review
+  :ensure nil                           ; installed from the fork below, not MELPA
+  :init
+  (unless (package-installed-p 'code-review)
+    (package-vc-install "https://github.com/doomelpa/code-review"))
+  (with-eval-after-load 'forge
+    (transient-append-suffix 'forge-dispatch "v p"
+      '("v r" "review pull-request" code-review-forge-pr-at-point)))
+  :defer t
+  :config
+  ;; ghub moved the `ghub-graphql' it calls into a file it no longer loads.
+  (require 'ghub-legacy)
+  (advice-add 'code-review--trigger-hooks :after #'rsr/code-review-decorate))
+
+(defun rsr/code-review-decorate (buff-name &rest _)
+  "Colour the diff lines in BUFF-NAME.
+Magit now paints a hunk only when one of its own commands shows it, which
+code-review's buffer never goes through, so its +/- lines stayed plain.
+Paint directly: code-review marks a parent section hidden while showing
+it, and magit's own updater skips hunks under a hidden parent."
+  (with-current-buffer buff-name
+    (with-silent-modifications
+      (save-excursion
+        (magit-map-sections
+         (lambda (section)
+           (when (and (magit-hunk-section-p section) (not (oref section painted)))
+             (goto-char (oref section start))
+             (magit-section-paint section nil))))))))
+
 ;; diff-hl — show git changes in fringe while editing (like VS Code git gutter)
 (use-package diff-hl
   :ensure t
