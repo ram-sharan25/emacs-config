@@ -1,6 +1,7 @@
 ;;; logs-test.el --- Tests for logs.el -*- lexical-binding: t; -*-
 
 (require 'ert)
+(require 'cl-lib)
 (require 'logs)
 
 (defmacro logs-test--with-org (content &rest body)
@@ -103,7 +104,9 @@ BODY sees the file's buffer as `buf'."
              (copy-marker (line-beginning-position))))
           (org-clock-start-time (org-time-string-to-time "2000-01-01 Sat 10:00")))
      (unwind-protect
-         (progn ,@body)
+         (cl-letf (((symbol-function 'rsr/store-file-line-link)
+                    (lambda () nil)))
+           ,@body)
        ;; Detach the fake clock first, or kill-buffer asks "Clock-out …?"
        ;; and a batch run hangs forever waiting for y/n.
        (set-marker org-clock-marker nil)

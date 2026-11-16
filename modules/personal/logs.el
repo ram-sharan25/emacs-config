@@ -99,10 +99,12 @@ A new session starts when LAST-SESSION is before CLOCK-START's minute."
   (setq rsr/logs--capture-heading (point-marker))
   (setq rsr/logs--pending-session
         (rsr/logs--session-line (rsr/logs--last-session-time) org-clock-start-time))
-  ;; A function target always inserts at point (Org's :exact-position), so
-  ;; point must be at the Logs subtree's end, not on its heading.
+  ;; `org-end-of-subtree' can land on the next sibling heading.  Without
+  ;; :insert-here, Org then treats that sibling (e.g. Notes) as the target and
+  ;; appends beneath it instead of inserting at this exact position.
   (org-end-of-subtree t t)
-  (unless (bolp) (insert "\n")))
+  (unless (bolp) (insert "\n"))
+  (org-capture-put :insert-here t))
 
 (defun rsr/logs-capture-show-logs ()
   "Widen the capture buffer to show the whole Logs above the new line.
