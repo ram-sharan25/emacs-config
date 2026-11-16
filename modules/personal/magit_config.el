@@ -29,6 +29,41 @@
       my/github-token))
   (advice-add 'ghub--token :before-until #'rsr/ghub-token-from-secrets))
 
+;; orgit / orgit-forge — C-c l in a magit or forge buffer stores an org link to
+;; the repo, commit, log, file or PR/issue; following it reopens that buffer.
+;; Their autoloads register the link types once org and magit are loaded.
+(use-package orgit
+  :ensure t
+  :defer t)
+
+(use-package orgit-forge
+  :ensure t
+  :defer t
+  :config
+  ;; orgit-forge only links topics selected by the region.  Also link the one
+  ;; at point, and keep the repo's status link from competing with it (org
+  ;; would otherwise prompt for which of the two to store).
+  (advice-add 'orgit-topic-store :before-until #'rsr/orgit-topic-store-at-point)
+  (advice-add 'orgit-status-store :before-while #'rsr/magit-no-topic-at-point))
+
+(defun rsr/magit-topic-at-point ()
+  "Return the PR or issue at point in a magit buffer, without a region."
+  (when-let* (((derived-mode-p 'magit-mode))
+              ((not (region-active-p)))
+              (section (magit-current-section))
+              ((memq (oref section type) '(issue pullreq))))
+    (oref section value)))
+
+(defun rsr/magit-no-topic-at-point ()
+  "Return non-nil unless point is on a PR or issue."
+  (not (rsr/magit-topic-at-point)))
+
+(defun rsr/orgit-topic-store-at-point ()
+  "Store a link to the PR or issue at point, if any."
+  (when-let ((topic (rsr/magit-topic-at-point)))
+    (orgit-topic-store-1 topic)
+    t))
+
 ;; diff-hl — show git changes in fringe while editing (like VS Code git gutter)
 (use-package diff-hl
   :ensure t
