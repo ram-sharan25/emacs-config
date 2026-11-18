@@ -98,6 +98,15 @@
 (setq auto-revert-verbose nil               ;; suppress "Reverting buffer..." messages
       global-auto-revert-non-file-buffers t) ;; also revert dired when dir changes
 
+;; The phone and watch change gtd files through Syncthing.  When code opens
+;; one with `find-file-noselect' before auto-revert's next poll, Emacs asks
+;; "changed on disk; Reread?".  Reread unmodified gtd buffers without asking;
+;; a buffer with unsaved edits still asks.  `find-file-noselect' matches the
+;; abbreviated name (~/...), `revert-buffer' the full one; match both.
+(add-to-list 'revert-without-query
+             (concat "\\`" (regexp-opt (list (abbreviate-file-name my/gtd-dir)
+                                             (expand-file-name my/gtd-dir)))))
+
 ;;; --- Repeat Mode ---
 
 (repeat-mode 1)
